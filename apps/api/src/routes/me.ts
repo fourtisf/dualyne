@@ -7,6 +7,8 @@ import type { AppContext } from "../context";
 import { ApiError } from "../lib/errors";
 import { microToUsd } from "../lib/money";
 import { utcDayStart } from "../lib/time";
+import { brand } from "@refract/config";
+import { tokenAmount } from "../tierService";
 
 /** Everything the dashboard needs about the signed-in wallet. */
 export async function buildMe(ctx: AppContext, wallet: Wallet) {
@@ -17,6 +19,7 @@ export async function buildMe(ctx: AppContext, wallet: Wallet) {
     ctx.prisma.apiKey.count({ where: { walletId: wallet.id } }),
   ]);
   const eligibility = tier === "explorer" && ctx.sybil.enabled ? await ctx.sybil.check(wallet.address) : null;
+  const bal = ctx.tierService.tokenEnabled ? await ctx.tierService.tokenBalance(wallet.address) : null;
   return {
     address: wallet.address,
     tier,
@@ -29,6 +32,9 @@ export async function buildMe(ctx: AppContext, wallet: Wallet) {
     },
     keys: { count: keyCount, max: policy.maxKeys },
     eligibility,
+    token: bal
+      ? { balance: tokenAmount(bal.units, bal.decimals), holderMin: ctx.tierService.holderMin, symbol: brand.tokenSymbol }
+      : null,
   };
 }
 

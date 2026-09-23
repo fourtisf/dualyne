@@ -1,5 +1,7 @@
-import { createPublicClient, erc20Abi, http, type Address, type Hex, type PublicClient } from "viem";
-import type { ChainReader } from "./types";
+import { createPublicClient, erc20Abi, http, parseAbiItem, type Address, type Hex, type PublicClient } from "viem";
+import type { ChainReader, Erc20Transfer } from "./types";
+
+const TRANSFER = parseAbiItem("event Transfer(address indexed from, address indexed to, uint256 value)");
 
 export interface ViemChainOptions {
   rpcUrl: string;
@@ -59,6 +61,28 @@ export class ViemChain implements ChainReader {
     if (!Array.isArray(json.result)) return null; // "No transactions found" or an error string
     const ts = Number(json.result[0]?.timeStamp);
     return Number.isFinite(ts) && ts > 0 ? ts : null;
+  }
+
+  blockNumber(): Promise<bigint> {
+    return this.client.getBlockNumber();
+  }
+
+  async blockTimestamp(block: bigint): Promise<number> {
+    const b = await this.client.getBlock({ blockNumber: block });
+    return Number(b.timestamp);
+  }
+
+  async erc20TransfersTo(token: Address, to: Address, fromBlock: bigint, toBlock: bigint): Promise<Erc20Transfer[]> {
+    const logs = await this.client.getLogs({ address: token, event: TRANSFER, args: { to }, fromBlock, toBlock });
+    return logs
+      .filter((l) => l.transactionHash && l.blockNumber !== null && l.logIndex !== null)
+      .map((l) => ({
+        txHash: l.transactionHash as Hex,
+        logIndex: Number(l.logIndex),
+        blockNumber: l.blockNumber as bigint,
+        from: l.args.from as Address,
+        value: l.args.value as bigint,
+      }));
   }
 
   verifyMessage(args: { address: Address; message: string; signature: Hex }): Promise<boolean> {

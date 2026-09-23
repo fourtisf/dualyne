@@ -596,6 +596,23 @@ Still untested: `server-setup.sh` on a real Ubuntu host (the sandbox has no syst
 - [x] Website: real sign-in with a browser wallet (WalletConnect when a project id is set), a key dialog (create, show once, copy, revoke with confirmation), and a dashboard on real data (requests today, tier, keys, a 7-day chart, usage per key)
 - [x] Tests: 21 new API tests (SIWE rules, sessions, keys, limits, sybil, CSRF, CORS, scheduler) and a browser run of the full key lifecycle
 
+## 11d. Phase 4 status (token, tiers, treasury)
+
+- [x] Holder tier from the on-chain RFX `balanceOf` (≥ `HOLDER_MIN_RFX`, 100,000 by default), cached 5 minutes in Redis. If the chain is briefly unreachable, the last known balance is used instead of demoting the wallet.
+- [x] Hourly `treasury-sync` job:
+  - reads stablecoin (USDG) `Transfer` events into the treasury wallet in 2,000-block chunks, after `CHAIN_CONFIRMATIONS` confirmations;
+  - resumes from a saved block cursor, and a duplicate-safe insert means repeated runs don't double-count;
+  - takes a balance snapshot on every run.
+- [x] `GET /treasury` (cached 5 minutes):
+  - balance and today's inflow;
+  - runway: balance ÷ average treasury spend over the last 7 complete days, plus its change over the week;
+  - requests over 7 days, with week-over-week change;
+  - 30-day balance series and daily in/out.
+  - Builder usage (charged to credits) doesn't count as treasury spend.
+- [x] Website: the Treasury section shows live numbers, a chart and table once a balance exists, and drops the "Sample data" labels. The Token section shows the contract address (with Copy and an explorer link) and Buy / View chart links once configured.
+- [x] Tests: tier threshold, the 5-minute cache, chain-outage fallback, `/me` token info, inflow scan (cursor, dedupe, snapshot) and summary maths. Checked in the browser with seeded data.
+- Converting fees to the stablecoin and topping up OpenRouter stay manual (DEPLOY.md §20). Automating swaps and payments needs custody decisions that aren't in the spec.
+
 ## 12. Before public launch
 
 - **Model ids:** on the server, run `pnpm --filter @refract/api models:resolve` and confirm or update each OpenRouter id. The seed ids (Claude Haiku/Sonnet/Opus 4.5, GPT-5, Gemini 2.5 Pro, Llama 3.3 70B, DeepSeek V3.1, Mistral Small 3.2) could not be verified from the sandbox.

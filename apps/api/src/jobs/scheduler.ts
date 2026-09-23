@@ -1,4 +1,6 @@
 import type { FastifyInstance } from "fastify";
+import { treasuryConfig } from "../routes/treasury";
+import { syncTreasury } from "../treasury";
 import { verifyModels } from "./verifyModels";
 
 const TICK_MS = 5 * 60 * 1000; // look every 5 minutes for jobs that are due
@@ -22,6 +24,17 @@ export function defaultJobs(app: FastifyInstance): Job[] {
       run: async () => {
         const r = await verifyModels(ctx.prisma, ctx.openrouter, ctx.alert);
         app.log.info({ job: "verify-models", ...r }, "model check finished");
+      },
+    },
+    {
+      name: "treasury-sync",
+      everyMs: HOUR,
+      run: async () => {
+        const cfg = treasuryConfig(ctx);
+        if (!cfg) return;
+        const r = await syncTreasury(ctx.prisma, cfg, ctx.clock);
+        await ctx.redis.del("cache:treasury");
+        app.log.info({ job: "treasury-sync", ...r, scannedTo: String(r.scannedTo) }, "treasury synced");
       },
     },
     {

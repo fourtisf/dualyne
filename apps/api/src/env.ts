@@ -69,6 +69,16 @@ const schema = z
       .optional()
       .or(z.literal("").transform(() => undefined)),
     EXPLORER_API_KEY: z.string().default(""),
+
+    // Token tier and treasury (Phase 4)
+    RFX_TOKEN_ADDRESS: z.string().regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x address").optional().or(z.literal("").transform(() => undefined)),
+    HOLDER_MIN_RFX: z.coerce.number().positive().default(100_000),
+    TREASURY_WALLET_ADDRESS: z.string().regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x address").optional().or(z.literal("").transform(() => undefined)),
+    /** Stablecoin (USDG) held by the treasury and used for Builder top-ups. 1 token = $1. */
+    USDG_TOKEN_ADDRESS: z.string().regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x address").optional().or(z.literal("").transform(() => undefined)),
+    /** First block to scan for treasury inflows. Default: the last ~10,000 blocks. */
+    TREASURY_START_BLOCK: z.coerce.number().int().min(0).optional(),
+    CHAIN_CONFIRMATIONS: z.coerce.number().int().min(0).default(3),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV !== "production") return;

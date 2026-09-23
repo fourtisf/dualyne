@@ -13,6 +13,7 @@ import { SybilCheck } from "./sybil";
 import { TierService } from "./tierService";
 import { authRoutes } from "./routes/auth";
 import { meRoutes } from "./routes/me";
+import { treasuryRoutes } from "./routes/treasury";
 import { Budget } from "./budget";
 import type { AppContext } from "./context";
 import { webOrigins, type Env } from "./env";
@@ -89,7 +90,10 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
             explorerApiKey: env.EXPLORER_API_KEY,
           })
         : null;
-  const tierService = new TierService(prisma, redis);
+  const tierService = new TierService(prisma, redis, chain, {
+    rfxToken: env.RFX_TOKEN_ADDRESS as `0x${string}` | undefined,
+    holderMin: env.HOLDER_MIN_RFX,
+  });
 
   const ctx: AppContext = {
     env,
@@ -233,6 +237,7 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
   await app.register(compareRoutes);
   await app.register(authRoutes);
   await app.register(meRoutes);
+  await app.register(treasuryRoutes);
 
   return app;
 }

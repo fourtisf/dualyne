@@ -100,6 +100,8 @@ model UsageLog {
   outputTokens  Int      @default(0)
   /// 1 = $0.000001
   costMicroUsd  BigInt   @default(0)
+  /// What a Builder wallet was charged from prepaid credits (cost × markup). 0 = paid by the treasury.
+  chargedMicroUsd BigInt @default(0)
   latencyMs     Int
   ttftMs        Int?
   status        Int
@@ -135,4 +137,32 @@ model ModelCheck {
   ok      Boolean
   missing String[]
   details Json
+}
+
+/// Stablecoin transfers into the treasury wallet, read from the chain (Phase 4).
+model TreasuryTransfer {
+  id             String   @id // "<txHash>:<logIndex>"
+  txHash         String
+  blockNumber    BigInt
+  timestamp      DateTime
+  fromAddress    String
+  amountMicroUsd BigInt
+
+  @@index([timestamp])
+}
+
+/// Treasury balance readings (stablecoin balanceOf), taken by the hourly sync.
+model TreasurySnapshot {
+  id              String   @id @default(cuid())
+  takenAt         DateTime @default(now())
+  balanceMicroUsd BigInt
+
+  @@index([takenAt])
+}
+
+/// Last block scanned by a chain job, so scans resume where they stopped.
+model ChainCursor {
+  name      String   @id
+  block     BigInt
+  updatedAt DateTime @updatedAt
 }

@@ -1,4 +1,5 @@
 import { getCatalog } from "@/lib/catalog";
+import { getTreasury } from "@/lib/treasury";
 import { ApiSection } from "@/components/home/ApiSection";
 import { Closing } from "@/components/home/Closing";
 import { Faq } from "@/components/home/Faq";
@@ -13,7 +14,7 @@ import { TokenSection } from "@/components/home/TokenSection";
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const models = await getCatalog();
+  const [models, treasury] = await Promise.all([getCatalog(), getTreasury()]);
   return (
     <main id="top">
       <Hero models={models} />
@@ -22,7 +23,7 @@ export default async function HomePage() {
       <ModelsSection models={models} />
       <ApiSection />
       <Pricing />
-      <TokenSection />
+      <TokenSection treasury={treasury} />
       <Faq />
       <Closing />
       <HomeEffects />

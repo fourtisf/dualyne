@@ -488,3 +488,7 @@ footer.big .fbot{flex-basis:100%}
 /* v7: wallet sign-in */
 .tier-name{color:var(--text); font-weight:500}
 .opt[disabled]{opacity:.6; cursor:progress}
+/* v7: token contract address */
+.ca-addr{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text); text-decoration:none}
+a.ca-addr:hover{text-decoration:underline}
+.kpi .d.neg{color:var(--muted)}

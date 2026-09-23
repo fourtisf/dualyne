@@ -331,3 +331,26 @@ Isi `ALERT_WEBHOOK_URL` di `.env` dengan URL webhook **Slack** atau **Discord** 
 - batas budget harian tercapai;
 - saldo OpenRouter habis;
 - ada model yang hilang dari katalog OpenRouter.
+
+## 20. Saat token diluncurkan
+
+Setelah kontrak token dan dompet treasury siap, isi nilai berikut di `.env` (langkah 9), lalu jalankan `deploy.sh`:
+
+| Variabel                    | Isi                                                                            |
+| --------------------------- | ------------------------------------------------------------------------------ |
+| `SIWE_CHAIN_ID`             | ID jaringan token (1 = Ethereum, 8453 = Base, 42161 = Arbitrum)                |
+| `RPC_URL`                   | Endpoint RPC untuk jaringan itu (Alchemy, Infura, QuickNode, dll.)             |
+| `RFX_TOKEN_ADDRESS`         | Alamat kontrak token                                                           |
+| `HOLDER_MIN_RFX`            | Jumlah token untuk tier Holder (default `100000`)                              |
+| `TREASURY_WALLET_ADDRESS`   | Alamat dompet treasury yang menerima fee                                       |
+| `USDG_TOKEN_ADDRESS`        | Alamat kontrak stablecoin (USDG) di jaringan yang sama                         |
+| `TREASURY_START_BLOCK`      | Nomor blok saat dompet treasury mulai dipakai, supaya semua pemasukan tercatat |
+| `NEXT_PUBLIC_RFX_BUY_URL`   | Link tombol **Buy** (misalnya halaman swap)                                    |
+| `NEXT_PUBLIC_RFX_CHART_URL` | Link tombol **View chart** (misalnya DexScreener)                              |
+| `NEXT_PUBLIC_EXPLORER_URL`  | Explorer jaringan, misalnya `https://basescan.org`                             |
+
+Setelah deploy:
+
+- Wallet yang memegang token minimal `HOLDER_MIN_RFX` otomatis menjadi **Holder**. Saldo dicek ulang tiap 5 menit.
+- Bagian **Treasury** di website otomatis berganti dari "Sample data" ke angka asli setelah sinkronisasi pertama, paling lama 1 jam.
+- Konversi fee ke stablecoin dan top-up saldo OpenRouter tetap dilakukan manual. Website hanya mencatat apa yang terlihat di blockchain.

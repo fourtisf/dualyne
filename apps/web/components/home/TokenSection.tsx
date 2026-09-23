@@ -1,11 +1,56 @@
 import Link from "next/link";
 import { brand, tokenTicker } from "@refract/config";
+import { balancePaths, fmt, type TreasuryData } from "@/lib/treasury";
+import { TokenActions } from "./TokenActions";
+
+const SAMPLE_LINE =
+  "M0 150 L25 146 L50 138 L75 140 L100 126 L125 118 L150 121 L175 104 L200 96 L225 99 L250 84 L275 76 L300 70 L325 58 L350 52 L375 44 L400 34";
+const SAMPLE_ROWS: [string, string, string][] = [
+  ["Sep 22", "+1,284", "−452"],
+  ["Sep 21", "+1,902", "−431"],
+  ["Sep 20", "+2,650", "−388"],
+  ["Sep 19", "+3,118", "−341"],
+  ["Sep 18", "+4,407", "−296"],
+];
 
 /**
- * Token facts, fee split and the treasury ledger. Everything in the ledger is sample data until
- * the treasury jobs ship, and is labelled as such.
+ * Token facts, fee split and the treasury ledger. The ledger shows live numbers from the API once
+ * the treasury is configured and has a recorded balance; until then it shows labelled sample data.
  */
-export function TokenSection() {
+export function TokenSection({ treasury }: { treasury: TreasuryData | null }) {
+  const live = treasury !== null;
+  const paths = live ? balancePaths(treasury.days) : null;
+  const line = paths?.line ?? SAMPLE_LINE;
+  const area = paths?.area ?? `${SAMPLE_LINE} L400 170 L0 170Z`;
+  const rows: [string, string, string][] = live
+    ? treasury.days
+        .slice(-5)
+        .reverse()
+        .map((d) => [fmt.day(d.day), fmt.signed(d.inUsd), fmt.signed(-d.outUsd)])
+    : SAMPLE_ROWS;
+  const kpi = live
+    ? {
+        balance: fmt.usd(treasury.balanceUsd ?? 0),
+        balanceNote: `+ ${fmt.usd(treasury.inflowTodayUsd)} today`,
+        runway: treasury.runwayDays === null ? "—" : `${treasury.runwayDays.toLocaleString("en-US")} days`,
+        runwayNote:
+          treasury.runwayChangeDays === null
+            ? ""
+            : `${treasury.runwayChangeDays < 0 ? "−" : "+"} ${Math.abs(treasury.runwayChangeDays)} days this week`,
+        requests: treasury.requests7d.toLocaleString("en-US"),
+        requestsNote:
+          treasury.requestsChangePct === null
+            ? ""
+            : `${treasury.requestsChangePct < 0 ? "−" : "+"} ${Math.abs(treasury.requestsChangePct)}% week over week`,
+      }
+    : {
+        balance: "$18,420",
+        balanceNote: "+ $832 today",
+        runway: "41 days",
+        runwayNote: "+ 2 days this week",
+        requests: "312,480",
+        requestsNote: "+ 18% week over week",
+      };
   return (
     <section className="block" id="token">
       <div className="wrap">
@@ -44,20 +89,7 @@ export function TokenSection() {
                 <dd>100,000 {brand.tokenSymbol}</dd>
               </div>
             </dl>
-            <div className="ca">
-              <span>Contract address is published at launch</span>
-              <button className="btn dark sm" type="button" disabled>
-                Copy
-              </button>
-            </div>
-            <div className="tk-actions">
-              <button className="btn" type="button" disabled>
-                Buy {brand.tokenSymbol}
-              </button>
-              <button className="btn dark" type="button" disabled>
-                View chart
-              </button>
-            </div>
+            <TokenActions />
           </div>
           <div className="tk-card">
             <div className="tk-head">
@@ -105,31 +137,35 @@ export function TokenSection() {
         <div className="subhead">
           <h3>Treasury</h3>
           <p>Every fee in and every request out, published daily.</p>
-          <span className="sample">Sample data</span>
+          {!live && <span className="sample">Sample data</span>}
         </div>
         <div className="ledger" id="ledger">
           <div className="lg-top">
             <div className="kpi">
               <div className="l">Treasury balance</div>
-              <div className="v">$18,420</div>
-              <div className="d">+ $832 today</div>
+              <div className="v">{kpi.balance}</div>
+              <div className="d">{kpi.balanceNote}</div>
             </div>
             <div className="kpi">
               <div className="l">Runway at current usage</div>
-              <div className="v">41 days</div>
-              <div className="d">+ 2 days this week</div>
+              <div className="v">{kpi.runway}</div>
+              {kpi.runwayNote && (
+                <div className={kpi.runwayNote.startsWith("−") ? "d neg" : "d"}>{kpi.runwayNote}</div>
+              )}
             </div>
             <div className="kpi">
               <div className="l">Requests served, 7 days</div>
-              <div className="v">312,480</div>
-              <div className="d">+ 18% week over week</div>
+              <div className="v">{kpi.requests}</div>
+              {kpi.requestsNote && (
+                <div className={kpi.requestsNote.startsWith("−") ? "d neg" : "d"}>{kpi.requestsNote}</div>
+              )}
             </div>
           </div>
           <div className="lg-body">
             <div className="lg-chart">
               <div className="l">
                 <span>Balance, last 30 days</span>
-                <span className="sample">Sample data</span>
+                {!live && <span className="sample">Sample data</span>}
               </div>
               <svg
                 viewBox="0 0 400 170"
@@ -148,12 +184,9 @@ export function TokenSection() {
                   <line x1="0" y1="85" x2="400" y2="85" />
                   <line x1="0" y1="128" x2="400" y2="128" />
                 </g>
+                <path d={area} fill="url(#lf)" />
                 <path
-                  d="M0 150 L25 146 L50 138 L75 140 L100 126 L125 118 L150 121 L175 104 L200 96 L225 99 L250 84 L275 76 L300 70 L325 58 L350 52 L375 44 L400 34 L400 170 L0 170Z"
-                  fill="url(#lf)"
-                />
-                <path
-                  d="M0 150 L25 146 L50 138 L75 140 L100 126 L125 118 L150 121 L175 104 L200 96 L225 99 L250 84 L275 76 L300 70 L325 58 L350 52 L375 44 L400 34"
+                  d={line}
                   fill="none"
                   stroke="#67E8F9"
                   strokeWidth="1.8"
@@ -170,13 +203,7 @@ export function TokenSection() {
                   </tr>
                 </thead>
                 <tbody>
-                  {[
-                    ["Sep 22", "+1,284", "−452"],
-                    ["Sep 21", "+1,902", "−431"],
-                    ["Sep 20", "+2,650", "−388"],
-                    ["Sep 19", "+3,118", "−341"],
-                    ["Sep 18", "+4,407", "−296"],
-                  ].map(([d, i, o]) => (
+                  {rows.map(([d, i, o]) => (
                     <tr key={d}>
                       <td>{d}</td>
                       <td className="num in">{i}</td>

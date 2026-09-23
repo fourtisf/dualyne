@@ -7,7 +7,7 @@ import { buildApp } from "../src/app";
 import { generateApiKey } from "../src/auth/apiKey";
 import { loadEnv } from "../src/env";
 import { seedModels } from "../prisma/seed";
-import type { ChainReader } from "../src/chain/types";
+import type { ChainReader, Erc20Transfer } from "../src/chain/types";
 
 // ---------- fake OpenRouter + Turnstile ----------
 
@@ -189,6 +189,9 @@ export async function createTestContext(
 export async function resetState(prisma: PrismaClient, redis: Redis): Promise<void> {
   await redis.flushdb();
   await prisma.session.deleteMany();
+  await prisma.treasuryTransfer.deleteMany();
+  await prisma.treasurySnapshot.deleteMany();
+  await prisma.chainCursor.deleteMany();
   await prisma.usageLog.deleteMany();
   await prisma.apiKey.deleteMany();
   await prisma.wallet.deleteMany();
@@ -271,6 +274,26 @@ export class FakeChain implements ChainReader {
   }
   async firstTxTimestamp(a: Address) {
     return this.firstTx.get(a.toLowerCase()) ?? null;
+  }
+  head = 1000n;
+  /** block → unix seconds; defaults to 12s blocks ending at `headTime`. */
+  headTime = Math.floor(new Date("2026-09-23T12:00:00Z").getTime() / 1000);
+  transfers: (Erc20Transfer & { token: string; to: string })[] = [];
+  async blockNumber() {
+    if (this.failing) throw new Error("rpc down");
+    return this.head;
+  }
+  async blockTimestamp(b: bigint) {
+    return this.headTime - Number(this.head - b) * 12;
+  }
+  async erc20TransfersTo(token: Address, to: Address, from: bigint, toBlock: bigint) {
+    return this.transfers.filter(
+      (t) =>
+        t.token === token.toLowerCase() &&
+        t.to === to.toLowerCase() &&
+        t.blockNumber >= from &&
+        t.blockNumber <= toBlock,
+    );
   }
   verifyMessage(args: { address: Address; message: string; signature: Hex }) {
     return verifyMessage(args);

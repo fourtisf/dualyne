@@ -8,4 +8,10 @@ export const publicConfig = {
   /** Chain used for WalletConnect sessions (sign-in uses the chain the API returns). */
   siweChainId: Number(process.env.NEXT_PUBLIC_SIWE_CHAIN_ID || 1),
   walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
+  /** Token launch details (empty until launch). */
+  rfxTokenAddress: process.env.NEXT_PUBLIC_RFX_TOKEN_ADDRESS || "",
+  rfxBuyUrl: process.env.NEXT_PUBLIC_RFX_BUY_URL || "",
+  rfxChartUrl: process.env.NEXT_PUBLIC_RFX_CHART_URL || "",
+  /** Block explorer base URL, e.g. https://basescan.org */
+  explorerUrl: (process.env.NEXT_PUBLIC_EXPLORER_URL || "").replace(/\/$/, ""),
 };
