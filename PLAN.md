@@ -640,6 +640,14 @@ Still untested: `server-setup.sh` on a real Ubuntu host (the sandbox has no syst
 - [x] Checks:
   - the English pages' server HTML was diffed against the previous build and is identical except for the language link, `hreflang` and `og:locale`;
   - a browser run of `/id` covered compare, vote, share, the wallet modal, the dashboard gate, the language round trip, mobile layout and console errors.
+- [x] Load test of `/internal/compare` (local, fake upstream, $0.05 cap, a different IP per request):
+  - a burst of 400 at 40 concurrent and a steady run of 300 at 4 concurrent;
+  - then 200 sequential requests until the cap tripped;
+  - spend never passed the cap (final $0.0452 of $0.05), rejections answered in ~5–40 ms at p50, and the API stayed healthy.
+- [x] The load test found a wording bug, now fixed. During a burst, worst-case reservations of in-flight runs filled the budget, and visitors were told "paused until 00:00 UTC" with most of the budget unspent.
+  - Reservations are now atomic (Lua), and in-flight holds are tracked in `held:{day}`.
+  - A refusal is `budget_exhausted` only when settled spend leaves no room. Otherwise it is `budget_busy` (429, `Retry-After: 10`, "try again in a few seconds").
+  - Covered by 3 new tests.
 - Known limit (Next 14 with two root layouts): a 404 returns status 404 but its server HTML is a shell, and the page renders in the browser. Invalid `/s/…` links already behaved this way.
 
 ## 12. Before public launch
@@ -649,5 +657,4 @@ Still untested: `server-setup.sh` on a real Ubuntu host (the sandbox has no syst
 - **Brand:** set the final name, domain, social links and `contactEmail` in `packages/config/src/brand.ts`.
 - **Wallets:** WalletConnect is built in but only switches on with `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (free at cloud.reown.com). It could not be tested from the sandbox, so test it once on the real domain.
 - **Terms of resale:** read OpenRouter's and each provider's terms on reselling access (from HANDOFF).
-- **Load test:** load-test `/internal/compare` and confirm the budget cap trips (from HANDOFF).
 - **Translation review:** have a native speaker read `apps/web/lib/i18n/id.ts` once before launch, especially the token disclaimer.

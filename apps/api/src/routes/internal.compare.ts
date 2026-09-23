@@ -1,7 +1,7 @@
 import type { Model } from "@prisma/client";
 import { compareRequestSchema, type CompareEvents, type Lane } from "@refract/shared";
 import type { FastifyPluginAsync } from "fastify";
-import type { Reservation } from "../budget";
+import { isRefusal, type Refusal, type Reservation } from "../budget";
 import { ApiError } from "../lib/errors";
 import { plainHeaders, SSE_HEADERS, writeRaw } from "../lib/http";
 import { estimateTokens, tokensCostMicro, usdToMicro } from "../lib/money";
@@ -9,7 +9,7 @@ import { secondsUntilUtcMidnight } from "../lib/time";
 import { readEvents, StreamInspector } from "../openrouter/sse";
 import { verifyTurnstile } from "../turnstile";
 import { logUsage } from "../usage/log";
-import { alertBudgetOnce } from "./v1.chat";
+import { alertBudgetOnce, BUSY_RETRY_SECONDS } from "./v1.chat";
 import { pickTwo } from "./votes";
 
 const PING_INTERVAL_MS = 15_000;
@@ -110,10 +110,19 @@ export const compareRoutes: FastifyPluginAsync = async (app) => {
           true,
         );
       const resA = await reserve(modelA);
-      const resB = resA ? await reserve(modelB) : null;
-      if (!resA || !resB) {
-        if (resA) await ctx.budget.settle(resA, 0);
+      const resB: Reservation | Refusal = isRefusal(resA) ? resA : await reserve(modelB);
+      if (isRefusal(resA) || isRefusal(resB)) {
+        if (!isRefusal(resA)) await ctx.budget.settle(resA, 0);
         await slot.release();
+        const refusal = isRefusal(resB) ? resB : (resA as Refusal);
+        if (refusal.refused === "busy") {
+          throw new ApiError(
+            429,
+            "budget_busy",
+            "Lots of people are comparing right now. Try again in a few seconds.",
+            { "retry-after": BUSY_RETRY_SECONDS },
+          );
+        }
         await alertBudgetOnce(app);
         throw budgetExhausted(ctx.clock());
       }

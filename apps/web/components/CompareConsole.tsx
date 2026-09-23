@@ -65,6 +65,8 @@ function errText(t: Dict, code: string, message: string, retry: number | null, l
       return e.rateLimited(limit, retry ? formatWait(t, retry) : null);
     case "budget_exhausted":
       return e.budget;
+    case "budget_busy":
+      return e.busy;
     case "turnstile_failed":
     case "turnstile":
       return e.turnstile;

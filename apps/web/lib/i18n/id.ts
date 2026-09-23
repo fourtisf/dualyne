@@ -124,6 +124,7 @@ export const id: Dict = {
       rateLimited: (limit, wait) =>
         `Anda sudah memakai ${limit} perbandingan gratis untuk jam ini.${wait ? ` Coba lagi dalam ${wait}.` : ""}`,
       budget: "Perbandingan gratis dijeda untuk hari ini dan akan kembali pukul 00.00 UTC.",
+      busy: "Banyak orang sedang membandingkan saat ini. Coba lagi dalam beberapa detik.",
       turnstile: "Browser ini tidak dapat kami verifikasi. Muat ulang halaman lalu coba lagi.",
       modelNotFree: "Model itu tidak tersedia untuk perbandingan gratis.",
       network: "Tidak dapat terhubung ke server. Periksa koneksi Anda, lalu coba lagi.",

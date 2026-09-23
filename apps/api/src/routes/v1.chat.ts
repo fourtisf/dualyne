@@ -2,12 +2,16 @@ import { MODEL_ID_RE, tierAllows } from "@refract/shared";
 import type { FastifyPluginAsync, FastifyReply } from "fastify";
 import { z } from "zod";
 import type { AppContext } from "../context";
+import { isRefusal } from "../budget";
 import { ApiError } from "../lib/errors";
 import { plainHeaders, SSE_HEADERS, writeRaw } from "../lib/http";
 import { estimateTokens, tokensCostMicro, usdToMicro } from "../lib/money";
 import { secondsUntilUtcMidnight } from "../lib/time";
 import { readEvents, readUsage, StreamInspector, type UsageInfo } from "../openrouter/sse";
 import { logUsage } from "../usage/log";
+
+/** Retry-After for a request refused while in-flight requests hold the free budget. */
+export const BUSY_RETRY_SECONDS = 10;
 
 const optionalPositiveInt = z.number().int().positive().max(10_000_000).nullish();
 
@@ -102,7 +106,15 @@ export const chatRoutes: FastifyPluginAsync<RouteOpts> = async (app, opts) => {
         tokensCostMicro(inputEstimate, outputCeiling, promptPrice, completionPrice),
         policy.free,
       );
-      if (!reservation) {
+      if (isRefusal(reservation)) {
+        if (reservation.refused === "busy") {
+          throw new ApiError(
+            429,
+            "budget_busy",
+            "Free capacity is fully in use right now. Retry in a few seconds.",
+            { "retry-after": BUSY_RETRY_SECONDS },
+          );
+        }
         await alertBudgetOnce(app);
         const retry = secondsUntilUtcMidnight(ctx.clock());
         throw new ApiError(

@@ -309,7 +309,10 @@ print(reply.choices[0].message.content)`}</code>
                   <td>
                     <code>429</code>
                   </td>
-                  <td>Daily allowance used up, or too many requests per minute</td>
+                  <td>
+                    Daily allowance used up, too many requests per minute, or free capacity briefly full (
+                    <code>budget_busy</code>)
+                  </td>
                   <td>
                     Wait for the time in the <code>Retry-After</code> header, or top up credits
                   </td>

@@ -5,6 +5,7 @@ import { chat, createKey, createTestContext, hello, type TestContext } from "./h
 // (1,000 output tokens × $5/M + a few input tokens) and really costs $0.0005 (500) in json mode.
 const CAP_MICRO = 10_000;
 const DAY_KEY = "spend:2026-09-23";
+const HELD_KEY = "held:2026-09-23";
 
 let t: TestContext;
 beforeEach(async () => {
@@ -68,6 +69,37 @@ describe("global daily budget cap", () => {
     const ok = results.filter((r) => r.statusCode === 200).length;
     expect(ok).toBeGreaterThan(0);
     expect(Number(await t.redis.get(DAY_KEY))).toBeLessThanOrEqual(CAP_MICRO);
+    // Every refusal during the burst was "busy" (budget left, held in flight), never "exhausted".
+    for (const r of results.filter((x) => x.statusCode === 429)) {
+      expect(r.json().error.code).toBe("budget_busy");
+    }
+    expect(await t.redis.get(HELD_KEY)).toBe("0"); // all holds released
+  });
+
+  it("releases the in-flight hold when a request settles", async () => {
+    const { key } = await createKey(t.prisma, "explorer");
+    await chat(t.app, key, hello("claude-swift"));
+    expect(await t.redis.get(DAY_KEY)).toBe("500");
+    expect(await t.redis.get(HELD_KEY)).toBe("0");
+  });
+
+  it("answers 'busy' (retry in seconds) when in-flight requests hold the remaining budget", async () => {
+    const { key } = await createKey(t.prisma, "explorer");
+    // 9,000 counted, 8,000 of it only reserved by requests still running: 1,000 really spent.
+    await t.redis.set(DAY_KEY, String(CAP_MICRO - 1000));
+    await t.redis.set(HELD_KEY, String(CAP_MICRO - 2000));
+    const res = await chat(t.app, key, hello("claude-swift"));
+    expect(res.statusCode).toBe(429);
+    expect(res.json().error.code).toBe("budget_busy");
+    expect(Number(res.headers["retry-after"])).toBe(10);
+    expect(await t.redis.get(DAY_KEY)).toBe(String(CAP_MICRO - 1000));
+    expect(await t.redis.get(HELD_KEY)).toBe(String(CAP_MICRO - 2000));
+    expect(await t.app.ctx.budget.isExhausted()).toBe(false);
+
+    // Once the running requests settle to their real cost, the same request goes through.
+    await t.redis.set(DAY_KEY, "1400");
+    await t.redis.set(HELD_KEY, "0");
+    expect((await chat(t.app, key, hello("claude-swift"))).statusCode).toBe(200);
   });
 
   it("rebuilds the day's spend from the usage log if Redis loses it", async () => {
@@ -87,5 +119,19 @@ describe("global daily budget cap", () => {
     });
     expect(res.statusCode).toBe(429);
     expect(res.json().error.code).toBe("budget_exhausted");
+  });
+
+  it("tells the Compare tool it's busy, not paused for the day, during a burst", async () => {
+    await t.redis.set(DAY_KEY, String(CAP_MICRO));
+    await t.redis.set(HELD_KEY, String(CAP_MICRO));
+    const res = await t.app.inject({
+      method: "POST",
+      url: "/internal/compare",
+      payload: { prompt: "hi", a: "claude-swift", b: "llama", turnstileToken: "good" },
+    });
+    expect(res.statusCode).toBe(429);
+    expect(res.json().error.code).toBe("budget_busy");
+    expect(Number(res.headers["retry-after"])).toBe(10);
+    expect(await t.redis.get(HELD_KEY)).toBe(String(CAP_MICRO)); // lane A's hold was released
   });
 });
