@@ -7,22 +7,29 @@ const DICTS: Record<Locale, Dict> = { en, id };
 
 export const getDict = (locale: Locale): Dict => DICTS[locale];
 
+/** Pages that exist in both languages (the Indonesian copy lives under /id). */
+const TRANSLATED = ["/dashboard", "/models", "/status"];
+const isTranslated = (p: string) => TRANSLATED.some((t) => p === t || p.startsWith(`${t}/`));
+
 /**
- * Link to a page in the given language. Only the home page and the dashboard are translated;
- * other pages (docs, legal, shared results) exist in English only.
- * `href("id", "/#faq")` → "/id#faq", `href("id", "/dashboard")` → "/id/dashboard".
+ * Link to a page in the given language. The home page, dashboard, model pages and status page
+ * are translated; other pages (docs, legal, shared results) exist in English only.
+ * `href("id", "/#faq")` → "/id#faq", `href("id", "/models/gpt")` → "/id/models/gpt",
+ * `href("id", "/?a=llama#compare")` → "/id?a=llama#compare".
  */
 export function href(locale: Locale, path: string): string {
   if (locale === "en") return path;
-  const [p, hash] = path.split("#") as [string, string | undefined];
-  const localized = p === "/" || p === "" ? "/id" : p === "/dashboard" ? "/id/dashboard" : p;
-  return hash !== undefined ? `${localized}#${hash}` : localized;
+  const m = /^([^?#]*)(.*)$/.exec(path)!;
+  const p = m[1] || "/";
+  const rest = m[2] ?? "";
+  if (p === "/") return `/id${rest}`;
+  return isTranslated(p) ? `/id${p}${rest}` : path;
 }
 
 /** The same page in the other language, for the language switch. */
 export function switchPath(pathname: string): string {
   if (pathname === "/id" || pathname.startsWith("/id/")) return pathname.slice(3) || "/";
-  return pathname === "/dashboard" ? "/id/dashboard" : "/id";
+  return isTranslated(pathname) ? `/id${pathname}` : "/id";
 }
 
 /** Human wait time, e.g. "12 minutes" / "12 menit". */

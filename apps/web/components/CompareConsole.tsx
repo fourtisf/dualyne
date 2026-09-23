@@ -131,6 +131,16 @@ export function CompareConsole({
     blind: boolean;
   } | null>(null);
 
+  // A model page links here with ?a=<id> to preselect that model on the left.
+  useEffect(() => {
+    const want = new URLSearchParams(window.location.search).get("a");
+    if (!want || blindMode === "always" || !free.some((m) => m.id === want)) return;
+    setModelA(want);
+    if (modelB === want) setModelB(free.find((m) => m.id !== want)?.id ?? want);
+    // Only on first load.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (/Mac|iPhone|iPad/.test(navigator.platform)) setKmod("⌘");
     setVotes(store.get<Match[]>("refract.matches", []).length);

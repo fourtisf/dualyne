@@ -5,7 +5,8 @@ import { TIER_DEFAULTS, type CatalogModel, type LeaderboardResponse } from "@ref
 import { publicConfig } from "@/lib/config";
 import { formatContext, formatPerMTok } from "@/lib/format";
 import { store } from "@/lib/storage";
-import { useT } from "../LocaleProvider";
+import { href } from "@/lib/i18n";
+import { useLocale, useT } from "../LocaleProvider";
 import { useWallet } from "../WalletProvider";
 
 interface Match {
@@ -159,6 +160,7 @@ function Leaderboard({ models }: { models: CatalogModel[] }) {
 export function ModelsSection({ models }: { models: CatalogModel[] }) {
   const [tab, setTab] = useState<"cat" | "lb">("cat");
   const t = useT().models;
+  const locale = useLocale();
   return (
     <section className="block" id="models">
       <div className="wrap">
@@ -208,7 +210,9 @@ export function ModelsSection({ models }: { models: CatalogModel[] }) {
                 {models.map((m) => (
                   <tr key={m.id}>
                     <td>
-                      {m.name}
+                      <a className="mname" href={href(locale, `/models/${m.id}`)}>
+                        {m.name}
+                      </a>
                       <small>{m.upstreamName}</small>
                     </td>
                     <td>

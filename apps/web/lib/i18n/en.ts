@@ -438,6 +438,47 @@ export const en = {
       hash: "That doesn't look like a transaction hash (0x followed by 64 characters).",
     },
   },
+  modelPage: {
+    breadcrumb: "Models",
+    metaTitle: (name: string) => `${name}: price, context and ranking`,
+    metaDesc: (name: string, provider: string, bestFor: string) =>
+      `${name} by ${provider} on ${brand.name}. Best for ${bestFor.toLowerCase()}. Price per million tokens, context window, speed and how it ranks in community votes.`,
+    by: (upstream: string, provider: string) => `${upstream} by ${provider}`,
+    compare: (name: string) => `Compare ${name}`,
+    docs: "Read the API docs",
+    freeNote: "Free to compare in the browser. No signup.",
+    keyNote: "Available through the API with a Holder or Builder key.",
+    speed: "Speed",
+    speedValue: (n: number) => `${n} of 4`,
+    speedNote: ["", "Slow, for hard problems", "Moderate", "Fast", "Fastest in the catalog"],
+    context: "Context window",
+    contextValue: (v: string) => `${v} tokens`,
+    contextNote: "How much text fits in one request",
+    input: "Input, per 1M tokens",
+    output: "Output, per 1M tokens",
+    priceNote: "What the provider charges. Explorer and Holder pay nothing.",
+    builderNote: "Builder pays this + 15% from prepaid credits.",
+    access: "Who can use it",
+    accessValue: { explorer: "Every wallet", holder: "Holder and Builder", builder: "Builder" } as Record<
+      string,
+      string
+    >,
+    accessNote: {
+      explorer: "Free: 20 API requests a day with a wallet",
+      holder: "Hold 100K tokens, or top up credits",
+      builder: "Top up credits in USDG or ETH",
+    } as Record<string, string>,
+    ranking: "Community ranking",
+    rankValue: (rank: number, total: number) => `#${rank} of ${total}`,
+    rankNote: (rating: number, winRate: number, votes: number) =>
+      `Rating ${rating} · ${winRate}% wins · ${votes.toLocaleString("en-US")} vote${votes === 1 ? "" : "s"}`,
+    unranked: "Not ranked yet",
+    unrankedNote: "Rankings appear after the first community votes.",
+    codeTitle: "Call it from your code",
+    codeNoteA: "Use the model id",
+    codeNoteB: "with any OpenAI SDK. Streaming, tools and JSON mode pass straight through.",
+    others: "Other models",
+  },
   /** Text for API error codes. Empty in English: the API's own English messages are shown. */
   apiErrors: {} as Record<string, string>,
   notFound: {

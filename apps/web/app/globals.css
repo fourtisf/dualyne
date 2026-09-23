@@ -514,3 +514,27 @@ a.ca-addr:hover{text-decoration:underline}
 /* Language switch */
 .navlink.lang{font-size:12px; font-weight:500; letter-spacing:.04em; padding:3px 7px; border:1px solid var(--line2); border-radius:7px}
 .mnav a.lang{margin-top:4px; border-top:1px solid var(--line); border-radius:0 0 10px 10px; color:var(--muted)}
+
+/* Model pages */
+.mp .kick a{color:inherit; text-decoration:none}
+.mp .kick a:hover{color:var(--text)}
+.mp-title{display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:12px}
+.mp-title h1{font:600 clamp(38px,5vw,56px)/1.05 var(--sans); letter-spacing:-.045em; margin:0}
+.mp-dot{width:34px; height:34px; border-radius:10px; background:var(--c); box-shadow:0 0 24px -4px var(--c); flex:none}
+.mp-ctas{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:-20px 0 44px}
+.mp-note{color:var(--muted); font-size:14px; margin-left:4px}
+.mp-grid .v{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.mp-grid .spd b{width:18px; height:7px}
+.mp-v2{font:600 20px/1 var(--sans); letter-spacing:-.02em}
+.mp-code{max-width:none; margin-top:12px}
+.mp-code h2,.mp-others h2{font:600 24px/1.2 var(--sans); letter-spacing:-.03em; margin:56px 0 12px}
+.mp-others{padding-bottom:96px}
+.mp-others ul{list-style:none; margin:16px 0 0; padding:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px}
+.mp-others a{display:flex; align-items:center; gap:12px; padding:14px 16px; border:1px solid var(--line); border-radius:14px; text-decoration:none; color:var(--text); background:rgba(255,255,255,.015)}
+.mp-others a:hover{border-color:var(--line2); background:rgba(255,255,255,.03)}
+.mp-others i{width:22px; height:22px; border-radius:6px; background:var(--c); flex:none}
+.mp-others span{display:flex; flex-direction:column; font-weight:500}
+.mp-others small{color:var(--muted); font-weight:400; font-size:12.5px}
+.models td a.mname{color:inherit; text-decoration:none}
+.models td a.mname:hover{text-decoration:underline; text-underline-offset:3px; text-decoration-color:var(--line3)}
+@media (max-width:640px){.mp-ctas{margin-top:-28px}.mp-ctas .btn{width:100%}.mp-note{margin-left:0}}

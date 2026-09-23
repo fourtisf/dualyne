@@ -46,6 +46,10 @@ describe("links", () => {
     expect(href("id", "/")).toBe("/id");
     expect(href("id", "/dashboard")).toBe("/id/dashboard");
     expect(href("id", "/docs")).toBe("/docs");
+    expect(href("id", "/models/gpt")).toBe("/id/models/gpt");
+    expect(href("id", "/status")).toBe("/id/status");
+    expect(href("id", "/?a=llama#compare")).toBe("/id?a=llama#compare");
+    expect(href("en", "/?a=llama#compare")).toBe("/?a=llama#compare");
   });
 
   it("switches to the same page in the other language", () => {
@@ -54,6 +58,9 @@ describe("links", () => {
     expect(switchPath("/docs")).toBe("/id");
     expect(switchPath("/id")).toBe("/");
     expect(switchPath("/id/dashboard")).toBe("/dashboard");
+    expect(switchPath("/models/llama")).toBe("/id/models/llama");
+    expect(switchPath("/id/models/llama")).toBe("/models/llama");
+    expect(switchPath("/status")).toBe("/id/status");
   });
 });
 

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { brand } from "@refract/config";
+import { STATIC_CATALOG } from "@refract/shared";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -18,6 +19,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
       alternates: { languages: { en: `${brand.siteUrl}/`, id: `${brand.siteUrl}/id` } },
     },
+    ...STATIC_CATALOG.flatMap((m) =>
+      (["", "/id"] as const).map((prefix) => ({
+        url: `${brand.siteUrl}${prefix}/models/${m.id}`,
+        lastModified: now,
+        changeFrequency: "weekly" as const,
+        priority: prefix ? 0.6 : 0.7,
+        alternates: {
+          languages: {
+            en: `${brand.siteUrl}/models/${m.id}`,
+            id: `${brand.siteUrl}/id/models/${m.id}`,
+          },
+        },
+      })),
+    ),
     { url: `${brand.siteUrl}/docs`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${brand.siteUrl}/terms`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },
     { url: `${brand.siteUrl}/privacy`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },
