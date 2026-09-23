@@ -41,10 +41,15 @@ for p in "$WEB_PORT" "$API_PORT"; do
    Pick free ports, e.g.:  WEB_PORT=3200 API_PORT=4200 bash deploy/pm2/setup.sh"
   fi
 done
-if ! command -v nginx >/dev/null && [[ -n "$(port_owner 80)" ]]; then
-  die "Something other than Nginx listens on port 80: $(port_owner 80)
+web_server_check() {
+  local owner
+  owner="$(port_owner 80)"
+  if [[ -n "$owner" && "$owner" != *'"nginx"'* ]]; then
+    die "Something other than Nginx listens on port 80: $owner
    This setup adds an Nginx site. Stop here and tell your developer which web server you use."
-fi
+  fi
+}
+web_server_check
 
 # ── 2. System packages (only the missing ones) ──
 say "Installing missing system packages"
@@ -181,14 +186,25 @@ fi
 say "Nginx site for $DOMAIN, www.$DOMAIN and api.$DOMAIN"
 site=/etc/nginx/sites-available/dualyne.conf
 if [[ ! -f "$site" ]] || ! grep -q "ssl_certificate" "$site"; then
-  DOMAIN="$DOMAIN" WEB_PORT="$WEB_PORT" API_PORT="$API_PORT" \
-    envsubst '${DOMAIN} ${WEB_PORT} ${API_PORT}' <"$APP_DIR/deploy/pm2/nginx.conf.template" >"$site"
+  export DOMAIN WEB_PORT API_PORT
+  # shellcheck disable=SC2016 # envsubst takes the variable names literally
+  envsubst '${DOMAIN} ${WEB_PORT} ${API_PORT}' <"$APP_DIR/deploy/pm2/nginx.conf.template" >"$site"
   # Servers without IPv6 cannot open [::] sockets; keep IPv4 only there.
   [[ -f /proc/net/if_inet6 ]] || sed -i '/listen \[::\]/d' "$site"
 fi
 ln -sf "$site" /etc/nginx/sites-enabled/dualyne.conf
 nginx -t
-systemctl reload nginx 2>/dev/null || nginx -s reload
+# Reload when Nginx runs; start it when it does not (e.g. freshly installed, or stopped).
+if systemctl is-active --quiet nginx 2>/dev/null || [[ -s /run/nginx.pid ]]; then
+  systemctl reload nginx 2>/dev/null || nginx -s reload
+else
+  web_server_check
+  if ! systemctl start nginx 2>/dev/null && ! nginx; then
+    systemctl status nginx --no-pager -l 2>/dev/null | tail -n 8 || true
+    ss -ltnp 2>/dev/null | grep -E ':(80|443) ' || true
+    die "Nginx does not start (details above). Send a screenshot of this to your developer."
+  fi
+fi
 
 # ── 7. HTTPS certificate (only for names that already point here) ──
 say "HTTPS certificate"
