@@ -1,9 +1,9 @@
 /**
  * Admin tool for API keys until self-serve keys (wallet sign-in) ship.
  *
- *   pnpm --filter @refract/api key:create -- --wallet 0xabc… [--tier holder] [--name "test"]
- *   pnpm --filter @refract/api key:create -- --list --wallet 0xabc…
- *   pnpm --filter @refract/api key:create -- --revoke <keyId>
+ *   pnpm --filter @refract/api key:create --wallet 0xabc… [--tier holder] [--name "test"]
+ *   pnpm --filter @refract/api key:create --list --wallet 0xabc…
+ *   pnpm --filter @refract/api key:create --revoke <keyId>
  *
  * The full key is printed once. Only its SHA-256 hash is stored.
  */

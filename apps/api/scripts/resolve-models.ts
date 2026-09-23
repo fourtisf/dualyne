@@ -2,7 +2,7 @@
  * Show how each Refract model maps onto OpenRouter's live catalog, and update a mapping.
  *
  *   pnpm --filter @refract/api models:resolve
- *   pnpm --filter @refract/api models:resolve -- --set gpt=openai/gpt-5.1
+ *   pnpm --filter @refract/api models:resolve --set gpt=openai/gpt-5.1
  *
  * Run it on the server (it needs OPENROUTER_API_KEY and DATABASE_URL). After --set, the daily
  * check refreshes prices on its next run; run with --verify to refresh immediately.

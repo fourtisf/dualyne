@@ -1,0 +1,61 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Local development: read the monorepo's root .env (Next.js only reads apps/web/.env*).
+// Existing variables win, and NODE_ENV is never taken from the file.
+const rootEnv = path.join(dirname, "../../.env");
+if (fs.existsSync(rootEnv)) {
+  for (const line of fs.readFileSync(rootEnv, "utf8").split(/\r?\n/)) {
+    const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/.exec(line);
+    if (!m || m[1] === "NODE_ENV" || process.env[m[1]] !== undefined) continue;
+    process.env[m[1]] = m[2].replace(/^(["'])(.*)\1$/, "$2");
+  }
+}
+const isDev = process.env.NODE_ENV !== "production";
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+const apiOrigin = apiUrl ? new URL(apiUrl).origin : "";
+
+const csp = [
+  "default-src 'self'",
+  // Next.js inlines small bootstrap scripts; Turnstile loads from Cloudflare.
+  `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data:",
+  "font-src 'self'",
+  `connect-src 'self' ${apiOrigin} https://challenges.cloudflare.com${isDev ? " ws:" : ""}`.trim(),
+  "frame-src https://challenges.cloudflare.com",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "object-src 'none'",
+].join("; ");
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  output: "standalone",
+  reactStrictMode: true,
+  poweredByHeader: false,
+  transpilePackages: ["@refract/config", "@refract/shared"],
+  experimental: {
+    // Trace workspace packages into the standalone output.
+    outputFileTracingRoot: path.join(dirname, "../../"),
+  },
+  async headers() {
+    const security = [
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      { key: "X-Frame-Options", value: "DENY" },
+      { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
+    ];
+    if (!isDev) {
+      security.push({ key: "Content-Security-Policy", value: csp });
+      security.push({ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" });
+    }
+    return [{ source: "/:path*", headers: security }];
+  },
+};
+
+export default nextConfig;

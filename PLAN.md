@@ -1,6 +1,6 @@
 # Refract — Build & Deployment Plan
 
-Status: **draft, waiting for approval.** Nothing below is built yet.
+Status: **Phase 1 built** (website + API + tests). Next: Phase 2 (deploy), which needs the domain and server details. See §11 for what shipped and §12 for what must happen before public launch.
 
 Sources read in full: `docs/refract.html` (1,206 lines: CSS, markup, and the inline script for compare, wallet modal, leaderboard, docs/dashboard router) and `docs/HANDOFF.md`. Where they disagree with `CLAUDE_CODE_PROMPT.md`, the prompt wins (for example Docker instead of PM2). Open questions are listed in §10. Each one has a recommended default. If you reply "lanjut" without answering them, the defaults apply.
 
@@ -10,13 +10,13 @@ Sources read in full: `docs/refract.html` (1,206 lines: CSS, markup, and the inl
 
 The prompt and HANDOFF number their phases differently. This plan uses these numbers:
 
-| Plan phase | Content | Source |
-|---|---|---|
-| **P1** | Website in Next.js, all models live, `/v1/*`, `/internal/compare`, budget cap, request logging, model-id check job | Prompt Phase 1 = HANDOFF Phase 1 |
-| **P2** | Production deploy: Docker, Nginx, TLS, Cloudflare, CI/CD, backups, DEPLOY.md | Prompt Phase 2 |
-| **P3** | SIWE wallet sign-in, self-serve API keys, per-wallet quota, sybil check, real dashboard | HANDOFF Phase 2 |
-| **P4** | On-chain RFX tier check, treasury jobs, `GET /treasury`, token section at launch | HANDOFF Phase 3 |
-| **P5** | Votes, community Elo leaderboard, Builder prepaid credit, optional x402 | HANDOFF Phase 4 |
+| Plan phase | Content                                                                                                            | Source                           |
+| ---------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------- |
+| **P1**     | Website in Next.js, all models live, `/v1/*`, `/internal/compare`, budget cap, request logging, model-id check job | Prompt Phase 1 = HANDOFF Phase 1 |
+| **P2**     | Production deploy: Docker, Nginx, TLS, Cloudflare, CI/CD, backups, DEPLOY.md                                       | Prompt Phase 2                   |
+| **P3**     | SIWE wallet sign-in, self-serve API keys, per-wallet quota, sybil check, real dashboard                            | HANDOFF Phase 2                  |
+| **P4**     | On-chain RFX tier check, treasury jobs, `GET /treasury`, token section at launch                                   | HANDOFF Phase 3                  |
+| **P5**     | Votes, community Elo leaderboard, Builder prepaid credit, optional x402                                            | HANDOFF Phase 4                  |
 
 After every phase: lint, typecheck and tests pass, then a commit, then a short summary, then I stop and wait.
 
@@ -108,9 +108,9 @@ refract/
 ```ts
 export const brand = {
   name: "Refract",
-  tokenSymbol: "RFX",             // rendered as "$RFX" / "100,000 RFX"
+  tokenSymbol: "RFX", // rendered as "$RFX" / "100,000 RFX"
   tokenName: "Refract access token",
-  domain: "refract.dev",           // site: https://{domain}, API: https://api.{domain}
+  domain: "refract.dev", // site: https://{domain}, API: https://api.{domain}
   apiBaseUrl: "https://api.refract.dev/v1",
   keyPrefix: "rf_live_",
   social: { x: "#", telegram: "#", github: "#" },
@@ -217,11 +217,7 @@ model CompareRun {                           // one per /internal/compare call
   // P5 votes reference this, so a vote needs a matching completed compare
 }
 
-model DailySpend {                           // durable mirror of the Redis counter
-  day          DateTime @id @db.Date         // UTC date
-  costMicroUsd BigInt   @default(0)
-  capHitAt     DateTime?
-}
+// DailySpend was dropped during build: the day's spend is rebuilt from UsageLog when Redis loses it.
 
 model ModelCheck {                           // history of the daily verification job
   id        String   @id @default(cuid())
@@ -275,15 +271,16 @@ Every body, query and param is validated with zod (`fastify-type-provider-zod`).
 
 ### P1
 
-| Method | Path | Auth | Rate limit | Notes |
-|---|---|---|---|---|
-| POST | `/v1/chat/completions` | Bearer key | 60/min per key + 120/min per IP | The steps are listed below |
-| GET | `/v1/models` | Bearer key | 60/min per key | OpenAI list shape, filtered to the caller's tier |
-| POST | `/internal/compare` | Turnstile | **10/hour per IP**, plus 30/min per IP on failed Turnstile | The steps are listed below |
-| GET | `/internal/catalog` | none | 120/min per IP, 60 s cache | Public catalog rows for the website (name, provider, bestFor, speed, tier) |
-| GET | `/health` | none | 60/min per IP | Checks DB `SELECT 1` and Redis `PING`: 200 or 503 |
+| Method | Path                   | Auth       | Rate limit                                                 | Notes                                                                      |
+| ------ | ---------------------- | ---------- | ---------------------------------------------------------- | -------------------------------------------------------------------------- |
+| POST   | `/v1/chat/completions` | Bearer key | 60/min per key + 120/min per IP                            | The steps are listed below                                                 |
+| GET    | `/v1/models`           | Bearer key | 60/min per key                                             | OpenAI list shape, filtered to the caller's tier                           |
+| POST   | `/internal/compare`    | Turnstile  | **10/hour per IP**, plus 30/min per IP on failed Turnstile | The steps are listed below                                                 |
+| GET    | `/internal/catalog`    | none       | 120/min per IP, 60 s cache                                 | Public catalog rows for the website (name, provider, bestFor, speed, tier) |
+| GET    | `/health`              | none       | 60/min per IP                                              | Checks DB `SELECT 1` and Redis `PING`: 200 or 503                          |
 
 **`POST /v1/chat/completions`**
+
 1. Parse the Bearer token. It must match `^rf_live_[0-9a-f]{32}$`, otherwise 401. SHA-256 it and look up `ApiKey.hash`. The lookup result is cached in Redis for 30 s, and a revoke busts the cache, so a revoke takes effect on the next request.
 2. zod-validate the body. Known OpenAI fields are typed, and the schema is `passthrough()` so `tools`, `response_format` and so on pass through unchanged. `model` must be a Refract id (400 otherwise).
 3. Tier check. `tier(wallet) ≥ model.minTier`, otherwise 403. In P1/P2 the tier is `Wallet.tierOverride ?? explorer`.
@@ -292,10 +289,11 @@ Every body, query and param is validated with zod (`fastify-type-provider-zod`).
 6. Quota. `INCR quota:{wallet}:{YYYY-MM-DD}` with 48 h expiry. If the count is over the tier limit, `DECR` and return 429. The response carries `x-refract-remaining`.
 7. Proxy to OpenRouter with the model id swapped to `openrouterId`. The server-side `OPENROUTER_API_KEY` is added here and nowhere else.
 8. **Streaming:** upstream bytes are written to the client exactly as received, including OpenRouter's `: OPENROUTER PROCESSING` keep-alive comments. A tee parses the same lines to catch TTFT and the final `usage` object. To get cost we send `usage:{include:true}` upstream. If the client did not ask for `stream_options.include_usage`, the one extra usage-only chunk that this adds is dropped, so the client receives what it would have received without it. Client disconnect aborts the upstream request.
-9. The response `model` field is rewritten back to the Refract id. This applies to non-stream JSON and to each stream chunk's `model` field. It's the only change to chunk content, and it avoids leaking upstream ids. See Q7.
+9. The response `model` field is **not** rewritten: it reports the exact upstream model, so events pass through byte-for-byte (decision on Q7, see §10).
 10. Settle. Record the real cost into the spend counter, write the UsageLog row (key id, wallet, model, input/output tokens, cost, latency, TTFT, status) and update `lastUsedAt`. If the upstream call fails, the quota is refunded and the error comes back as 502 in OpenAI error shape.
 
 **`POST /internal/compare`**. One request covers one comparison run. That matters because Turnstile tokens are single-use and the 10/hour limit should count runs, not lanes.
+
 - Body `{prompt: string(1..8000), a: modelId, b: modelId, turnstileToken: string}`.
 - The Turnstile token is verified with siteverify. The hostname must equal the site domain.
 - Both models must be `minTier = explorer`, otherwise 403. `max_tokens` is fixed at 1,000.
@@ -316,23 +314,25 @@ Every body, query and param is validated with zod (`fastify-type-provider-zod`).
 
 ### P3: wallet accounts and keys
 
-| Method | Path | Notes |
-|---|---|---|
-| GET | `/auth/nonce` | Random nonce stored in Redis (5 min TTL, single use) |
-| POST | `/auth/verify` | `{message, signature}`. The SIWE message (EIP-4361) is verified with viem, including domain, URI, chainId, nonce and expiry. The response sets an `HttpOnly; Secure; SameSite=Lax` cookie on `.{domain}` |
-| POST | `/auth/logout` | |
-| GET | `/me` | Wallet, tier, today's usage, remaining, key count and limit |
-| GET | `/me/usage?days=7` | Daily request counts (days capped at 1..30) |
-| GET | `/me/keys` | Key id, last4, created, lastUsed |
-| POST | `/me/keys` | Enforces the key limit per tier (1 / 5 / unlimited). Returns the full key **once** |
-| DELETE | `/me/keys/:id` | Deletes the row and busts the auth cache |
+| Method | Path               | Notes                                                                                                                                                                                                    |
+| ------ | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/auth/nonce`      | Random nonce stored in Redis (5 min TTL, single use)                                                                                                                                                     |
+| POST   | `/auth/verify`     | `{message, signature}`. The SIWE message (EIP-4361) is verified with viem, including domain, URI, chainId, nonce and expiry. The response sets an `HttpOnly; Secure; SameSite=Lax` cookie on `.{domain}` |
+| POST   | `/auth/logout`     |                                                                                                                                                                                                          |
+| GET    | `/me`              | Wallet, tier, today's usage, remaining, key count and limit                                                                                                                                              |
+| GET    | `/me/usage?days=7` | Daily request counts (days capped at 1..30)                                                                                                                                                              |
+| GET    | `/me/keys`         | Key id, last4, created, lastUsed                                                                                                                                                                         |
+| POST   | `/me/keys`         | Enforces the key limit per tier (1 / 5 / unlimited). Returns the full key **once**                                                                                                                       |
+| DELETE | `/me/keys/:id`     | Deletes the row and busts the auth cache                                                                                                                                                                 |
 
 The sybil gate for Explorer is `balance ≥ SYBIL_MIN_ETH_WEI` **or** first tx older than `SYBIL_MIN_WALLET_AGE_DAYS`. It's read via viem and cached for 24 h. There's one caveat: wallet age needs an indexer or explorer API, because a plain RPC can't answer it. See Q8.
 
 ### P4: token and treasury
+
 `GET /treasury` returns balance, runway (balance ÷ 7-day average spend), the 30-day balance series and daily in/out rows. RFX balance is read with viem `balanceOf`, cached for 5 min in `tier:{address}`.
 
 ### P5: votes, leaderboard, credit
+
 `POST /votes`, `GET /leaderboard` (nightly Elo, K=24, start at 1000, same-model votes ignored), then Builder credit accounts, a deposit watcher, and charges at cost × 1.15.
 
 ---
@@ -345,45 +345,48 @@ Fonts are the Geist and Geist Mono weights the prototype loads, served through `
 
 ### 5.1 Components
 
-| Component | Prototype source | Server/Client |
-|---|---|---|
-| `Logo` | `<svg class="logo">` with the `#lg` gradient | server |
-| `Nav` | `header.nav` (links, Dashboard link, wallet button, menu button) | client (wallet label, menu toggle) |
-| `MobileNav` | `nav.mnav` | client |
-| `Hero` | `.hero-text` (badge, h1, lede, CTAs, trust row) | server, with `WalletButton` islands |
-| `CompareConsole` | `#compare .console` (bar, composer, chips, lanes, verdict) | client |
-| ├ `Lane` | `.lane[data-lane]` with `select`, `.stats`, `.lb` | client |
-| └ `Verdict` | `#verdict` (Left / About the same / Right, record) | client |
-| `LogoMarquee` | `section.logos` | server |
-| `Features` | `#features` bento: race, keycard, mini code, spark | server + `TileSpotlight` (pointermove `--mx/--my`) |
-| `Models` | `#models`, with `.mtabs` Catalog/Leaderboard toggle | client (tab state) |
-| ├ `ModelCatalog` | `#mt-cat` table rows, **rendered from `/internal/catalog`** | server data |
-| └ `Leaderboard` | `#leaderboard` (local "Your votes" Elo) | client |
-| `ApiSection` | `#api` list + code tabs + Copy | client (tabs) |
-| `Pricing` | `#pricing` tiers + fine print | server |
-| `Token` | `#token` coin, facts, contract row, fee split | server |
-| `Treasury` | `.subhead` + `#ledger`, with the count-up KPIs | client (IntersectionObserver) |
-| `Faq` | `#faq` `<details>` | server |
-| `Closing` | `section.closing` | server |
-| `Footer` | `footer.big` (socials from `brand.social`) | server |
-| `WalletModal` | `dialog#walletModal` (connect / access / keys) | client, context provider |
-| `DocsView` | `#view-docs` TOC + prose (`/docs`) | server + a small client TOC scroller |
-| `DashboardView` | `#view-dash` gate + cards + bars (`/dashboard`) | client |
+| Component        | Prototype source                                                 | Server/Client                                      |
+| ---------------- | ---------------------------------------------------------------- | -------------------------------------------------- |
+| `Logo`           | `<svg class="logo">` with the `#lg` gradient                     | server                                             |
+| `Nav`            | `header.nav` (links, Dashboard link, wallet button, menu button) | client (wallet label, menu toggle)                 |
+| `MobileNav`      | `nav.mnav`                                                       | client                                             |
+| `Hero`           | `.hero-text` (badge, h1, lede, CTAs, trust row)                  | server, with `WalletButton` islands                |
+| `CompareConsole` | `#compare .console` (bar, composer, chips, lanes, verdict)       | client                                             |
+| ├ `Lane`         | `.lane[data-lane]` with `select`, `.stats`, `.lb`                | client                                             |
+| └ `Verdict`      | `#verdict` (Left / About the same / Right, record)               | client                                             |
+| `LogoMarquee`    | `section.logos`                                                  | server                                             |
+| `Features`       | `#features` bento: race, keycard, mini code, spark               | server + `TileSpotlight` (pointermove `--mx/--my`) |
+| `Models`         | `#models`, with `.mtabs` Catalog/Leaderboard toggle              | client (tab state)                                 |
+| ├ `ModelCatalog` | `#mt-cat` table rows, **rendered from `/internal/catalog`**      | server data                                        |
+| └ `Leaderboard`  | `#leaderboard` (local "Your votes" Elo)                          | client                                             |
+| `ApiSection`     | `#api` list + code tabs + Copy                                   | client (tabs)                                      |
+| `Pricing`        | `#pricing` tiers + fine print                                    | server                                             |
+| `Token`          | `#token` coin, facts, contract row, fee split                    | server                                             |
+| `Treasury`       | `.subhead` + `#ledger`, with the count-up KPIs                   | client (IntersectionObserver)                      |
+| `Faq`            | `#faq` `<details>`                                               | server                                             |
+| `Closing`        | `section.closing`                                                | server                                             |
+| `Footer`         | `footer.big` (socials from `brand.social`)                       | server                                             |
+| `WalletModal`    | `dialog#walletModal` (connect / access / keys)                   | client, context provider                           |
+| `DocsView`       | `#view-docs` TOC + prose (`/docs`)                               | server + a small client TOC scroller               |
+| `DashboardView`  | `#view-dash` gate + cards + bars (`/dashboard`)                  | client                                             |
 
 Shared client state (the wallet and the local vote/usage history) lives in a `WalletProvider` context in `layout.tsx`. It reads and writes the same `localStorage` keys as the prototype (`refract.wallet`, `refract.matches`, `refract.usage`, `refract.hist`).
 
 ### 5.2 Routing
-| Prototype | Next.js |
-|---|---|
-| `#/docs` | `/docs` |
-| `#/dashboard` | `/dashboard` |
+
+| Prototype                                  | Next.js                                                                     |
+| ------------------------------------------ | --------------------------------------------------------------------------- |
+| `#/docs`                                   | `/docs`                                                                     |
+| `#/dashboard`                              | `/dashboard`                                                                |
 | `#features`, `#models`, … on the home page | unchanged; from `/docs` and `/dashboard` they become `/#features` and so on |
-| `data-doc` TOC links | `href="#d-quick"` etc. with the same smooth-scroll behaviour |
+| `data-doc` TOC links                       | `href="#d-quick"` etc. with the same smooth-scroll behaviour                |
 
 Old hash links such as `/#/docs` get a tiny client redirect so shared URLs keep working.
 
 ### 5.3 Deliberate differences from the prototype
+
 Each of these is required by the prompt or HANDOFF. The exact new copy is in Q3.
+
 1. The `sample(...)` path, `window.claude.use` and the "Connecting to models…" / "needs model access from the claude.ai viewer" messages are replaced by `compare-client.ts`, which POSTs to `/internal/compare` and reads the multiplexed SSE. The lane rendering (`shim`, `caret`, `md()`, stats, error text) is unchanged.
 2. **Turnstile** is added. It's an invisible/managed widget that runs when you click "Run comparison". There's no visible box unless Cloudflare decides to challenge.
 3. **Every model is marked live.** The model dropdowns, the "3 models live" counter, the catalog Status column, the FAQ answer and the footer line are updated to match.
@@ -399,39 +402,39 @@ The Treasury KPIs, chart and table keep their **"Sample data"** label, and the f
 
 `.env.example` (dev) and `.env.production.example` (prod) list the same keys. Every line in the prod file gets a comment.
 
-| Variable | Used by | Example / default | Phase |
-|---|---|---|---|
-| `NODE_ENV` | both | `production` | P1 |
-| `PUBLIC_DOMAIN` | both | `refract.dev` (the site is `https://{d}`, the API is `https://api.{d}`) | P1 |
-| `NEXT_PUBLIC_API_URL` | web (browser) | `https://api.refract.dev` | P1 |
-| `API_INTERNAL_URL` | web (server) | `http://api:4000` | P1 |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | web | Cloudflare dashboard | P1 |
-| `TURNSTILE_SECRET_KEY` | api | Cloudflare dashboard (**secret**) | P1 |
-| `OPENROUTER_API_KEY` | api | `sk-or-…` (**secret**, server only) | P1 |
-| `OPENROUTER_BASE_URL` | api | `https://openrouter.ai/api/v1` | P1 |
-| `OPENROUTER_APP_URL` / `OPENROUTER_APP_TITLE` | api | sent as `HTTP-Referer` / `X-Title` | P1 |
-| `DATABASE_URL` | api | `postgresql://refract:…@postgres:5432/refract` (**secret**) | P1 |
-| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | postgres | (**secret** password) | P1 |
-| `REDIS_URL` | api | `redis://:pass@redis:6379` | P1 |
-| `REDIS_PASSWORD` | redis | (**secret**) | P1 |
-| `DAILY_BUDGET_USD` | api | `100` | P1 |
-| `COMPARE_LIMIT_PER_HOUR` | api | `10` | P1 |
-| `COMPARE_MAX_TOKENS` | api | `1000` | P1 |
-| `TIER_EXPLORER_DAILY` / `TIER_HOLDER_DAILY` | api | `20` / `250` | P1 |
-| `TIER_EXPLORER_MAX_TOKENS` / `TIER_HOLDER_MAX_TOKENS` / `TIER_BUILDER_MAX_TOKENS` | api | see Q5 | P1 |
-| `IP_HASH_SECRET` | api | 32 random bytes (**secret**), used for HMAC of IPs | P1 |
-| `ALERT_WEBHOOK_URL` | api | optional Discord/Slack/Telegram-compatible webhook for model-id and budget alerts | P1 |
-| `LOG_LEVEL` | api | `info` | P1 |
-| `API_PORT` / `WEB_PORT` | both | `4000` / `3000` (bound to 127.0.0.1 in prod) | P2 |
-| `BACKUP_DIR` / `BACKUP_RETENTION_DAYS` | backup | `/var/backups/refract` / `7` | P2 |
-| `SESSION_SECRET` | api | (**secret**) | P3 |
-| `SIWE_CHAIN_ID` | both | see Q9 | P3 |
-| `RPC_URL` | api | chain RPC (**secret** if it's keyed) | P3 |
-| `SYBIL_MIN_ETH_WEI` / `SYBIL_MIN_WALLET_AGE_DAYS` | api | configurable | P3 |
-| `EXPLORER_API_URL` / `EXPLORER_API_KEY` | api | wallet-age lookup (Q8) | P3 |
-| `RFX_TOKEN_ADDRESS` / `HOLDER_MIN_RFX` | api | set at launch / `100000` | P4 |
-| `TREASURY_WALLET_ADDRESS` | api | fee wallet | P4 |
-| `USDG_TOKEN_ADDRESS` / `BUILDER_MARKUP` | api | – / `1.15` | P5 |
+| Variable                                                                          | Used by       | Example / default                                                                 | Phase |
+| --------------------------------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------- | ----- |
+| `NODE_ENV`                                                                        | both          | `production`                                                                      | P1    |
+| `PUBLIC_DOMAIN`                                                                   | both          | `refract.dev` (the site is `https://{d}`, the API is `https://api.{d}`)           | P1    |
+| `NEXT_PUBLIC_API_URL`                                                             | web (browser) | `https://api.refract.dev`                                                         | P1    |
+| `API_INTERNAL_URL`                                                                | web (server)  | `http://api:4000`                                                                 | P1    |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`                                                  | web           | Cloudflare dashboard                                                              | P1    |
+| `TURNSTILE_SECRET_KEY`                                                            | api           | Cloudflare dashboard (**secret**)                                                 | P1    |
+| `OPENROUTER_API_KEY`                                                              | api           | `sk-or-…` (**secret**, server only)                                               | P1    |
+| `OPENROUTER_BASE_URL`                                                             | api           | `https://openrouter.ai/api/v1`                                                    | P1    |
+| `OPENROUTER_APP_URL` / `OPENROUTER_APP_TITLE`                                     | api           | sent as `HTTP-Referer` / `X-Title`                                                | P1    |
+| `DATABASE_URL`                                                                    | api           | `postgresql://refract:…@postgres:5432/refract` (**secret**)                       | P1    |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB`                             | postgres      | (**secret** password)                                                             | P1    |
+| `REDIS_URL`                                                                       | api           | `redis://:pass@redis:6379`                                                        | P1    |
+| `REDIS_PASSWORD`                                                                  | redis         | (**secret**)                                                                      | P1    |
+| `DAILY_BUDGET_USD`                                                                | api           | `100`                                                                             | P1    |
+| `COMPARE_LIMIT_PER_HOUR`                                                          | api           | `10`                                                                              | P1    |
+| `COMPARE_MAX_TOKENS`                                                              | api           | `1000`                                                                            | P1    |
+| `TIER_EXPLORER_DAILY` / `TIER_HOLDER_DAILY`                                       | api           | `20` / `250`                                                                      | P1    |
+| `TIER_EXPLORER_MAX_TOKENS` / `TIER_HOLDER_MAX_TOKENS` / `TIER_BUILDER_MAX_TOKENS` | api           | see Q5                                                                            | P1    |
+| `IP_HASH_SECRET`                                                                  | api           | 32 random bytes (**secret**), used for HMAC of IPs                                | P1    |
+| `ALERT_WEBHOOK_URL`                                                               | api           | optional Discord/Slack/Telegram-compatible webhook for model-id and budget alerts | P1    |
+| `LOG_LEVEL`                                                                       | api           | `info`                                                                            | P1    |
+| `API_PORT` / `WEB_PORT`                                                           | both          | `4000` / `3000` (bound to 127.0.0.1 in prod)                                      | P2    |
+| `BACKUP_DIR` / `BACKUP_RETENTION_DAYS`                                            | backup        | `/var/backups/refract` / `7`                                                      | P2    |
+| `SESSION_SECRET`                                                                  | api           | (**secret**)                                                                      | P3    |
+| `SIWE_CHAIN_ID`                                                                   | both          | see Q9                                                                            | P3    |
+| `RPC_URL`                                                                         | api           | chain RPC (**secret** if it's keyed)                                              | P3    |
+| `SYBIL_MIN_ETH_WEI` / `SYBIL_MIN_WALLET_AGE_DAYS`                                 | api           | configurable                                                                      | P3    |
+| `EXPLORER_API_URL` / `EXPLORER_API_KEY`                                           | api           | wallet-age lookup (Q8)                                                            | P3    |
+| `RFX_TOKEN_ADDRESS` / `HOLDER_MIN_RFX`                                            | api           | set at launch / `100000`                                                          | P4    |
+| `TREASURY_WALLET_ADDRESS`                                                         | api           | fee wallet                                                                        | P4    |
+| `USDG_TOKEN_ADDRESS` / `BUILDER_MARKUP`                                           | api           | – / `1.15`                                                                        | P5    |
 
 CI-only secrets in GitHub are `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` and `DEPLOY_PATH`. Application secrets are **not** stored in GitHub. They live only in `/opt/refract/.env` on the server.
 
@@ -459,7 +462,7 @@ Browser ──HTTPS──▶ Cloudflare (proxied, SSL "Full (strict)")
   - HTTP → HTTPS redirect.
   - `real_ip_header CF-Connecting-IP` with `set_real_ip_from` for each Cloudflare range. The range list comes from a script that refreshes it weekly.
   - The API location gets `proxy_buffering off`, `proxy_cache off`, `proxy_read_timeout 300s`, `proxy_http_version 1.1`, `Connection ""` and `X-Accel-Buffering: no`, so SSE streams through untouched. The API also sends `Cache-Control: no-cache, no-transform`, so Cloudflare doesn't buffer or compress the stream.
-- **TLS.** With Cloudflare proxying, the HTTP-01 challenge is unreliable because Cloudflare's "Always Use HTTPS" gets in the way. So certbot uses the **DNS-01** challenge via `python3-certbot-dns-cloudflare`, with a Cloudflare API token scoped to *Zone:DNS:Edit* on this zone only. Certbot's systemd timer renews automatically, and a deploy hook reloads Nginx. See Q2 for an alternative.
+- **TLS.** With Cloudflare proxying, the HTTP-01 challenge is unreliable because Cloudflare's "Always Use HTTPS" gets in the way. So certbot uses the **DNS-01** challenge via `python3-certbot-dns-cloudflare`, with a Cloudflare API token scoped to _Zone:DNS:Edit_ on this zone only. Certbot's systemd timer renews automatically, and a deploy hook reloads Nginx. See Q2 for an alternative.
 - **Cloudflare DNS records.** `DEPLOY.md` gives exact screenshots-in-words:
   | Type | Name | Content | Proxy |
   |---|---|---|---|
@@ -469,6 +472,7 @@ Browser ──HTTPS──▶ Cloudflare (proxied, SSL "Full (strict)")
   | AAAA | same three | server IPv6 (only if the server has one) | Proxied |
 
   The Cloudflare settings are SSL/TLS "Full (strict)", Always Use HTTPS on, and Rocket Loader off, because it breaks Next.js hydration. A cache rule bypasses the cache for `api.*`. Turnstile gets a site created for the domain.
+
 - **Migrations** run automatically on every deploy through the `migrate` service. They're forward-only. Schema changes follow expand/contract so the previous image still works during a rollback.
 - **Health.** `GET /health` exists on both services and is used by the Docker healthchecks and by the deploy script's post-deploy check.
 - **Backups.** The `backup` container (postgres:16-alpine plus a tiny loop script) runs `pg_dump -Fc` nightly at 03:00 UTC into the host's `/var/backups/refract/refract-YYYY-MM-DD.dump` and deletes files older than 7 days. `DEPLOY.md` covers the restore command and an optional off-server copy (rclone to any S3 bucket).
@@ -489,15 +493,15 @@ Browser ──HTTPS──▶ Cloudflare (proxied, SSL "Full (strict)")
 
 The API tests use `buildApp()` with `fastify.inject()`, real Postgres and Redis (docker locally, service containers in CI), and a **test-only** fake OpenRouter HTTP server that streams scripted SSE. There's no mock data in production code.
 
-| Area (required by the prompt) | Cases |
-|---|---|
-| Key auth | missing key → 401; malformed → 401; unknown hash → 401; valid → 200; revoked (row deleted) → 401 on the very next request (cache bust); only the hash is stored |
-| Tier check | explorer → holder model = 403; holder → holder model = 200; `/v1/models` filtered by tier; compare rejects non-explorer models |
-| Quota counting | the Nth request passes and the N+1th gets 429; `x-refract-remaining` counts down; key expires in 48 h; an upstream failure refunds the quota; concurrent requests don't overshoot |
-| Budget cap | spend ≥ cap → free tiers 429 with a `Retry-After` to 00:00 UTC; builder still allowed; the cap resets on a UTC date change (fake clock); reservation prevents overshoot under concurrency |
-| SSE streaming | pass-through is byte-identical to upstream (fixture comparison, including keep-alive comments); `model` rewritten; the usage chunk is dropped unless requested; client abort cancels upstream; the compare multiplexer emits correct lane events |
+| Area (required by the prompt) | Cases                                                                                                                                                                                                                                            |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Key auth                      | missing key → 401; malformed → 401; unknown hash → 401; valid → 200; revoked (row deleted) → 401 on the very next request (cache bust); only the hash is stored                                                                                  |
+| Tier check                    | explorer → holder model = 403; holder → holder model = 200; `/v1/models` filtered by tier; compare rejects non-explorer models                                                                                                                   |
+| Quota counting                | the Nth request passes and the N+1th gets 429; `x-refract-remaining` counts down; key expires in 48 h; an upstream failure refunds the quota; concurrent requests don't overshoot                                                                |
+| Budget cap                    | spend ≥ cap → free tiers 429 with a `Retry-After` to 00:00 UTC; builder still allowed; the cap resets on a UTC date change (fake clock); reservation prevents overshoot under concurrency                                                        |
+| SSE streaming                 | pass-through is byte-identical to upstream (fixture comparison, including keep-alive comments); `model` rewritten; the usage chunk is dropped unless requested; client abort cancels upstream; the compare multiplexer emits correct lane events |
 
-There are also unit tests for `markdown.ts` (ported `md()`), the zod schemas and the Turnstile verification, plus a Playwright smoke test for the web app (home renders, `/docs`, `/dashboard`, compare happy path against the fake upstream).
+There are also unit tests for `markdown.ts` (ported `md()`), the compare stream parser, the zod schemas and the Turnstile verification. The browser flow (home, `/docs`, `/dashboard`, the compare happy path against a fake upstream) was checked with Playwright during Phase 1. It is not yet part of CI; adding it is a Phase 2 task.
 
 Tooling is ESLint (`next/core-web-vitals` plus `@typescript-eslint`), Prettier and `tsc --noEmit`. The root scripts are `pnpm lint`, `pnpm typecheck` and `pnpm test`.
 
@@ -516,41 +520,57 @@ Tooling is ESLint (`next/core-web-vitals` plus `@typescript-eslint`), Prettier a
 
 ---
 
-## 10. Open questions (recommended default in **bold**)
+## 10. Decisions (approved defaults, applied in Phase 1)
 
-1. **Compare is "explorer-tier models only", but the Definition of Done says "a GPT vs Claude comparison streams live" and GPT is a Holder model. The prototype's default lanes are Claude Swift vs Claude Deep, and Deep is also Holder.** Which should win?
-   - **A (recommended):** keep the safety rule. Compare offers the explorer models (Claude Swift, Llama, DeepSeek, plus Mistral if Q4 = yes). Holder models show in the dropdown as disabled under a "With an API key" group. The default lanes become Claude Swift vs Llama. The Definition of Done is checked with Claude vs Llama, and GPT is checked through `/v1/chat/completions` with a holder test key.
-   - B: map `gpt` to a cheap model (for example a `gpt-*-mini`) and make it Explorer, so GPT vs Claude works in Compare.
-   - C: allow every model in Compare. That breaks the HANDOFF rule and raises cost per anonymous run.
-2. **TLS behind Cloudflare.** Should the origin use a Let's Encrypt cert with the DNS-01 challenge through a scoped Cloudflare token, or a Cloudflare Origin CA cert (15-year, no renewal needed, but only trusted by Cloudflare)? The prompt says certbot, so the default is **Let's Encrypt with DNS-01**.
-3. **Copy changes needed once every model is live.** Please approve these, or edit them:
-   - Console bar: "3 models live" → "**{n} models live**" (n from the catalog; 7 or 8).
-   - Catalog Status column: every row shows "**Live**" (green `st live` style).
-   - Dropdown groups "Live in this preview" / "Through the Refract API" → "**Free to compare**" / "**With an API key**" (see Q1).
-   - FAQ "…In this preview, live comparisons run on Claude." → "**…Every model in the catalog is live, in the Compare tool and through the API.**"
-   - Footer "Preview build. Live answers here run on Claude; other providers connect through the production API." → "**Early access. Every model runs live through the same API you can call.**"
-   - The new budget-cap error in a lane → "**Free comparisons are paused for today. They come back at 00:00 UTC.**"
-4. **Mistral is in the prototype's dropdown but not in the HANDOFF table, the catalog or the docs.** **Add it as an 8th model (`mistral`, Mistral, Explorer, best for "Fast multilingual, low cost", speed 4) and add a matching row to the catalog and docs tables**, or drop it?
-5. **`max_tokens` ceilings per tier aren't specified.** The default is **Explorer 1,000, Holder 4,000, Builder no Refract ceiling (the model's own limit)**, configurable by env.
-6. **The wallet modal and dashboard before P3 (no real sign-in yet).** The prototype's "Demo wallet" and its locally generated `rf_live_` keys look real but don't work. That conflicts with "no mock data in production code". For P1/P2, the default is **keep the modal's look, but "Create key" shows "Self-serve keys open with wallet sign-in (coming soon)". Drop the Demo wallet option. The injected-wallet connect and the local compare counter stay as they are.** The alternative is to keep the prototype's behaviour exactly until P3.
-7. **Should `/v1/*` responses report the Refract model id (`"model":"gpt"`) or the real upstream id?** Default: **the Refract id**. It's the only change to stream chunks, and it keeps the provider mapping private.
-8. **Sybil wallet age (P3).** This needs an explorer or indexer API (Etherscan-compatible, Alchemy, and so on). Which one? This can wait until P3.
-9. **Chain (P3–P5).** Which chain is RFX on, what's the SIWE chainId, and what is USDG? For example, Ethereum mainnet, Base, or another L2. This can wait until P3.
-10. **Deploy target (P2).** I'll ask for the domain, server IP and SSH user, and confirmation that DNS is on Cloudflare, before P2 starts, as instructed. Default: the single VPS described in §7.
+1. **Compare vs. "GPT vs Claude":** option A. Compare offers only Explorer models (Claude Swift, Llama, DeepSeek, Mistral). Holder models appear disabled under "With an API key". Default lanes: Claude Swift vs Meta Llama. GPT is verified through `/v1/chat/completions` with a Holder test key.
+2. **TLS:** Let's Encrypt with the DNS-01 challenge (applies in Phase 2).
+3. **Copy changes:** applied as proposed ("{n} models live", "Live" status, "Free to compare" / "With an API key", new FAQ and footer lines, budget message).
+4. **Mistral:** added as the 8th model (Explorer).
+5. **max_tokens ceilings:** Explorer 1,000, Holder 4,000, Builder none. Configurable by env.
+6. **Wallet modal before sign-in:** Demo wallet removed. Connecting only reads the address (no signature until real SIWE). "Create key" is disabled with a "coming soon" note.
+7. **Upstream model id:** changed from the draft. Responses report the real upstream id, and nothing inside stream chunks is rewritten. This keeps "SSE passed through unchanged" literally true and matches the transparency fix below (the catalog shows what each id runs on).
+   8–10. Still open: the sybil indexer (Phase 3), the chain (Phase 3), and deploy target details (Phase 2).
+
+Improvements added from the product review ("website ini kurang apa"):
+
+- The Treasury section is labelled "Sample data" as a whole, not only its chart.
+- Terms of Service and Privacy Policy pages, plus a token disclaimer under the Token section and in the Terms.
+- A FAQ entry on what happens to prompts (text is never stored) and one on "why not OpenRouter directly".
+- Social icons render only when a real link is set in `brand.ts` (no dead `#` links), and an optional contact email.
+- The catalog shows the model each id runs on, context length, provider price per 1M tokens, tier and live status (from the daily sync).
+- Compare shows the cost of each run, has a Copy button per answer, reports how many free runs are left, and gives clear messages for rate-limit, budget and verification errors.
+- Docs gained the error JSON format, a 404 row, `Retry-After`, tier `max_tokens` caps, a streaming curl example, notes on tools/JSON mode, and the model version policy.
+- SEO: metadata, Open Graph image, favicon, sitemap and robots.txt, plus real routes for `/docs` (old `#/docs` links redirect).
+- Accessibility: `--faint` text raised from 2.8:1 to 4.8:1 contrast, a live region that announces when answers finish, and valid tab ARIA.
+- A mobile layout bug inherited from the prototype is fixed: glow effects widened the home page to ~745px, so phones zoomed out.
+- 404 and error pages in the site's style, and security headers (CSP, HSTS, frame-ancestors).
+- The wallet error message explains what to do on phones (open the page in the wallet app's browser).
 
 **Environment note:** this build sandbox can't reach `openrouter.ai`, because the network policy returns 403. So the exact OpenRouter ids (for example which `anthropic/claude-haiku-*` is current) can't be pinned here. In P1 the seed uses the newest ids I can confirm. Then `scripts/resolve-models.ts` and the daily verification job, running on the server, print and verify the live ids, and `/health` reports any mapped id that's missing. Tests use the fake upstream, so CI doesn't depend on OpenRouter.
 
 ---
 
-## 11. P1 deliverables checklist
+## 11. Phase 1 status
 
-- [ ] pnpm monorepo skeleton, lint/typecheck/test scripts, `.gitignore`, `.env.example`
-- [ ] `packages/config` brand file, `packages/shared` zod schemas
-- [ ] Next.js app: the prototype converted into the components in §5, `/docs`, `/dashboard`, `/health`, and a visual diff against the prototype
-- [ ] Fastify API: `/v1/chat/completions` (stream and non-stream), `/v1/models`, `/internal/compare`, `/internal/catalog`, `/health`
-- [ ] Prisma schema plus the P1 migration and the models seed
-- [ ] Budget cap, per-tier `max_tokens`, quota, request logging
-- [ ] Daily model-id verification job with alerting
-- [ ] `scripts/create-key.ts` for test keys
-- [ ] Tests from §8, all green; `docker compose up` for local Postgres/Redis
-- [ ] Commit and summary, then stop
+- [x] pnpm monorepo, lint/typecheck/test/format scripts, `.gitignore`, `.env.example`, local `docker-compose.yml`
+- [x] `packages/config` brand file and `packages/shared` (catalog, tiers, zod schemas)
+- [x] Next.js site: prototype converted with the same DOM/CSS, `/docs`, `/dashboard`, `/terms`, `/privacy`, `/health`, 404. Checked side by side with the prototype at 1440 and 390 px.
+- [x] Fastify API: `/v1/chat/completions` (stream and non-stream), `/v1/models`, `/internal/compare`, `/internal/catalog`, `/health`
+- [x] Prisma schema, initial migration and models seed
+- [x] Budget cap (reserve/settle), per-tier `max_tokens`, per-wallet quota, per-request usage log
+- [x] Daily OpenRouter id check with a webhook alert; `models:resolve` to update the mapping
+- [x] `key:create` admin script for test keys
+- [x] 65 tests (API 55, web 5, shared 5) on real Postgres and Redis, plus a GitHub Actions CI workflow
+- [x] Browser end-to-end run (Playwright): compare streaming, Stop, voting, leaderboard, wallet states, dashboard, docs, mobile menu, and old-link redirects, with no console errors
+
+Known limits of this sandbox: `openrouter.ai` and `challenges.cloudflare.com` are blocked here. The end-to-end run used a local stand-in for OpenRouter, and Turnstile was checked through the API tests with a fake verifier. Both must be checked for real on the server in Phase 2.
+
+## 12. Before public launch
+
+- **Model ids:** on the server, run `pnpm --filter @refract/api models:resolve` and confirm or update each OpenRouter id. The seed ids (Claude Haiku/Sonnet/Opus 4.5, GPT-5, Gemini 2.5 Pro, Llama 3.3 70B, DeepSeek V3.1, Mistral Small 3.2) could not be verified from the sandbox.
+- **Legal:** have a lawyer review `/terms` and `/privacy`, including governing law and the legal entity name (`brand.legalName`), and the token disclaimer.
+- **Brand:** set the final name, domain, social links and `contactEmail` in `packages/config/src/brand.ts`.
+- **Wallets:** WalletConnect (for phones without a wallet browser) ships with wallet sign-in in Phase 3. It needs a WalletConnect project id.
+- **Terms of resale:** read OpenRouter's and each provider's terms on reselling access (from HANDOFF).
+- **Load test:** load-test `/internal/compare` and confirm the budget cap trips (from HANDOFF).
+- **Not done, needs your decision:** an Indonesian (or other) language version, and sharing compare results by link. Sharing means storing answers, which changes the privacy promise.

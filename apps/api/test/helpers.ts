@@ -20,7 +20,13 @@ export interface FakeUpstream {
   streamBody: string;
   requests: { path: string; body: Record<string, unknown>; headers: IncomingMessage["headers"] }[];
   aborted: number;
-  catalog: { id: string; name: string; created: number; context_length: number; pricing: { prompt: string; completion: string } }[];
+  catalog: {
+    id: string;
+    name: string;
+    created: number;
+    context_length: number;
+    pricing: { prompt: string; completion: string };
+  }[];
   close(): Promise<void>;
 }
 

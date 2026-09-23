@@ -10,7 +10,10 @@ const perMTok = (price: unknown): number | null => {
 export const catalogRoutes: FastifyPluginAsync = async (app) => {
   const { ctx } = app;
   app.get("/internal/catalog", async (_req, reply) => {
-    const models = await ctx.prisma.model.findMany({ where: { enabled: true }, orderBy: { sortOrder: "asc" } });
+    const models = await ctx.prisma.model.findMany({
+      where: { enabled: true },
+      orderBy: { sortOrder: "asc" },
+    });
     const data: CatalogModel[] = models.map((m) => ({
       id: m.id,
       name: m.name,

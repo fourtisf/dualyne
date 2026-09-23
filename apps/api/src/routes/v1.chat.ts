@@ -57,7 +57,11 @@ export const chatRoutes: FastifyPluginAsync<RouteOpts> = async (app, opts) => {
 
       const model = await ctx.prisma.model.findUnique({ where: { id: body.model } });
       if (!model || !model.enabled) {
-        throw new ApiError(404, "model_not_found", `Model "${body.model}" does not exist. See GET /v1/models.`);
+        throw new ApiError(
+          404,
+          "model_not_found",
+          `Model "${body.model}" does not exist. See GET /v1/models.`,
+        );
       }
       if (!tierAllows(principal.tier, model.minTier)) {
         throw new ApiError(
@@ -87,7 +91,9 @@ export const chatRoutes: FastifyPluginAsync<RouteOpts> = async (app, opts) => {
       // Budget: reserve the worst case. Free tiers stop at the daily cap.
       const promptPrice = Number(model.promptPrice);
       const completionPrice = Number(model.completionPrice);
-      const inputEstimate = estimateTokens(JSON.stringify(body.messages).length + JSON.stringify(body.tools ?? []).length);
+      const inputEstimate = estimateTokens(
+        JSON.stringify(body.messages).length + JSON.stringify(body.tools ?? []).length,
+      );
       const outputCeiling =
         (upstream.max_completion_tokens as number | undefined) ??
         (upstream.max_tokens as number | undefined) ??
@@ -183,7 +189,11 @@ export const chatRoutes: FastifyPluginAsync<RouteOpts> = async (app, opts) => {
           errorCode: `upstream_${res.status}`,
         });
         if (clientError) {
-          throw new ApiError(400, "invalid_request", upstreamMessage ?? "The model provider rejected the request.");
+          throw new ApiError(
+            400,
+            "invalid_request",
+            upstreamMessage ?? "The model provider rejected the request.",
+          );
         }
         throw providerFailed();
       }
@@ -300,5 +310,8 @@ export async function alertBudgetOnce(app: { ctx: AppContext }): Promise<void> {
   const { ctx } = app;
   const key = `alert:budget:${ctx.clock().toISOString().slice(0, 10)}`;
   const first = await ctx.redis.set(key, "1", "EX", 172_800, "NX");
-  if (first) void ctx.alert(`Daily budget cap of $${ctx.env.DAILY_BUDGET_USD} reached. Free tiers now get 429 until 00:00 UTC.`);
+  if (first)
+    void ctx.alert(
+      `Daily budget cap of $${ctx.env.DAILY_BUDGET_USD} reached. Free tiers now get 429 until 00:00 UTC.`,
+    );
 }

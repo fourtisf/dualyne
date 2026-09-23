@@ -16,12 +16,14 @@ export const healthRoutes: FastifyPluginAsync = async (app) => {
     ]);
     const missing =
       db === "ok"
-        ? (await ctx.prisma.model.findMany({ where: { missingSince: { not: null } }, select: { id: true } })).map(
-            (m) => m.id,
-          )
+        ? (
+            await ctx.prisma.model.findMany({ where: { missingSince: { not: null } }, select: { id: true } })
+          ).map((m) => m.id)
         : [];
     const ok = db === "ok" && redis === "ok";
     reply.header("cache-control", "no-store");
-    return reply.status(ok ? 200 : 503).send({ status: ok ? "ok" : "degraded", db, redis, modelsMissing: missing });
+    return reply
+      .status(ok ? 200 : 503)
+      .send({ status: ok ? "ok" : "degraded", db, redis, modelsMissing: missing });
   });
 };

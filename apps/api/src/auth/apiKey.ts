@@ -79,4 +79,8 @@ export class ApiKeyAuth {
 }
 
 const invalid = () =>
-  new ApiError(401, "invalid_api_key", "Invalid API key. Check the key or create a new one in the dashboard.");
+  new ApiError(
+    401,
+    "invalid_api_key",
+    "Invalid API key. Check the key or create a new one in the dashboard.",
+  );

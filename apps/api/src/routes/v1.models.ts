@@ -10,7 +10,10 @@ export const modelsRoutes: FastifyPluginAsync<RouteOpts> = async (app, opts) => 
   const { ctx } = app;
   app.get("/v1/models", { config: opts.routeConfig }, async (req) => {
     const principal = await ctx.auth.authenticate(req.headers.authorization);
-    const models = await ctx.prisma.model.findMany({ where: { enabled: true }, orderBy: { sortOrder: "asc" } });
+    const models = await ctx.prisma.model.findMany({
+      where: { enabled: true },
+      orderBy: { sortOrder: "asc" },
+    });
     return {
       object: "list",
       data: models

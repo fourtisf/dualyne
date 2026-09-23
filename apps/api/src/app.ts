@@ -30,12 +30,7 @@ export interface BuildOptions {
   clock?: Clock;
 }
 
-export const EXPOSED_HEADERS = [
-  "x-request-id",
-  "x-refract-remaining",
-  "x-compare-remaining",
-  "retry-after",
-];
+export const EXPOSED_HEADERS = ["x-request-id", "x-refract-remaining", "x-compare-remaining", "retry-after"];
 
 export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
   const { env } = opts;
@@ -67,7 +62,8 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
   const ownPrisma = !opts.prisma;
   const ownRedis = !opts.redis;
   const prisma = opts.prisma ?? new PrismaClient();
-  const redis = opts.redis ?? new Redis(env.REDIS_URL, { maxRetriesPerRequest: 2, enableAutoPipelining: true });
+  const redis =
+    opts.redis ?? new Redis(env.REDIS_URL, { maxRetriesPerRequest: 2, enableAutoPipelining: true });
   const clock = opts.clock ?? systemClock;
 
   const ctx: AppContext = {
@@ -156,19 +152,26 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
     if (err instanceof ZodError) {
       const issue = err.issues[0];
       const where = issue?.path.length ? `${issue.path.join(".")}: ` : "";
-      return reply.status(400).send(errorBody(400, "invalid_request", `${where}${issue?.message ?? "Invalid body"}`));
+      return reply
+        .status(400)
+        .send(errorBody(400, "invalid_request", `${where}${issue?.message ?? "Invalid body"}`));
     }
     const status = (err as FastifyError).statusCode ?? 500;
     if (status >= 500) {
       req.log.error({ err }, "unhandled error");
       return reply.status(500).send(errorBody(500, "internal_error", "Something went wrong on our side."));
     }
-    if (status === 413) return reply.status(413).send(errorBody(413, "body_too_large", "Request body is too large."));
-    return reply.status(status).send(errorBody(status, (err as FastifyError).code ?? "bad_request", err.message));
+    if (status === 413)
+      return reply.status(413).send(errorBody(413, "body_too_large", "Request body is too large."));
+    return reply
+      .status(status)
+      .send(errorBody(status, (err as FastifyError).code ?? "bad_request", err.message));
   });
 
   app.setNotFoundHandler((req, reply) =>
-    reply.status(404).send(errorBody(404, "not_found", `No route for ${req.method} ${req.url.split("?")[0]}`)),
+    reply
+      .status(404)
+      .send(errorBody(404, "not_found", `No route for ${req.method} ${req.url.split("?")[0]}`)),
   );
 
   // Per-key limit for the OpenAI-compatible API (in addition to the per-IP limit).

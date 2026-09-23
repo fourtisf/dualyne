@@ -4,3 +4,4 @@ pnpm-lock.yaml
 **/dist/
 **/prisma/migrations/
 apps/web/app/globals.css
+CLAUDE_CODE_PROMPT.md

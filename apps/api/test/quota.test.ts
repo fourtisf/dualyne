@@ -70,7 +70,9 @@ describe("quota counting", () => {
 
   it("never overshoots under concurrent requests", async () => {
     const { key } = await createKey(t.prisma, "explorer");
-    const results = await Promise.all(Array.from({ length: 10 }, () => chat(t.app, key, hello("claude-swift"))));
+    const results = await Promise.all(
+      Array.from({ length: 10 }, () => chat(t.app, key, hello("claude-swift"))),
+    );
     expect(results.filter((r) => r.statusCode === 200)).toHaveLength(3);
     expect(results.filter((r) => r.statusCode === 429)).toHaveLength(7);
   });

@@ -29,7 +29,9 @@ export const compareRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const body = compareRequestSchema.parse(req.body);
 
-      const models = await ctx.prisma.model.findMany({ where: { id: { in: [body.a, body.b] }, enabled: true } });
+      const models = await ctx.prisma.model.findMany({
+        where: { id: { in: [body.a, body.b] }, enabled: true },
+      });
       const byId = new Map(models.map((m) => [m.id, m]));
       const modelA = byId.get(body.a);
       const modelB = byId.get(body.b);
@@ -61,7 +63,11 @@ export const compareRoutes: FastifyPluginAsync = async (app) => {
           req.ip,
         );
         if (!passed) {
-          throw new ApiError(403, "turnstile_failed", "We couldn't verify this browser. Reload the page and try again.");
+          throw new ApiError(
+            403,
+            "turnstile_failed",
+            "We couldn't verify this browser. Reload the page and try again.",
+          );
         }
       }
 
@@ -80,7 +86,12 @@ export const compareRoutes: FastifyPluginAsync = async (app) => {
       const inputTokens = estimateTokens(body.prompt.length);
       const reserve = (m: Model) =>
         ctx.budget.reserve(
-          tokensCostMicro(inputTokens, env.COMPARE_MAX_TOKENS, Number(m.promptPrice), Number(m.completionPrice)),
+          tokensCostMicro(
+            inputTokens,
+            env.COMPARE_MAX_TOKENS,
+            Number(m.promptPrice),
+            Number(m.completionPrice),
+          ),
           true,
         );
       const resA = await reserve(modelA);
@@ -132,7 +143,8 @@ export const compareRoutes: FastifyPluginAsync = async (app) => {
           );
           if (!res.ok) {
             await res.text().catch(() => "");
-            if (res.status === 402) void ctx.alert("OpenRouter returned 402: the OpenRouter account is out of credits.");
+            if (res.status === 402)
+              void ctx.alert("OpenRouter returned 402: the OpenRouter account is out of credits.");
             status = 502;
             errorCode = `upstream_${res.status}`;
           } else {

@@ -15,7 +15,11 @@ export async function verifyTurnstile(
   if (!token) return false;
   const form = new URLSearchParams({ secret: opts.secret, response: token, remoteip: ip });
   try {
-    const res = await fetch(opts.verifyUrl, { method: "POST", body: form, signal: AbortSignal.timeout(8000) });
+    const res = await fetch(opts.verifyUrl, {
+      method: "POST",
+      body: form,
+      signal: AbortSignal.timeout(8000),
+    });
     if (!res.ok) return false;
     const json = (await res.json()) as { success?: boolean; hostname?: string; action?: string };
     if (json.success !== true) return false;

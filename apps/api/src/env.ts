@@ -1,8 +1,6 @@
 import { z } from "zod";
 
-const bool = z
-  .enum(["true", "false", "1", "0"])
-  .transform((v) => v === "true" || v === "1");
+const bool = z.enum(["true", "false", "1", "0"]).transform((v) => v === "true" || v === "1");
 const optionalInt = z.coerce.number().int().positive().optional();
 
 const schema = z
@@ -25,7 +23,10 @@ const schema = z
     OPENROUTER_APP_TITLE: z.string().default("Refract"),
 
     TURNSTILE_SECRET_KEY: z.string().default(""),
-    TURNSTILE_VERIFY_URL: z.string().url().default("https://challenges.cloudflare.com/turnstile/v0/siteverify"),
+    TURNSTILE_VERIFY_URL: z
+      .string()
+      .url()
+      .default("https://challenges.cloudflare.com/turnstile/v0/siteverify"),
 
     DAILY_BUDGET_USD: z.coerce.number().positive().default(100),
     COMPARE_LIMIT_PER_HOUR: z.coerce.number().int().positive().default(10),
@@ -37,7 +38,11 @@ const schema = z
     TIER_BUILDER_MAX_TOKENS: optionalInt,
 
     IP_HASH_SECRET: z.string().default(""),
-    ALERT_WEBHOOK_URL: z.string().url().optional().or(z.literal("").transform(() => undefined)),
+    ALERT_WEBHOOK_URL: z
+      .string()
+      .url()
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
     JOBS_ENABLED: bool.default("true"),
   })
   .superRefine((env, ctx) => {

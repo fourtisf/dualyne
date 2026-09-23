@@ -1,21 +1,48 @@
-# Refract — paket untuk Claude Code
+# Refract
 
-Isi folder:
-- `CLAUDE_CODE_PROMPT.md` — prompt yang dikirim ke Claude Code
-- `docs/refract.html` — website yang sudah jadi (desain final)
-- `docs/HANDOFF.md` — spesifikasi backend
+AI model comparison website and OpenAI-compatible API gateway. Access is tied to crypto wallets and funded by a token treasury.
 
-## Cara pakai
-1. Ekstrak zip ini, lalu buka foldernya di terminal.
-2. Jalankan `git init` supaya Claude Code bisa commit.
-3. Jalankan `claude` di folder ini.
-4. Salin isi `CLAUDE_CODE_PROMPT.md` (di bawah garis) dan kirim ke Claude Code.
-5. Claude Code akan menulis `PLAN.md` dulu lalu berhenti. Cek, lalu balas "lanjut".
-6. Ulangi "lanjut" setelah setiap fase selesai dan dicek.
+- `apps/web`: Next.js 14 website (the design from `docs/refract.html`)
+- `apps/api`: Fastify API (`/v1/chat/completions`, `/v1/models`, `/internal/compare`, …)
+- `packages/config`: **brand config** (name, token symbol, domain, social links, contact) in one file
+- `packages/shared`: model catalog, tier limits and schemas shared by web and API
 
-## Yang perlu disiapkan sebelum Phase 2 (deploy)
-- Domain (misalnya dari Namecheap atau Cloudflare)
-- VPS Ubuntu 22.04+, minimal 2 vCPU dan 4 GB RAM
-- Akun Cloudflare (gratis) dan akun GitHub
-- Akun OpenRouter dengan saldo awal ($300–1,000 disarankan)
-- Nama brand, simbol token, dan link sosial final
+See `PLAN.md` for the architecture, phase plan and status, and `docs/HANDOFF.md` for the product spec.
+
+## Run it locally
+
+Requirements: Node 22, pnpm 10, Docker (or your own Postgres 16 and Redis 7).
+
+```bash
+pnpm install
+cp .env.example .env            # then put your OpenRouter key in OPENROUTER_API_KEY
+docker compose up -d            # Postgres + Redis on localhost
+pnpm --filter @refract/api db:deploy   # create tables
+pnpm --filter @refract/api db:seed     # load the model catalog
+pnpm dev                        # web on http://localhost:3000, API on http://localhost:4000
+```
+
+Create a test API key (keys are self-serve once wallet sign-in ships):
+
+```bash
+pnpm --filter @refract/api key:create --wallet 0xYourAddress --tier holder
+```
+
+Check or update the OpenRouter model mapping:
+
+```bash
+pnpm --filter @refract/api models:resolve
+pnpm --filter @refract/api models:resolve --set gpt=openai/gpt-5.1
+```
+
+## Checks
+
+```bash
+pnpm lint && pnpm typecheck && pnpm test && pnpm build
+```
+
+API tests need Postgres and Redis (the `docker compose` services above; the test database is `refract_test`).
+
+## Changing the brand
+
+Edit `packages/config/src/brand.ts`. The name, token symbol, domain, key prefix, social links and contact email are read from there everywhere. Set `SITE_DOMAIN` / `NEXT_PUBLIC_SITE_DOMAIN` to change the domain without editing code.
