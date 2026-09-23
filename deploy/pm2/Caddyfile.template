@@ -1,0 +1,28 @@
+# Dualyne: Caddy sites for a server whose Caddy already serves other sites. setup.sh renders
+# this into dualyne.caddy next to the main Caddyfile (${DOMAIN}, ${WEB_PORT} and ${API_PORT}
+# are replaced) and adds one "import" line for it. Caddy gets the HTTPS certificates itself.
+
+# www → apex
+www.${DOMAIN} {
+	redir https://${DOMAIN}{uri} permanent
+}
+
+# Website
+${DOMAIN} {
+	request_body {
+		max_size 1MB
+	}
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:${WEB_PORT}
+}
+
+# API: streaming responses are passed on as they arrive. Caddy replaces any X-Forwarded-For a
+# client sends with the client's real address, which the API trusts (TRUST_PROXY=true).
+api.${DOMAIN} {
+	request_body {
+		max_size 8MB
+	}
+	reverse_proxy 127.0.0.1:${API_PORT} {
+		flush_interval -1
+	}
+}

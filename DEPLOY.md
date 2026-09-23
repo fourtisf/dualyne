@@ -377,12 +377,13 @@ Jika leaderboard terlihat dimanipulasi, ubah `COMPARE_BLIND_MODE=always` di `.en
 
 ## 22. Deploy dengan PM2 di server yang sudah ada
 
-Untuk server Ubuntu yang sudah menjalankan aplikasi lain dengan PM2 dan Nginx. Dualyne berjalan di sampingnya sebagai dua aplikasi PM2, `dualyne-api` dan `dualyne-web`:
+Untuk server Ubuntu yang sudah menjalankan aplikasi lain dengan PM2 dan Caddy atau Nginx. Dualyne berjalan di sampingnya sebagai dua aplikasi PM2, `dualyne-api` dan `dualyne-web`:
 
 - Memakai Node 22 sendiri di folder `.runtime/`; Node sistem dan aplikasi lain tidak berubah.
 - Mendengarkan di `127.0.0.1` saja (port 3100 dan 4100).
-- Punya file Nginx sendiri (`dualyne.conf`), dan tidak menyentuh situs, database, atau aplikasi PM2 lain.
-- DNS boleh tetap di Hostinger. Sertifikat HTTPS diambil dengan certbot biasa.
+- Jika Caddy sudah melayani port 80, Dualyne menambahkan file Caddy sendiri (`dualyne.caddy`) plus satu baris `import` di Caddyfile, dan Caddy mengurus HTTPS sendiri. Jika tidak, Dualyne memakai Nginx (`dualyne.conf`) dengan certbot.
+- Tidak menyentuh situs, database, atau aplikasi PM2 lain.
+- DNS boleh tetap di Hostinger.
 
 ### 22.1 DNS (di panel domain)
 
@@ -394,18 +395,25 @@ Tiga record berikut harus mengarah ke IP server:
 | CNAME | `www` | `domainanda.com` |
 | A     | `api` | IP server        |
 
-### 22.2 Beri server akses baca ke repository (sekali)
+### 22.2 Ambil kode
 
-Jalankan di server sebagai root:
+Repository public: cukup clone lewat HTTPS, tanpa kunci.
+
+```bash
+git clone -b BRANCH https://github.com/OWNER/REPO.git /var/www/dualyne
+cd /var/www/dualyne
+```
+
+### 22.3 Repository private (lewati jika public)
+
+Beri server kunci baca saja:
 
 ```bash
 ssh-keygen -t ed25519 -N "" -C "dualyne-server" -f /root/.ssh/dualyne_deploy
 cat /root/.ssh/dualyne_deploy.pub
 ```
 
-Salin baris yang muncul. Di GitHub, buka **repository → Settings → Deploy keys → Add deploy key**, tempel, dan **jangan** centang _Allow write access_.
-
-### 22.3 Ambil kode
+Salin baris yang muncul. Di GitHub, buka **repository → Settings → Deploy keys → Add deploy key**, tempel, dan **jangan** centang _Allow write access_. Lalu clone lewat SSH:
 
 ```bash
 GIT_SSH_COMMAND="ssh -i /root/.ssh/dualyne_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
@@ -423,9 +431,11 @@ EMAIL=emailanda@contoh.com bash deploy/pm2/setup.sh
 
 Script ini:
 
-- memasang yang belum ada saja (Postgres, Redis, Nginx, certbot);
+- memasang yang belum ada saja (Postgres, Redis; Nginx dan certbot hanya jika tidak ada Caddy);
 - membuat database `dualyne` dan file `.env` berisi rahasia acak;
-- menambahkan situs Nginx dan mengambil sertifikat HTTPS untuk nama yang DNS-nya sudah benar.
+- menambahkan situs Dualyne ke Caddy atau Nginx, lalu HTTPS: Caddy mengambil sertifikat sendiri (juga untuk nama yang DNS-nya menyusul); dengan Nginx, certbot mengambilnya untuk nama yang DNS-nya sudah benar.
+
+Dengan Caddy, Caddyfile dicek dulu (`caddy validate`) sebelum di-reload. Jika ditolak, Caddyfile dikembalikan seperti semula dan situs lain tetap berjalan.
 
 Jika port 3100/4100 sudah dipakai, script berhenti dan memberi tahu. Pilih port lain: `WEB_PORT=3200 API_PORT=4200 bash deploy/pm2/setup.sh`.
 

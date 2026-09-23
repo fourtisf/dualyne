@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
-# One-time setup of Dualyne on an Ubuntu server that already runs other apps (PM2, Nginx).
+# One-time setup of Dualyne on an Ubuntu server that already runs other apps (PM2, and Caddy or Nginx).
+# Works with the server's Caddy when Caddy already serves port 80, else with Nginx.
 # Run as root from the cloned repository:
 #
 #   bash deploy/pm2/setup.sh
 #
 # Safe to run again. It never stops, changes or removes other PM2 apps, Nginx sites,
 # databases or firewall rules. What it does:
-#   1. installs only the missing system packages (Postgres, Redis, Nginx, certbot)
+#   1. installs only the missing system packages (Postgres, Redis; Nginx + certbot if no Caddy)
 #   2. installs Node 22 and pnpm inside this folder (.runtime/), not system-wide
 #   3. creates the "dualyne" database and user (if missing) and a .env with fresh secrets
-#   4. adds the Nginx site dualyne.conf and gets the HTTPS certificate (when DNS is ready)
+#   4. adds Dualyne's own sites to Caddy (dualyne.caddy) or Nginx (dualyne.conf) with HTTPS
 # Then fill in the three keys in .env and run deploy/pm2/deploy.sh.
 set -euo pipefail
 
@@ -41,20 +42,35 @@ for p in "$WEB_PORT" "$API_PORT"; do
    Pick free ports, e.g.:  WEB_PORT=3200 API_PORT=4200 bash deploy/pm2/setup.sh"
   fi
 done
-web_server_check() {
-  local owner
-  owner="$(port_owner 80)"
-  if [[ -n "$owner" && "$owner" != *'"nginx"'* ]]; then
-    die "Something other than Nginx listens on port 80: $owner
-   This setup adds an Nginx site. Stop here and tell your developer which web server you use."
-  fi
-}
-web_server_check
+# The web server in front: a Caddy that already serves port 80 here, or else Nginx.
+port80="$(port_owner 80)"
+case "$port80" in
+  *'"caddy"'*) PROXY=caddy ;;
+  "" | *'"nginx"'*) PROXY=nginx ;;
+  *) die "Something other than Nginx or Caddy listens on port 80: $port80
+   Stop here and tell your developer which web server you use." ;;
+esac
+if [[ $PROXY == caddy ]]; then
+  caddy_pid="$(sed -n 's/.*"caddy",pid=\([0-9]*\).*/\1/p' <<<"$port80")"
+  [[ "$(readlink "/proc/$caddy_pid/root")" == / ]] ||
+    die "Caddy runs inside a container here. Tell your developer; this setup edits a Caddyfile on the server."
+  caddy_conf="$(tr '\0' '\n' <"/proc/$caddy_pid/cmdline" |
+    awk 'f { print; exit } /^--config=/ { sub(/^--config=/, ""); print; exit } $0 == "--config" { f = 1 }')"
+  caddy_conf="${caddy_conf:-/etc/caddy/Caddyfile}"
+  [[ -f "$caddy_conf" && "$caddy_conf" != *.json ]] ||
+    die "Caddy does not run from a Caddyfile ($caddy_conf). Tell your developer."
+  caddy_bin="$(command -v caddy || readlink -f "/proc/$caddy_pid/exe")"
+  echo "Web server: Caddy ($caddy_conf). Dualyne adds its own sites to it."
+else
+  echo "Web server: Nginx."
+fi
 
 # ── 2. System packages (only the missing ones) ──
 say "Installing missing system packages"
 need=()
-for pkg in postgresql redis-server nginx certbot python3-certbot-nginx curl git openssl xz-utils gettext-base; do
+pkgs=(postgresql redis-server curl git openssl xz-utils gettext-base)
+[[ $PROXY == nginx ]] && pkgs+=(nginx certbot python3-certbot-nginx)
+for pkg in "${pkgs[@]}"; do
   dpkg -s "$pkg" >/dev/null 2>&1 || need+=("$pkg")
 done
 if ((${#need[@]})); then
@@ -66,7 +82,6 @@ else
 fi
 start_service postgresql
 start_service redis-server
-start_service nginx
 
 # ── 3. Node 22 + pnpm, private to this folder ──
 say "Node $NODE_VERSION and pnpm for Dualyne (in $RUNTIME, system Node untouched)"
@@ -145,7 +160,7 @@ WEB_ORIGINS=https://${DOMAIN},https://www.${DOMAIN}
 NEXT_PUBLIC_API_URL=https://api.${DOMAIN}
 WEB_PORT=${WEB_PORT}
 API_PORT=${API_PORT}
-# Nginx on this server overwrites X-Forwarded-For; the API only listens on 127.0.0.1.
+# The web server (Caddy or Nginx) overwrites X-Forwarded-For; the API only listens on 127.0.0.1.
 TRUST_PROXY=true
 LOG_LEVEL=info
 
@@ -182,24 +197,69 @@ else
   echo "Exists, kept as is."
 fi
 
-# ── 6. Nginx site ──
-say "Nginx site for $DOMAIN, www.$DOMAIN and api.$DOMAIN"
-site=/etc/nginx/sites-available/dualyne.conf
-if [[ ! -f "$site" ]] || ! grep -q "ssl_certificate" "$site"; then
-  export DOMAIN WEB_PORT API_PORT
-  # shellcheck disable=SC2016 # envsubst takes the variable names literally
-  envsubst '${DOMAIN} ${WEB_PORT} ${API_PORT}' <"$APP_DIR/deploy/pm2/nginx.conf.template" >"$site"
-  # Servers without IPv6 cannot open [::] sockets; keep IPv4 only there.
-  [[ -f /proc/net/if_inet6 ]] || sed -i '/listen \[::\]/d' "$site"
-fi
-ln -sf "$site" /etc/nginx/sites-enabled/dualyne.conf
-nginx -t
-# Reload when Nginx runs; start it when it does not (e.g. freshly installed, or stopped).
-if systemctl is-active --quiet nginx 2>/dev/null || [[ -s /run/nginx.pid ]]; then
-  systemctl reload nginx 2>/dev/null || nginx -s reload
+# ── 6. Web server sites ──
+export DOMAIN WEB_PORT API_PORT
+render() { # shellcheck disable=SC2016 # envsubst takes the variable names literally
+  envsubst '${DOMAIN} ${WEB_PORT} ${API_PORT}' <"$APP_DIR/deploy/pm2/$1"
+}
+
+if [[ $PROXY == caddy ]]; then
+  say "Caddy sites for $DOMAIN, www.$DOMAIN and api.$DOMAIN"
+  site="$(dirname "$caddy_conf")/dualyne.caddy"
+  keep="$(mktemp -d)"
+  cp -p "$caddy_conf" "$keep/Caddyfile"
+  [[ -f "$site" ]] && cp -p "$site" "$keep/dualyne.caddy"
+  restore() {
+    cp -p "$keep/Caddyfile" "$caddy_conf"
+    if [[ -f "$keep/dualyne.caddy" ]]; then cp -p "$keep/dualyne.caddy" "$site"; else rm -f "$site"; fi
+  }
+  render Caddyfile.template >"$site"
+  chmod 644 "$site" # Caddy runs as its own user
+  if ! grep -qxF "import $site" "$caddy_conf"; then
+    printf '\n# Dualyne (added by deploy/pm2/setup.sh)\nimport %s\n' "$site" >>"$caddy_conf"
+  fi
+  if ! "$caddy_bin" validate --config "$caddy_conf" --adapter caddyfile >"$keep/log" 2>&1; then
+    restore
+    tail -n 15 "$keep/log"
+    die "Caddy rejected the new sites (details above); your Caddyfile is back as it was. Tell your developer."
+  fi
+  if systemctl is-active --quiet caddy 2>/dev/null; then
+    reload=(systemctl reload caddy)
+  else
+    reload=("$caddy_bin" reload --config "$caddy_conf" --adapter caddyfile)
+  fi
+  if ! "${reload[@]}"; then
+    restore
+    die "Caddy did not reload; your Caddyfile is back as it was and your sites keep running. Tell your developer."
+  fi
+  rm -rf "$keep"
+  echo "Added $site and one import line at the end of $caddy_conf."
+
+  # An earlier run of this script may have added an Nginx site. Nginx cannot run next to Caddy
+  # (both want port 80), so remove that site and keep Nginx from starting at boot.
+  if [[ -e /etc/nginx/sites-enabled/dualyne.conf || -e /etc/nginx/sites-available/dualyne.conf ]]; then
+    rm -f /etc/nginx/sites-enabled/dualyne.conf /etc/nginx/sites-available/dualyne.conf
+    echo "Removed the unused Nginx site dualyne.conf."
+  fi
+  if systemctl is-enabled --quiet nginx 2>/dev/null && ! systemctl is-active --quiet nginx 2>/dev/null; then
+    systemctl disable nginx >/dev/null 2>&1 || true
+    echo "Nginx is installed but not running: turned off its start at boot so it never competes with Caddy."
+  fi
 else
-  web_server_check
-  if ! systemctl start nginx 2>/dev/null && ! nginx; then
+  say "Nginx site for $DOMAIN, www.$DOMAIN and api.$DOMAIN"
+  start_service nginx
+  site=/etc/nginx/sites-available/dualyne.conf
+  if [[ ! -f "$site" ]] || ! grep -q "ssl_certificate" "$site"; then
+    render nginx.conf.template >"$site"
+    # Servers without IPv6 cannot open [::] sockets; keep IPv4 only there.
+    [[ -f /proc/net/if_inet6 ]] || sed -i '/listen \[::\]/d' "$site"
+  fi
+  ln -sf "$site" /etc/nginx/sites-enabled/dualyne.conf
+  nginx -t
+  # Reload when Nginx runs; start it when it does not (e.g. freshly installed, or stopped).
+  if systemctl is-active --quiet nginx 2>/dev/null || [[ -s /run/nginx.pid ]]; then
+    systemctl reload nginx 2>/dev/null || nginx -s reload
+  elif ! systemctl start nginx 2>/dev/null && ! nginx; then
     systemctl status nginx --no-pager -l 2>/dev/null | tail -n 8 || true
     ss -ltnp 2>/dev/null | grep -E ':(80|443) ' || true
     die "Nginx does not start (details above). Send a screenshot of this to your developer."
@@ -218,7 +278,9 @@ for h in "$DOMAIN" "www.$DOMAIN" "api.$DOMAIN"; do
     warn "$h does not point to this server yet (it resolves to '${ip:-nothing}', this server is $server_ip)."
   fi
 done
-if ((${#names[@]})); then
+if [[ $PROXY == caddy ]]; then
+  echo "Caddy gets and renews the certificates by itself, also for names whose DNS is fixed later."
+elif ((${#names[@]})); then
   mail=(--register-unsafely-without-email)
   [[ -n "$EMAIL" ]] && mail=(-m "$EMAIL")
   certbot --nginx --non-interactive --agree-tos --redirect --expand "${mail[@]}" "${names[@]}"
