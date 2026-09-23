@@ -650,6 +650,23 @@ Still untested: `server-setup.sh` on a real Ubuntu host (the sandbox has no syst
   - Covered by 3 new tests.
 - Known limit (Next 14 with two root layouts): a 404 returns status 404 but its server HTML is a shell, and the page renders in the browser. Invalid `/s/…` links already behaved this way.
 
+## 11g. Product polish
+
+- [x] One page per model (`/models/<id>`, EN and ID):
+  - price, context, speed, who can use it, live status and community ranking;
+  - "Compare <model>" preselects it in Compare;
+  - a code example, links to the other models, hreflang and sitemap entries.
+- [x] Public status page (`/status`, EN and ID) with `GET /status`:
+  - services, and whether free comparisons are available or paused;
+  - per model from the last hour of real calls: error rate and median time to first token;
+  - last job runs.
+- [x] Accessibility audit with axe-core. It covered 12 pages at desktop and mobile width, the wallet modal, a finished comparison and vote, the leaderboard and the mobile menu. Everything it found is fixed; it now reports 0 issues:
+  - roles and labels, and tab/panel structure for the code examples;
+  - heading order, and an `h1` on 404 and error pages;
+  - keyboard access to scrolling code blocks and tables;
+  - contrast of the model-maker names.
+- [x] Logo "Prompt Lines" and the logo pack in `brand/` (see `brand/README.md`).
+
 ## 12. Before public launch
 
 - **Model ids:** on the server, run `pnpm --filter @refract/api models:resolve` and confirm or update each OpenRouter id. The seed ids (Claude Haiku/Sonnet/Opus 4.5, GPT-5, Gemini 2.5 Pro, Llama 3.3 70B, DeepSeek V3.1, Mistral Small 3.2) could not be verified from the sandbox.

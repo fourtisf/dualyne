@@ -480,7 +480,7 @@ export function CompareConsole({
     <div className="stage rise" id="compare" style={{ "--d": ".5s" } as CSSProperties}>
       <div className="console">
         <div className="bar">
-          <span className="t">{c.title}</span>
+          <h2 className="t">{c.title}</h2>
           <span className="sub">{c.sub}</span>
           <span className="tag" id="exTag" hidden={!example}>
             {c.example}

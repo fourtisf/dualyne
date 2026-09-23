@@ -58,7 +58,7 @@ export function Footer({ locale }: { locale: Locale }) {
             )}
           </div>
           <div>
-            <h5>{t.product}</h5>
+            <h2>{t.product}</h2>
             <ul>
               <li>
                 <a href={h("/#compare")}>{n.compare}</a>
@@ -78,7 +78,7 @@ export function Footer({ locale }: { locale: Locale }) {
             </ul>
           </div>
           <div>
-            <h5>{t.developers}</h5>
+            <h2>{t.developers}</h2>
             <ul>
               <li>
                 <Link href="/docs">{t.documentation}</Link>
@@ -103,7 +103,7 @@ export function Footer({ locale }: { locale: Locale }) {
             </ul>
           </div>
           <div>
-            <h5>{t.token}</h5>
+            <h2>{t.token}</h2>
             <ul>
               <li>
                 <a href={h("/#token")}>{tokenTicker}</a>

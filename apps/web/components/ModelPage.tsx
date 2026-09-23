@@ -126,7 +126,7 @@ reply = client.chat.completions.create(
           <p>
             {t.codeNoteA} <code>{m.id}</code> {t.codeNoteB}
           </p>
-          <pre>
+          <pre tabIndex={0}>
             <code>{`import os\n${snippet}`}</code>
           </pre>
         </section>

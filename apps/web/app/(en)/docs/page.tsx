@@ -49,7 +49,7 @@ export default async function DocsPage() {
             1. Connect a wallet and create a key in the <Link href="/dashboard">dashboard</Link>. 2. Set it as
             an environment variable. 3. Point your SDK at {brand.name}.
           </p>
-          <pre>
+          <pre tabIndex={0}>
             <code>{`export ${envName}="${brand.keyPrefix}..."
 
 import os
@@ -67,7 +67,7 @@ print(reply.choices[0].message.content)`}</code>
             Send your key as a bearer token on every request. Keys belong to the wallet that created them and
             stop working the moment you revoke them.
           </p>
-          <pre>
+          <pre tabIndex={0}>
             <code>{`Authorization: Bearer ${brand.keyPrefix}...`}</code>
           </pre>
           <p>
@@ -81,7 +81,7 @@ print(reply.choices[0].message.content)`}</code>
             <span className="meth">POST</span>
             <code>/v1/chat/completions</code>
           </p>
-          <div className="tblw">
+          <div className="tblw" tabIndex={0}>
             <table>
               <thead>
                 <tr>
@@ -146,7 +146,7 @@ print(reply.choices[0].message.content)`}</code>
             <code>/v1/models</code> returns every model your key can use. Explorer wallets see fast models;
             Holder and Builder see the full catalog.
           </p>
-          <div className="tblw">
+          <div className="tblw" tabIndex={0}>
             <table>
               <thead>
                 <tr>
@@ -182,11 +182,11 @@ print(reply.choices[0].message.content)`}</code>
             small piece of the answer; the last one is <code>data: [DONE]</code>. Lines starting with{" "}
             <code>:</code> are keep-alive comments and can be ignored (the OpenAI SDKs do this for you).
           </p>
-          <pre>
+          <pre tabIndex={0}>
             <code>{`for chunk in client.chat.completions.create(model="gpt", messages=msgs, stream=True):
     print(chunk.choices[0].delta.content or "", end="")`}</code>
           </pre>
-          <pre>
+          <pre tabIndex={0}>
             <code>{`curl -N ${base}/chat/completions \\
   -H "Authorization: Bearer $${envName}" \\
   -H "Content-Type: application/json" \\
@@ -203,7 +203,7 @@ print(reply.choices[0].message.content)`}</code>
           </p>
 
           <h2 id="d-limits">Limits and billing</h2>
-          <div className="tblw">
+          <div className="tblw" tabIndex={0}>
             <table>
               <thead>
                 <tr>
@@ -256,7 +256,7 @@ print(reply.choices[0].message.content)`}</code>
           </p>
 
           <h2 id="d-errors">Errors</h2>
-          <div className="tblw">
+          <div className="tblw" tabIndex={0}>
             <table>
               <thead>
                 <tr>
@@ -328,7 +328,7 @@ print(reply.choices[0].message.content)`}</code>
             </table>
           </div>
           <p>Errors use the OpenAI format, so SDKs raise them as normal exceptions:</p>
-          <pre>
+          <pre tabIndex={0}>
             <code>{`{
   "error": {
     "message": "Daily allowance used up (20 requests for Explorer). It resets at 00:00 UTC.",

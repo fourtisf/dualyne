@@ -52,11 +52,13 @@ function RankTable({
 }) {
   const t = useT().models.lb.th;
   return (
-    <div className="tbl">
+    <div className="tbl" tabIndex={0}>
       <table>
         <thead>
           <tr>
-            <th />
+            <th>
+              <span className="sr">{t.rank}</span>
+            </th>
             <th>{t.model}</th>
             <th className="num">{t.rating}</th>
             <th>{t.winRate}</th>
@@ -192,7 +194,7 @@ export function ModelsSection({ models }: { models: CatalogModel[] }) {
           ))}
         </div>
         <div className="models" id="mt-cat" role="tabpanel" hidden={tab !== "cat"}>
-          <div className="tbl">
+          <div className="tbl" tabIndex={0}>
             <table>
               <thead>
                 <tr>
@@ -223,7 +225,7 @@ export function ModelsSection({ models }: { models: CatalogModel[] }) {
                     </td>
                     <td>{t.bestFor[m.id] ?? m.bestFor}</td>
                     <td>
-                      <span className="spd" aria-label={t.speedAria(m.speed)}>
+                      <span className="spd" role="img" aria-label={t.speedAria(m.speed)}>
                         {[1, 2, 3, 4].map((n) => (
                           <b key={n} className={n <= m.speed ? "on" : undefined} />
                         ))}

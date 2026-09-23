@@ -8,7 +8,7 @@ export function ErrorView({ reset }: { reset: () => void }) {
     <main className="view">
       <div className="wrap">
         <div className="gate">
-          <h2>{t.title}</h2>
+          <h1>{t.title}</h1>
           <p>{t.text}</p>
           <button className="btn lg" type="button" onClick={reset}>
             {t.retry}

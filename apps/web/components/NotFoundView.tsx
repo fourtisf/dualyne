@@ -7,7 +7,7 @@ export function NotFoundView({ locale }: { locale: Locale }) {
     <main className="view">
       <div className="wrap">
         <div className="gate">
-          <h2>{t.title}</h2>
+          <h1>{t.title}</h1>
           <p>{t.text}</p>
           <Link className="btn lg" href={href(locale, "/")}>
             {t.home}

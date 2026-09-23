@@ -164,7 +164,7 @@ export function DashboardView() {
         <div className="card span3">
           <div className="l">{t.perKey}</div>
           {usage && usage.byKey.length ? (
-            <div className="tbl" style={{ marginTop: 10 }}>
+            <div className="tbl" tabIndex={0} style={{ marginTop: 10 }}>
               <table>
                 <thead>
                   <tr>
@@ -202,7 +202,7 @@ export function DashboardView() {
             <div className="v">${creditsOn.balanceUsd.toFixed(2)}</div>
             <div className="s">{creditsOn.balanceUsd > 0 ? t.creditsOn : t.creditsOff}</div>
             {creditsOn.deposits.length > 0 && (
-              <div className="tbl" style={{ marginTop: 14 }}>
+              <div className="tbl" tabIndex={0} style={{ marginTop: 14 }}>
                 <table>
                   <thead>
                     <tr>

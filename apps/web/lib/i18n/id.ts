@@ -199,7 +199,7 @@ export const id: Dict = {
       empty:
         "Belum ada pilihan. Jalankan perbandingan dan pilih jawaban yang lebih baik untuk memulai peringkat Anda.",
       run: "Jalankan perbandingan",
-      th: { model: "Model", rating: "Rating", winRate: "Tingkat menang", votes: "Pilihan" },
+      th: { rank: "Urutan", model: "Model", rating: "Rating", winRate: "Tingkat menang", votes: "Pilihan" },
     },
   },
   api: {

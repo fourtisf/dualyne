@@ -93,17 +93,34 @@ export function ApiSection() {
           </ul>
         </div>
         <div className="code">
-          <div className="tabs" role="tablist" aria-label={t.tabs}>
-            {TABS.map(([k, label]) => (
-              <button key={k} role="tab" type="button" aria-selected={tab === k} onClick={() => setTab(k)}>
-                {label}
-              </button>
-            ))}
+          <div className="tabs">
+            <div className="tablist" role="tablist" aria-label={t.tabs}>
+              {TABS.map(([k, label]) => (
+                <button
+                  key={k}
+                  id={`codetab-${k}`}
+                  role="tab"
+                  type="button"
+                  aria-selected={tab === k}
+                  aria-controls="codeBox"
+                  onClick={() => setTab(k)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             <button className="copy" id="copyCode" type="button" onClick={copy}>
               {d.copy[copyState]}
             </button>
           </div>
-          <pre id="codeBox" ref={box} dangerouslySetInnerHTML={{ __html: CODE[tab] }} />
+          <pre
+            id="codeBox"
+            ref={box}
+            tabIndex={0}
+            role="tabpanel"
+            aria-labelledby={`codetab-${tab}`}
+            dangerouslySetInnerHTML={{ __html: CODE[tab] }}
+          />
         </div>
       </div>
     </section>

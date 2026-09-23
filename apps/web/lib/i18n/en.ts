@@ -189,7 +189,7 @@ export const en = {
       metaNone: "Community rankings appear after the first nightly update.",
       empty: "No votes yet. Run a comparison and pick the better answer to start your ranking.",
       run: "Run a comparison",
-      th: { model: "Model", rating: "Rating", winRate: "Win rate", votes: "Votes" },
+      th: { rank: "Rank", model: "Model", rating: "Rating", winRate: "Win rate", votes: "Votes" },
     },
   },
   api: {

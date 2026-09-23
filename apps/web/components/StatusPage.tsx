@@ -58,7 +58,7 @@ export function StatusPage({ locale, status: s }: { locale: Locale; status: Stat
             </div>
 
             <h2 className="sp-sub">{t.models}</h2>
-            <div className="tbl sp-tbl">
+            <div className="tbl sp-tbl" tabIndex={0}>
               <table>
                 <thead>
                   <tr>

@@ -75,7 +75,7 @@ h1{font:600 clamp(44px,7vw,84px)/1.02 var(--sans); letter-spacing:-.05em; margin
 @keyframes scan{0%{left:-40%}60%,100%{left:100%}}
 @media (prefers-reduced-motion:reduce){.console::before{animation:none; left:30%}}
 .bar{display:flex; align-items:center; gap:14px; height:48px; padding:0 16px; border-bottom:1px solid var(--line); font-size:13px; color:var(--muted)}
-.bar .t{color:var(--text); font-weight:500}
+.bar .t{color:var(--text); font:500 13px/1 var(--sans); margin:0}
 .bar .tag{font:500 11.5px/1 var(--mono); padding:5px 8px; border-radius:6px; color:var(--amber); background:rgba(251,191,36,.08); border:1px solid rgba(251,191,36,.18)}
 .bar .live{margin-left:auto; display:flex; gap:8px; align-items:center}
 .bar .live i{width:6px; height:6px; border-radius:50%; background:var(--ok); box-shadow:0 0 8px var(--ok)}
@@ -128,7 +128,7 @@ h1{font:600 clamp(44px,7vw,84px)/1.02 var(--sans); letter-spacing:-.05em; margin
 .logos p{color:var(--faint); font-size:13px; margin:0 0 28px}
 .logos ul{list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; justify-content:center; gap:16px 54px;
   -webkit-mask:linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent); mask:linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent)}
-.logos li{font:600 20px/1 var(--sans); letter-spacing:-.03em; color:#5E5E68}
+.logos li{font:600 20px/1 var(--sans); letter-spacing:-.03em; color:#777781}
 
 /* sections */
 section.block{padding:140px 0 0}
@@ -180,6 +180,7 @@ section.block{padding:140px 0 0}
 .tabs{display:flex; align-items:center; gap:2px; height:46px; padding:0 8px; border-bottom:1px solid var(--line)}
 .tabs button{border:0; background:transparent; color:var(--muted); font:400 13px/1 var(--sans); height:30px; padding:0 12px; border-radius:7px; cursor:pointer}
 .tabs button[aria-selected="true"]{color:var(--text); background:rgba(255,255,255,.07)}
+.tabs .tablist{display:flex; align-items:center; gap:2px}
 .tabs .copy{margin-left:auto; border:1px solid var(--line)}
 .code pre{margin:0; padding:22px 24px 26px; overflow-x:auto; font:400 13px/1.8 var(--mono); color:#C9C9D1}
 .code .k{color:#C4B5FD}.code .s{color:#86EFAC}.code .c{color:#56565F}.code .f{color:#67E8F9}
@@ -356,7 +357,7 @@ dialog::backdrop{background:rgba(0,0,0,.6); backdrop-filter:blur(6px)}
 /* footer v4 */
 footer.big{padding:64px 0 40px}
 .fgrid{display:grid; grid-template-columns:1.4fr repeat(3,1fr); gap:40px}
-.fgrid h5{font:500 13px var(--sans); color:var(--text); margin:0 0 14px}
+.fgrid h2{font:500 13px var(--sans); color:var(--text); margin:0 0 14px}
 .fgrid ul{list-style:none; margin:0; padding:0; display:grid; gap:10px}
 .fgrid a{text-decoration:none; color:var(--muted); font-size:13.5px}
 .fgrid a:hover{color:var(--text)}
@@ -424,7 +425,7 @@ tr.first .rank{color:var(--amber)}
 .bars i{display:block; width:100%; max-width:34px; border-radius:6px 6px 2px 2px; background:linear-gradient(180deg,var(--violet),rgba(139,92,246,.25)); min-height:3px}
 .bars span{font:400 11px var(--mono); color:var(--faint)}
 .gate{text-align:center; padding:80px 20px; border:1px dashed var(--line2); border-radius:20px}
-.gate h2{font:600 28px/1.1 var(--sans); letter-spacing:-.04em; margin:0 0 10px}
+.gate h1,.gate h2{font:600 28px/1.1 var(--sans); letter-spacing:-.04em; margin:0 0 10px}
 .gate p{color:var(--muted); margin:0 0 22px}
 @media (max-width:900px){.dgrid{grid-template-columns:1fr}.span2{grid-column:auto}}
 

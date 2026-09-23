@@ -193,7 +193,7 @@ export function TokenSection({ locale, treasury }: { locale: Locale; treasury: T
                 <path d={line} fill="none" stroke="#67E8F9" strokeWidth="1.8" />
               </svg>
             </div>
-            <div className="tbl">
+            <div className="tbl" tabIndex={0}>
               <table>
                 <thead>
                   <tr>
