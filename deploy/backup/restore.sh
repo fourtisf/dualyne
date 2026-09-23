@@ -1,6 +1,6 @@
 #!/bin/sh
 # Restore a backup INTO THE RUNNING DATABASE. This replaces current data.
-#   ./deploy/backup/restore.sh /var/backups/refract/refract-2026-09-23.dump
+#   ./deploy/backup/restore.sh /var/backups/dualyne/dualyne-2026-09-23.dump
 set -eu
 file="${1:?usage: restore.sh <dump file>}"
 [ -f "$file" ] || { echo "No such file: $file" >&2; exit 1; }

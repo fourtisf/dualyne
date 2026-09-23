@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { brand, tokenTicker } from "@refract/config";
+import { brand, tokenTicker } from "@dualyne/config";
 import { getDict, type Locale } from "@/lib/i18n";
 import { balancePaths, fmt, type TreasuryData } from "@/lib/treasury";
 import { TokenActions } from "./TokenActions";

@@ -84,7 +84,7 @@ export async function verifyModels(
     });
     await alert(
       `OpenRouter no longer lists these mapped models:\n${lines.join("\n")}\n` +
-        "Run `pnpm --filter @refract/api models:resolve` on the server to pick replacements.",
+        "Run `pnpm --filter @dualyne/api models:resolve` on the server to pick replacements.",
     );
   }
   return result;

@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ImageResponse } from "next/og";
-import { brand } from "@refract/config";
+import { brand } from "@dualyne/config";
 import { getDict, type Locale } from "./i18n";
 
 export const ogSize = { width: 1200, height: 630 };

@@ -27,7 +27,7 @@ describe("SSE streaming pass-through", () => {
     expect(res.headers["content-type"]).toBe("text/event-stream; charset=utf-8");
     expect(res.headers["cache-control"]).toBe("no-cache, no-transform");
     expect(res.headers["x-accel-buffering"]).toBe("no");
-    expect(res.headers["x-refract-remaining"]).toBe("19");
+    expect(res.headers["x-dualyne-remaining"]).toBe("19");
     expect(res.body).toBe(SAMPLE_STREAM + DONE_EVENT);
   });
 

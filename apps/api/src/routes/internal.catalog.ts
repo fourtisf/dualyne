@@ -1,4 +1,4 @@
-import type { CatalogModel } from "@refract/shared";
+import type { CatalogModel } from "@dualyne/shared";
 import type { FastifyPluginAsync } from "fastify";
 
 const perMTok = (price: unknown): number | null => {

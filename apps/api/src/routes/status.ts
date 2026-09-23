@@ -1,4 +1,4 @@
-import type { ServiceState, StatusResponse } from "@refract/shared";
+import type { ServiceState, StatusResponse } from "@dualyne/shared";
 import type { FastifyPluginAsync } from "fastify";
 import { secondsUntilUtcMidnight } from "../lib/time";
 

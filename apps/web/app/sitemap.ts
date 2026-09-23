@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
-import { brand } from "@refract/config";
-import { STATIC_CATALOG } from "@refract/shared";
+import { brand } from "@dualyne/config";
+import { STATIC_CATALOG } from "@dualyne/shared";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

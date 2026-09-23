@@ -1,23 +1,23 @@
-# Logo Refract ("Prompt Lines")
+# Logo Dualyne ("Prompt Lines")
 
-Tanda `>` (prompt) dengan dua garis jawaban, cyan di atas pink: satu prompt, dua jawaban. Wordmark `refract` memakai Geist Mono Medium, huruf kecil. Semua teks di file SVG sudah diubah menjadi outline, jadi file bisa dibuka tanpa memasang font.
+Tanda `>` (prompt) dengan dua garis jawaban, cyan di atas pink: satu prompt, dua jawaban. Wordmark `dualyne` memakai Geist Mono Medium, huruf kecil. Semua teks di file SVG sudah diubah menjadi outline, jadi file bisa dibuka tanpa memasang font.
 
 Ringkasan visual ada di `brand-sheet.png`.
 
 ## Mana yang dipakai
 
-| Kebutuhan                                         | File                                                                         |
-| ------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Logo di latar gelap (utama)                       | `png/refract-logo-2400x1200.png`, `svg/refract-logo.svg`                     |
-| Logo di latar terang                              | `png/refract-logo-on-light-2400x1200.png`, `svg/refract-logo-on-light.svg`   |
-| Logo putih di gradien ungu–pink                   | `png/refract-logo-white-2400x1200.png`                                       |
-| Logo hitam di latar putih                         | `png/refract-logo-black-2400x1200.png`                                       |
-| Simbol saja (tanpa tulisan)                       | `png/refract-mark*-1024.png`, `svg/refract-mark*.svg`                        |
-| Ikon aplikasi                                     | `png/refract-app-icon-{1024,512,192,180,32}.png`, `svg/refract-app-icon.svg` |
-| Favicon website                                   | `favicon.ico` (16/32/48), dipakai juga di `apps/web/app`                     |
-| Koin $RFX (DEX, CoinGecko, CoinMarketCap, wallet) | `png/rfx-token-{1024,512,256,200}.png`, `svg/rfx-token.svg`                  |
-| Foto profil X / Telegram / Discord                | `png/refract-avatar-800.png`                                                 |
-| Header X (Twitter)                                | `png/refract-x-banner-1500x500.png`                                          |
+| Kebutuhan                                          | File                                                                         |
+| -------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Logo di latar gelap (utama)                        | `png/dualyne-logo-2400x1200.png`, `svg/dualyne-logo.svg`                     |
+| Logo di latar terang                               | `png/dualyne-logo-on-light-2400x1200.png`, `svg/dualyne-logo-on-light.svg`   |
+| Logo putih di gradien ungu–pink                    | `png/dualyne-logo-white-2400x1200.png`                                       |
+| Logo hitam di latar putih                          | `png/dualyne-logo-black-2400x1200.png`                                       |
+| Simbol saja (tanpa tulisan)                        | `png/dualyne-mark*-1024.png`, `svg/dualyne-mark*.svg`                        |
+| Ikon aplikasi                                      | `png/dualyne-app-icon-{1024,512,192,180,32}.png`, `svg/dualyne-app-icon.svg` |
+| Favicon website                                    | `favicon.ico` (16/32/48), dipakai juga di `apps/web/app`                     |
+| Koin $DLYN (DEX, CoinGecko, CoinMarketCap, wallet) | `png/dlyn-token-{1024,512,256,200}.png`, `svg/dlyn-token.svg`                |
+| Foto profil X / Telegram / Discord                 | `png/dualyne-avatar-800.png`                                                 |
+| Header X (Twitter)                                 | `png/dualyne-x-banner-1500x500.png`                                          |
 
 Semua PNG di `png/` punya warna latar, tidak ada bagian transparan:
 

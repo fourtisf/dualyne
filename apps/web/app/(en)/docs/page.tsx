@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { brand } from "@refract/config";
-import { TIER_DEFAULTS } from "@refract/shared";
+import { brand } from "@dualyne/config";
+import { TIER_DEFAULTS } from "@dualyne/shared";
 import { getCatalog } from "@/lib/catalog";
 
 export const revalidate = 60;
@@ -241,7 +241,7 @@ print(reply.choices[0].message.content)`}</code>
           </div>
           <p>
             Allowances reset at 00:00 UTC. Explorer and Holder responses include{" "}
-            <code>x-refract-remaining</code> so your app can see how many requests are left today. A larger{" "}
+            <code>x-dualyne-remaining</code> so your app can see how many requests are left today. A larger{" "}
             <code>max_tokens</code> than your tier allows is lowered to the cap. Each key can send up to 120
             requests a minute.
           </p>

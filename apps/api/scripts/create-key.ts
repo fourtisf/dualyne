@@ -1,14 +1,14 @@
 /**
  * Admin tool for API keys until self-serve keys (wallet sign-in) ship.
  *
- *   pnpm --filter @refract/api key:create --wallet 0xabc… [--tier holder] [--name "test"]
- *   pnpm --filter @refract/api key:create --list --wallet 0xabc…
- *   pnpm --filter @refract/api key:create --revoke <keyId>
+ *   pnpm --filter @dualyne/api key:create --wallet 0xabc… [--tier holder] [--name "test"]
+ *   pnpm --filter @dualyne/api key:create --list --wallet 0xabc…
+ *   pnpm --filter @dualyne/api key:create --revoke <keyId>
  *
  * The full key is printed once. Only its SHA-256 hash is stored.
  */
 import { PrismaClient, type Tier } from "@prisma/client";
-import { TIERS } from "@refract/shared";
+import { TIERS } from "@dualyne/shared";
 import { Redis } from "ioredis";
 import { parseArgs } from "node:util";
 import { ApiKeyAuth, generateApiKey } from "../src/auth/apiKey";

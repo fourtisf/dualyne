@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { brand } from "@refract/config";
-import type { CreditsResponse, MeResponse, UsageResponse } from "@refract/shared";
+import { brand } from "@dualyne/config";
+import type { CreditsResponse, MeResponse, UsageResponse } from "@dualyne/shared";
 import { apiFetch } from "@/lib/api";
 import { publicConfig } from "@/lib/config";
 import { formatRunCost, shortAddr } from "@/lib/format";

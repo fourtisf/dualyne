@@ -6,7 +6,7 @@ import { useT } from "../LocaleProvider";
 
 /** Contract address with Copy, and Buy / View chart links. Disabled until launch values are set. */
 export function TokenActions() {
-  const { rfxTokenAddress: ca, rfxBuyUrl, rfxChartUrl, explorerUrl } = publicConfig;
+  const { dlynTokenAddress: ca, dlynBuyUrl, dlynChartUrl, explorerUrl } = publicConfig;
   const d = useT();
   const t = d.token;
   const [state, setState] = useState<"copy" | "copied" | "select">("copy");
@@ -38,8 +38,8 @@ export function TokenActions() {
         </button>
       </div>
       <div className="tk-actions">
-        {rfxBuyUrl ? (
-          <a className="btn" href={rfxBuyUrl} target="_blank" rel="noopener">
+        {dlynBuyUrl ? (
+          <a className="btn" href={dlynBuyUrl} target="_blank" rel="noopener">
             {t.buy}
           </a>
         ) : (
@@ -47,8 +47,8 @@ export function TokenActions() {
             {t.buy}
           </button>
         )}
-        {rfxChartUrl ? (
-          <a className="btn dark" href={rfxChartUrl} target="_blank" rel="noopener">
+        {dlynChartUrl ? (
+          <a className="btn dark" href={dlynChartUrl} target="_blank" rel="noopener">
             {t.chart}
           </a>
         ) : (

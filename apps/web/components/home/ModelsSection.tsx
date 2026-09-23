@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { TIER_DEFAULTS, type CatalogModel, type LeaderboardResponse } from "@refract/shared";
+import { TIER_DEFAULTS, type CatalogModel, type LeaderboardResponse } from "@dualyne/shared";
 import { publicConfig } from "@/lib/config";
 import { formatContext, formatPerMTok } from "@/lib/format";
 import { store } from "@/lib/storage";
@@ -97,7 +97,7 @@ function Leaderboard({ models }: { models: CatalogModel[] }) {
   const [mine, setMine] = useState<ReturnType<typeof ratings>>({ rows: [], total: 0 });
   const [community, setCommunity] = useState<LeaderboardResponse | null>(null);
   const [scope, setScope] = useState<"everyone" | "mine" | null>(null);
-  useEffect(() => setMine(ratings(store.get<Match[]>("refract.matches", []))), [version]);
+  useEffect(() => setMine(ratings(store.get<Match[]>("dualyne.matches", []))), [version]);
   useEffect(() => {
     fetch(`${publicConfig.apiUrl}/leaderboard`)
       .then((r) => (r.ok ? (r.json() as Promise<LeaderboardResponse>) : null))

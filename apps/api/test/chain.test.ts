@@ -36,7 +36,7 @@ const USER = privateKeyToAccount("0x6cbed15c793ce57650b9877cf6fa156fbef513c4e613
 const TREASURY: Address = "0x2222222222222222222222222222222222222222";
 
 let server: { listen(port: number): Promise<void>; close(): Promise<void> };
-let rfx: Address;
+let dlyn: Address;
 let usdg: Address;
 let feed: Address;
 const deployer = createWalletClient({ account: DEPLOYER, chain: chainDef, transport: http(RPC) });
@@ -66,11 +66,11 @@ beforeAll(async () => {
     logging: { quiet: true },
   } as never);
   await server.listen(PORT);
-  rfx = await deploy("TestToken", ["Refract", "RFX", 18]);
+  dlyn = await deploy("TestToken", ["Dualyne", "DLYN", 18]);
   usdg = await deploy("TestToken", ["USD Global", "USDG", 6]);
   feed = await deploy("TestFeed", [2500n * 10n ** 8n]);
   for (const [token, amount] of [
-    [rfx, 150_000n * 10n ** 18n],
+    [dlyn, 150_000n * 10n ** 18n],
     [usdg, 100n * 10n ** 6n],
   ] as const) {
     const hash = await deployer.writeContract({
@@ -87,7 +87,7 @@ afterAll(async () => server?.close());
 describe("ViemChain against a real EVM", () => {
   it("reads native and ERC-20 balances and decimals", async () => {
     expect(await chain.nativeBalance(USER.address)).toBeGreaterThan(parseEther("1"));
-    expect(await chain.tokenBalance(rfx, USER.address)).toBe(150_000n * 10n ** 18n);
+    expect(await chain.tokenBalance(dlyn, USER.address)).toBe(150_000n * 10n ** 18n);
     expect(await chain.tokenDecimals(usdg)).toBe(6);
   });
 
@@ -141,7 +141,7 @@ describe("end to end on a real EVM", () => {
     t = await createTestContext(
       {
         SIWE_CHAIN_ID: "1",
-        RFX_TOKEN_ADDRESS: rfx,
+        DLYN_TOKEN_ADDRESS: dlyn,
         TREASURY_WALLET_ADDRESS: TREASURY,
         USDG_TOKEN_ADDRESS: usdg,
         DEPOSIT_ADDRESS: TREASURY,
@@ -155,7 +155,7 @@ describe("end to end on a real EVM", () => {
   });
   afterAll(async () => t?.close());
 
-  it("signs in, is Holder by RFX balance, and credits a USDG top-up", async () => {
+  it("signs in, is Holder by DLYN balance, and credits a USDG top-up", async () => {
     const message = await siweMessage(t, USER);
     const signature = await USER.signMessage({ message });
     const login = await t.app.inject({

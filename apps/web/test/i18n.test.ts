@@ -1,4 +1,4 @@
-import { MODEL_DEFS } from "@refract/shared";
+import { MODEL_DEFS } from "@dualyne/shared";
 import { describe, expect, it } from "vitest";
 import { en } from "../lib/i18n/en";
 import { id } from "../lib/i18n/id";

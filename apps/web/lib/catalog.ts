@@ -1,5 +1,5 @@
 import "server-only";
-import { STATIC_CATALOG, type CatalogModel } from "@refract/shared";
+import { STATIC_CATALOG, type CatalogModel } from "@dualyne/shared";
 
 /**
  * Model catalog for server components. Reads the API (over the internal network in

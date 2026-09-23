@@ -1,4 +1,4 @@
-# Refract
+# Dualyne
 
 AI model comparison website and OpenAI-compatible API gateway. Access is tied to crypto wallets and funded by a token treasury.
 
@@ -17,22 +17,22 @@ Requirements: Node 22, pnpm 10, Docker (or your own Postgres 16 and Redis 7).
 pnpm install
 cp .env.example .env            # then put your OpenRouter key in OPENROUTER_API_KEY
 docker compose up -d            # Postgres + Redis on localhost
-pnpm --filter @refract/api db:deploy   # create tables
-pnpm --filter @refract/api db:seed     # load the model catalog
+pnpm --filter @dualyne/api db:deploy   # create tables
+pnpm --filter @dualyne/api db:seed     # load the model catalog
 pnpm dev                        # web on http://localhost:3000, API on http://localhost:4000
 ```
 
 Create a test API key (keys are self-serve once wallet sign-in ships):
 
 ```bash
-pnpm --filter @refract/api key:create --wallet 0xYourAddress --tier holder
+pnpm --filter @dualyne/api key:create --wallet 0xYourAddress --tier holder
 ```
 
 Check or update the OpenRouter model mapping:
 
 ```bash
-pnpm --filter @refract/api models:resolve
-pnpm --filter @refract/api models:resolve --set gpt=openai/gpt-5.1
+pnpm --filter @dualyne/api models:resolve
+pnpm --filter @dualyne/api models:resolve --set gpt=openai/gpt-5.1
 ```
 
 ## Checks
@@ -41,7 +41,7 @@ pnpm --filter @refract/api models:resolve --set gpt=openai/gpt-5.1
 pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ```
 
-API tests need Postgres and Redis (the `docker compose` services above; the test database is `refract_test`).
+API tests need Postgres and Redis (the `docker compose` services above; the test database is `dualyne_test`).
 
 ## Changing the brand
 

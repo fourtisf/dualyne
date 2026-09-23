@@ -1,5 +1,5 @@
 {
-  "name": "@refract/api",
+  "name": "@dualyne/api",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -21,8 +21,8 @@
     "@fastify/cors": "11.3.0",
     "@fastify/rate-limit": "10.3.0",
     "@prisma/client": "6.19.3",
-    "@refract/config": "workspace:*",
-    "@refract/shared": "workspace:*",
+    "@dualyne/config": "workspace:*",
+    "@dualyne/shared": "workspace:*",
     "fastify": "5.12.5",
     "fastify-plugin": "5.1.0",
     "ioredis": "5.11.1",

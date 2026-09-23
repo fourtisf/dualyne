@@ -1,5 +1,5 @@
 import type { Model } from "@prisma/client";
-import { compareRequestSchema, type CompareEvents, type Lane } from "@refract/shared";
+import { compareRequestSchema, type CompareEvents, type Lane } from "@dualyne/shared";
 import type { FastifyPluginAsync } from "fastify";
 import { isRefusal, type Refusal, type Reservation } from "../budget";
 import { ApiError } from "../lib/errors";

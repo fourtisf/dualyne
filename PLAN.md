@@ -1,4 +1,4 @@
-# Refract — Build & Deployment Plan
+# Dualyne — Build & Deployment Plan
 
 Status: **Phase 1 built** (website + API + tests). Next: Phase 2 (deploy), which needs the domain and server details. See §11 for what shipped and §12 for what must happen before public launch.
 
@@ -15,7 +15,7 @@ The prompt and HANDOFF number their phases differently. This plan uses these num
 | **P1**     | Website in Next.js, all models live, `/v1/*`, `/internal/compare`, budget cap, request logging, model-id check job | Prompt Phase 1 = HANDOFF Phase 1 |
 | **P2**     | Production deploy: Docker, Nginx, TLS, Cloudflare, CI/CD, backups, DEPLOY.md                                       | Prompt Phase 2                   |
 | **P3**     | SIWE wallet sign-in, self-serve API keys, per-wallet quota, sybil check, real dashboard                            | HANDOFF Phase 2                  |
-| **P4**     | On-chain RFX tier check, treasury jobs, `GET /treasury`, token section at launch                                   | HANDOFF Phase 3                  |
+| **P4**     | On-chain DLYN tier check, treasury jobs, `GET /treasury`, token section at launch                                  | HANDOFF Phase 3                  |
 | **P5**     | Votes, community Elo leaderboard, Builder prepaid credit, optional x402                                            | HANDOFF Phase 4                  |
 
 After every phase: lint, typecheck and tests pass, then a commit, then a short summary, then I stop and wait.
@@ -27,7 +27,7 @@ After every phase: lint, typecheck and tests pass, then a commit, then a short s
 The monorepo uses **pnpm workspaces**. There's no Turborepo, because plain `pnpm -r` is enough at this size.
 
 ```
-refract/
+dualyne/
 ├─ apps/
 │  ├─ web/                          Next.js 14, App Router, TypeScript
 │  │  ├─ app/
@@ -52,7 +52,7 @@ refract/
 │     │  ├─ app.ts                  buildApp(): plugins and routes (used by tests)
 │     │  ├─ env.ts                  zod-validated process.env; exits on bad config
 │     │  ├─ plugins/                prisma, redis, cors, rate-limit, error handler, request-id
-│     │  ├─ auth/apiKey.ts          Bearer rf_live_… → SHA-256 → ApiKey row
+│     │  ├─ auth/apiKey.ts          Bearer dly_live_… → SHA-256 → ApiKey row
 │     │  ├─ tiers.ts                tier rank, per-tier daily quota, max_tokens ceiling, key limit
 │     │  ├─ quota.ts                Redis per-wallet daily counter
 │     │  ├─ budget.ts               global daily spend cap (reserve → settle)
@@ -85,7 +85,7 @@ refract/
 │  └─ shared/src/                   zod schemas and types shared by web and api
 │                                   (compare request, SSE event shapes, tier names)
 ├─ deploy/
-│  ├─ nginx/refract.conf            host Nginx site config (template)
+│  ├─ nginx/dualyne.conf            host Nginx site config (template)
 │  ├─ backup/backup.sh              nightly pg_dump with 7-day retention
 │  └─ scripts/deploy.sh             what CI runs on the server
 ├─ .github/workflows/
@@ -107,18 +107,18 @@ refract/
 
 ```ts
 export const brand = {
-  name: "Refract",
-  tokenSymbol: "RFX", // rendered as "$RFX" / "100,000 RFX"
-  tokenName: "Refract access token",
-  domain: "refract.dev", // site: https://{domain}, API: https://api.{domain}
-  apiBaseUrl: "https://api.refract.dev/v1",
-  keyPrefix: "rf_live_",
+  name: "Dualyne",
+  tokenSymbol: "DLYN", // rendered as "$DLYN" / "100,000 DLYN"
+  tokenName: "Dualyne access token",
+  domain: "dualyne.com", // site: https://{domain}, API: https://api.{domain}
+  apiBaseUrl: "https://api.dualyne.com/v1",
+  keyPrefix: "dly_live_",
   social: { x: "#", telegram: "#", github: "#" },
   copyrightYear: 2026,
 } as const;
 ```
 
-Every "Refract", "$RFX", "RFX" and "api.refract.dev" in the site markup, code samples, docs, key prefix and API error messages is read from this file. The domains are overridable by env (`PUBLIC_DOMAIN`) so the same build can run on any domain. The source-code identifier `refract` (package names, DB name) stays as-is, because it isn't user-visible.
+Every "Dualyne", "$DLYN", "DLYN" and "api.dualyne.com" in the site markup, code samples, docs, key prefix and API error messages is read from this file. The domains are overridable by env (`PUBLIC_DOMAIN`) so the same build can run on any domain. The source-code identifier `dualyne` (package names, DB name) stays as-is, because it isn't user-visible.
 
 ---
 
@@ -134,7 +134,7 @@ enum Tier { explorer holder builder }
 
 // ── P1 ────────────────────────────────────────────────────────────
 model Model {
-  id               String   @id              // Refract id: "claude-swift"
+  id               String   @id              // Dualyne id: "claude-swift"
   name             String                    // "Claude Swift"
   provider         String                    // "Anthropic"
   providerColor    String                    // "#D4A27F" (catalog swatch)
@@ -223,7 +223,7 @@ model ModelCheck {                           // history of the daily verificatio
   id        String   @id @default(cuid())
   ranAt     DateTime @default(now())
   ok        Boolean
-  missing   String[]                         // refract ids whose OR id vanished
+  missing   String[]                         // dualyne ids whose OR id vanished
   details   Json
 }
 
@@ -281,12 +281,12 @@ Every body, query and param is validated with zod (`fastify-type-provider-zod`).
 
 **`POST /v1/chat/completions`**
 
-1. Parse the Bearer token. It must match `^rf_live_[0-9a-f]{32}$`, otherwise 401. SHA-256 it and look up `ApiKey.hash`. The lookup result is cached in Redis for 30 s, and a revoke busts the cache, so a revoke takes effect on the next request.
-2. zod-validate the body. Known OpenAI fields are typed, and the schema is `passthrough()` so `tools`, `response_format` and so on pass through unchanged. `model` must be a Refract id (400 otherwise).
+1. Parse the Bearer token. It must match `^dly_live_[0-9a-f]{32}$`, otherwise 401. SHA-256 it and look up `ApiKey.hash`. The lookup result is cached in Redis for 30 s, and a revoke busts the cache, so a revoke takes effect on the next request.
+2. zod-validate the body. Known OpenAI fields are typed, and the schema is `passthrough()` so `tools`, `response_format` and so on pass through unchanged. `model` must be a Dualyne id (400 otherwise).
 3. Tier check. `tier(wallet) ≥ model.minTier`, otherwise 403. In P1/P2 the tier is `Wallet.tierOverride ?? explorer`.
 4. Clamp `max_tokens` (and `max_completion_tokens`) to the tier ceiling.
 5. Budget. If the caller's tier is free and the cap has been hit, return 429 with `Retry-After` set to seconds until 00:00 UTC.
-6. Quota. `INCR quota:{wallet}:{YYYY-MM-DD}` with 48 h expiry. If the count is over the tier limit, `DECR` and return 429. The response carries `x-refract-remaining`.
+6. Quota. `INCR quota:{wallet}:{YYYY-MM-DD}` with 48 h expiry. If the count is over the tier limit, `DECR` and return 429. The response carries `x-dualyne-remaining`.
 7. Proxy to OpenRouter with the model id swapped to `openrouterId`. The server-side `OPENROUTER_API_KEY` is added here and nowhere else.
 8. **Streaming:** upstream bytes are written to the client exactly as received, including OpenRouter's `: OPENROUTER PROCESSING` keep-alive comments. A tee parses the same lines to catch TTFT and the final `usage` object. To get cost we send `usage:{include:true}` upstream. If the client did not ask for `stream_options.include_usage`, the one extra usage-only chunk that this adds is dropped, so the client receives what it would have received without it. Client disconnect aborts the upstream request.
 9. The response `model` field is **not** rewritten: it reports the exact upstream model, so events pass through byte-for-byte (decision on Q7, see §10).
@@ -329,7 +329,7 @@ The sybil gate for Explorer is `balance ≥ SYBIL_MIN_ETH_WEI` **or** first tx o
 
 ### P4: token and treasury
 
-`GET /treasury` returns balance, runway (balance ÷ 7-day average spend), the 30-day balance series and daily in/out rows. RFX balance is read with viem `balanceOf`, cached for 5 min in `tier:{address}`.
+`GET /treasury` returns balance, runway (balance ÷ 7-day average spend), the 30-day balance series and daily in/out rows. DLYN balance is read with viem `balanceOf`, cached for 5 min in `tier:{address}`.
 
 ### P5: votes, leaderboard, credit
 
@@ -370,7 +370,7 @@ Fonts are the Geist and Geist Mono weights the prototype loads, served through `
 | `DocsView`       | `#view-docs` TOC + prose (`/docs`)                               | server + a small client TOC scroller               |
 | `DashboardView`  | `#view-dash` gate + cards + bars (`/dashboard`)                  | client                                             |
 
-Shared client state (the wallet and the local vote/usage history) lives in a `WalletProvider` context in `layout.tsx`. It reads and writes the same `localStorage` keys as the prototype (`refract.wallet`, `refract.matches`, `refract.usage`, `refract.hist`).
+Shared client state (the wallet and the local vote/usage history) lives in a `WalletProvider` context in `layout.tsx`. It reads and writes the same `localStorage` keys as the prototype (`dualyne.wallet`, `dualyne.matches`, `dualyne.usage`, `dualyne.hist`).
 
 ### 5.2 Routing
 
@@ -407,15 +407,15 @@ The Treasury KPIs, chart and table keep their **"Sample data"** label, and the f
 | Variable                                                                          | Used by       | Example / default                                                                 | Phase |
 | --------------------------------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------- | ----- |
 | `NODE_ENV`                                                                        | both          | `production`                                                                      | P1    |
-| `PUBLIC_DOMAIN`                                                                   | both          | `refract.dev` (the site is `https://{d}`, the API is `https://api.{d}`)           | P1    |
-| `NEXT_PUBLIC_API_URL`                                                             | web (browser) | `https://api.refract.dev`                                                         | P1    |
+| `PUBLIC_DOMAIN`                                                                   | both          | `dualyne.com` (the site is `https://{d}`, the API is `https://api.{d}`)           | P1    |
+| `NEXT_PUBLIC_API_URL`                                                             | web (browser) | `https://api.dualyne.com`                                                         | P1    |
 | `API_INTERNAL_URL`                                                                | web (server)  | `http://api:4000`                                                                 | P1    |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY`                                                  | web           | Cloudflare dashboard                                                              | P1    |
 | `TURNSTILE_SECRET_KEY`                                                            | api           | Cloudflare dashboard (**secret**)                                                 | P1    |
 | `OPENROUTER_API_KEY`                                                              | api           | `sk-or-…` (**secret**, server only)                                               | P1    |
 | `OPENROUTER_BASE_URL`                                                             | api           | `https://openrouter.ai/api/v1`                                                    | P1    |
 | `OPENROUTER_APP_URL` / `OPENROUTER_APP_TITLE`                                     | api           | sent as `HTTP-Referer` / `X-Title`                                                | P1    |
-| `DATABASE_URL`                                                                    | api           | `postgresql://refract:…@postgres:5432/refract` (**secret**)                       | P1    |
+| `DATABASE_URL`                                                                    | api           | `postgresql://dualyne:…@postgres:5432/dualyne` (**secret**)                       | P1    |
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB`                             | postgres      | (**secret** password)                                                             | P1    |
 | `REDIS_URL`                                                                       | api           | `redis://:pass@redis:6379`                                                        | P1    |
 | `REDIS_PASSWORD`                                                                  | redis         | (**secret**)                                                                      | P1    |
@@ -428,17 +428,17 @@ The Treasury KPIs, chart and table keep their **"Sample data"** label, and the f
 | `ALERT_WEBHOOK_URL`                                                               | api           | optional Discord/Slack/Telegram-compatible webhook for model-id and budget alerts | P1    |
 | `LOG_LEVEL`                                                                       | api           | `info`                                                                            | P1    |
 | `API_PORT` / `WEB_PORT`                                                           | both          | `4000` / `3000` (bound to 127.0.0.1 in prod)                                      | P2    |
-| `BACKUP_DIR` / `BACKUP_RETENTION_DAYS`                                            | backup        | `/var/backups/refract` / `7`                                                      | P2    |
+| `BACKUP_DIR` / `BACKUP_RETENTION_DAYS`                                            | backup        | `/var/backups/dualyne` / `7`                                                      | P2    |
 | `SESSION_SECRET`                                                                  | api           | (**secret**)                                                                      | P3    |
 | `SIWE_CHAIN_ID`                                                                   | both          | see Q9                                                                            | P3    |
 | `RPC_URL`                                                                         | api           | chain RPC (**secret** if it's keyed)                                              | P3    |
 | `SYBIL_MIN_ETH_WEI` / `SYBIL_MIN_WALLET_AGE_DAYS`                                 | api           | configurable                                                                      | P3    |
 | `EXPLORER_API_URL` / `EXPLORER_API_KEY`                                           | api           | wallet-age lookup (Q8)                                                            | P3    |
-| `RFX_TOKEN_ADDRESS` / `HOLDER_MIN_RFX`                                            | api           | set at launch / `100000`                                                          | P4    |
+| `DLYN_TOKEN_ADDRESS` / `HOLDER_MIN_DLYN`                                          | api           | set at launch / `100000`                                                          | P4    |
 | `TREASURY_WALLET_ADDRESS`                                                         | api           | fee wallet                                                                        | P4    |
 | `USDG_TOKEN_ADDRESS` / `BUILDER_MARKUP`                                           | api           | – / `1.15`                                                                        | P5    |
 
-CI-only secrets in GitHub are `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` and `DEPLOY_PATH`. Application secrets are **not** stored in GitHub. They live only in `/opt/refract/.env` on the server.
+CI-only secrets in GitHub are `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` and `DEPLOY_PATH`. Application secrets are **not** stored in GitHub. They live only in `/opt/dualyne/.env` on the server.
 
 ---
 
@@ -477,7 +477,7 @@ Browser ──HTTPS──▶ Cloudflare (proxied, SSL "Full (strict)")
 
 - **Migrations** run automatically on every deploy through the `migrate` service. They're forward-only. Schema changes follow expand/contract so the previous image still works during a rollback.
 - **Health.** `GET /health` exists on both services and is used by the Docker healthchecks and by the deploy script's post-deploy check.
-- **Backups.** The `backup` container (postgres:16-alpine plus a tiny loop script) runs `pg_dump -Fc` nightly at 03:00 UTC into the host's `/var/backups/refract/refract-YYYY-MM-DD.dump` and deletes files older than 7 days. `DEPLOY.md` covers the restore command and an optional off-server copy (rclone to any S3 bucket).
+- **Backups.** The `backup` container (postgres:16-alpine plus a tiny loop script) runs `pg_dump -Fc` nightly at 03:00 UTC into the host's `/var/backups/dualyne/dualyne-YYYY-MM-DD.dump` and deletes files older than 7 days. `DEPLOY.md` covers the restore command and an optional off-server copy (rclone to any S3 bucket).
 - **CI/CD.**
   - `ci.yml` runs on every push and PR: pnpm install, lint, typecheck, and tests with Postgres and Redis service containers.
   - `deploy.yml` runs on push to `main`: the same test job, then an SSH step with `appleboy/ssh-action` that runs `deploy/scripts/deploy.sh`. That script does `git fetch && git reset --hard origin/main`, `docker compose build` (tagged by SHA), `docker compose up -d` (migrate runs first), waits until `/health` on both services is 200, and prunes images older than the last 5 SHAs.
@@ -499,7 +499,7 @@ The API tests use `buildApp()` with `fastify.inject()`, real Postgres and Redis 
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Key auth                      | missing key → 401; malformed → 401; unknown hash → 401; valid → 200; revoked (row deleted) → 401 on the very next request (cache bust); only the hash is stored                                                                                  |
 | Tier check                    | explorer → holder model = 403; holder → holder model = 200; `/v1/models` filtered by tier; compare rejects non-explorer models                                                                                                                   |
-| Quota counting                | the Nth request passes and the N+1th gets 429; `x-refract-remaining` counts down; key expires in 48 h; an upstream failure refunds the quota; concurrent requests don't overshoot                                                                |
+| Quota counting                | the Nth request passes and the N+1th gets 429; `x-dualyne-remaining` counts down; key expires in 48 h; an upstream failure refunds the quota; concurrent requests don't overshoot                                                                |
 | Budget cap                    | spend ≥ cap → free tiers 429 with a `Retry-After` to 00:00 UTC; builder still allowed; the cap resets on a UTC date change (fake clock); reservation prevents overshoot under concurrency                                                        |
 | SSE streaming                 | pass-through is byte-identical to upstream (fixture comparison, including keep-alive comments); `model` rewritten; the usage chunk is dropped unless requested; client abort cancels upstream; the compare multiplexer emits correct lane events |
 
@@ -590,7 +590,7 @@ Still untested: `server-setup.sh` on a real Ubuntu host (the sandbox has no syst
 ## 11c. Phase 3 status (wallet accounts and keys)
 
 - [x] Sign-In With Ethereum: `GET /auth/nonce`, `POST /auth/verify`, `GET /auth/session`, `POST /auth/logout`. Nonces are single use and last 5 minutes. The server checks the domain, URI, chain and message age, and the signature (smart-contract wallets too, when `RPC_URL` is set).
-- [x] Sessions: a random `rf_session` cookie (HttpOnly, SameSite=Lax, Secure in production) valid for 30 days. Only its HMAC is stored, and a daily job purges expired sessions.
+- [x] Sessions: a random `dly_session` cookie (HttpOnly, SameSite=Lax, Secure in production) valid for 30 days. Only its HMAC is stored, and a daily job purges expired sessions.
 - [x] `GET /me`, `GET /me/usage?days=7` (per day and per key), `GET /me/keys`, `POST /me/keys` (the full key is shown once), `DELETE /me/keys/:id`
 - [x] Key limits per tier (Explorer 1, Holder 5, Builder unlimited), with a per-wallet lock against parallel creation
 - [x] CSRF: cookie writes require the website's `Origin`; credentialed CORS is only allowed for our origins
@@ -600,7 +600,7 @@ Still untested: `server-setup.sh` on a real Ubuntu host (the sandbox has no syst
 
 ## 11d. Phase 4 status (token, tiers, treasury)
 
-- [x] Holder tier from the on-chain RFX `balanceOf` (≥ `HOLDER_MIN_RFX`, 100,000 by default), cached 5 minutes in Redis. If the chain is briefly unreachable, the last known balance is used instead of demoting the wallet.
+- [x] Holder tier from the on-chain DLYN `balanceOf` (≥ `HOLDER_MIN_DLYN`, 100,000 by default), cached 5 minutes in Redis. If the chain is briefly unreachable, the last known balance is used instead of demoting the wallet.
 - [x] Hourly `treasury-sync` job:
   - reads stablecoin (USDG) `Transfer` events into the treasury wallet in 2,000-block chunks, after `CHAIN_CONFIRMATIONS` confirmations;
   - resumes from a saved block cursor, and a duplicate-safe insert means repeated runs don't double-count;
@@ -626,7 +626,7 @@ Still untested: `server-setup.sh` on a real Ubuntu host (the sandbox has no syst
   - each transaction credits once.
 - [x] Builder charging: a positive balance makes the wallet Builder. Each request reserves cost × `BUILDER_MARKUP` atomically and settles to the real cost; failures refund; 402 when the credit can't cover the request. Charges are logged, and treasury spend excludes them.
 - [x] Website: the Blind toggle and revealed names, server-side votes, the community leaderboard, a dashboard credits card, and a top-up dialog (pay from the wallet with a network switch and USDG/ETH, or paste a transaction hash; it waits for confirmations).
-- [x] Tests: 23 new API tests, including **6 against a real EVM (Ganache)** with a test ERC-20, stablecoin and price feed. These found and fixed a stale block-number cache in viem that under-counted confirmations. The browser run on that local chain covered: sign-in, Holder by RFX, a USDG top-up to Builder, a blind comparison with a vote, and the community leaderboard.
+- [x] Tests: 23 new API tests, including **6 against a real EVM (Ganache)** with a test ERC-20, stablecoin and price feed. These found and fixed a stale block-number cache in viem that under-counted confirmations. The browser run on that local chain covered: sign-in, Holder by DLYN, a USDG top-up to Builder, a blind comparison with a vote, and the community leaderboard.
 - Not built (optional in HANDOFF): x402 pay-per-request for agents.
 
 ## 11f. Extras status
@@ -667,11 +667,19 @@ Still untested: `server-setup.sh` on a real Ubuntu host (the sandbox has no syst
   - contrast of the model-maker names.
 - [x] Logo "Prompt Lines" and the logo pack in `brand/` (see `brand/README.md`).
 
+## 11h. Name: Dualyne
+
+The placeholder name Refract is replaced everywhere by **Dualyne**. Nearly every Refract domain was already registered.
+
+- Domain **dualyne.com**, API `api.dualyne.com/v1`, token **$DLYN**, key prefix `dly_live_`, API header `x-dualyne-remaining`.
+- Workspace packages `@dualyne/*`; database, Docker images, Nginx files and server paths use `dualyne`.
+- Unchanged on purpose: the original sources (`docs/refract.html`, `docs/HANDOFF.md`, `CLAUDE_CODE_PROMPT.md`) and the GitHub repository name (`fourtisf/refract`, which can be renamed on GitHub; GitHub redirects the old URL).
+
 ## 12. Before public launch
 
-- **Model ids:** on the server, run `pnpm --filter @refract/api models:resolve` and confirm or update each OpenRouter id. The seed ids (Claude Haiku/Sonnet/Opus 4.5, GPT-5, Gemini 2.5 Pro, Llama 3.3 70B, DeepSeek V3.1, Mistral Small 3.2) could not be verified from the sandbox.
+- **Model ids:** on the server, run `pnpm --filter @dualyne/api models:resolve` and confirm or update each OpenRouter id. The seed ids (Claude Haiku/Sonnet/Opus 4.5, GPT-5, Gemini 2.5 Pro, Llama 3.3 70B, DeepSeek V3.1, Mistral Small 3.2) could not be verified from the sandbox.
 - **Legal:** have a lawyer review `/terms` and `/privacy`, including governing law and the legal entity name (`brand.legalName`), and the token disclaimer.
-- **Brand:** set the final name, domain, social links and `contactEmail` in `packages/config/src/brand.ts`. The logo is chosen: direction G, "Prompt Lines" (a prompt caret plus two answer lines, with a lowercase Geist Mono wordmark). It is used in `components/Logo.tsx`, `app/icon.svg`, the token coin and the social cards (`lib/og.tsx`).
+- **Brand:** the name and domain are set (Dualyne, dualyne.com). Still to add: the social links and `contactEmail` in `packages/config/src/brand.ts`, and register the domain and handles. The logo is chosen: direction G, "Prompt Lines" (a prompt caret plus two answer lines, with a lowercase Geist Mono wordmark). It is used in `components/Logo.tsx`, `app/icon.svg`, the token coin and the social cards (`lib/og.tsx`).
 - **Wallets:** WalletConnect is built in but only switches on with `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (free at cloud.reown.com). It could not be tested from the sandbox, so test it once on the real domain.
 - **Terms of resale:** read OpenRouter's and each provider's terms on reselling access (from HANDOFF).
 - **Translation review:** have a native speaker read `apps/web/lib/i18n/id.ts` once before launch, especially the token disclaimer.

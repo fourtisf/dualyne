@@ -1,4 +1,4 @@
-import type { ApiErrorBody } from "@refract/shared";
+import type { ApiErrorBody } from "@dualyne/shared";
 import { publicConfig } from "./config";
 
 export class ApiRequestError extends Error {

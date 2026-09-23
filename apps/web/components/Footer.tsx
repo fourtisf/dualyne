@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { brand, tokenTicker } from "@refract/config";
+import { brand, tokenTicker } from "@dualyne/config";
 import { getDict, href, type Locale } from "@/lib/i18n";
 import { Logo } from "./Logo";
 

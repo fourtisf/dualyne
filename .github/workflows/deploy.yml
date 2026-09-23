@@ -45,7 +45,7 @@ jobs:
           command_timeout: 35m
           script: |
             set -e
-            cd /opt/refract
+            cd /opt/dualyne
             git fetch --quiet origin main
             git checkout --quiet --force --detach "$SHA"
             ./deploy/scripts/deploy.sh "$SHA"

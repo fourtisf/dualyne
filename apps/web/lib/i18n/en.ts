@@ -1,4 +1,4 @@
-import { brand, tokenTicker } from "@refract/config";
+import { brand, tokenTicker } from "@dualyne/config";
 
 /**
  * English copy, exactly as the site shows it. Other languages implement the same shape

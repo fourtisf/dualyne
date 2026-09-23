@@ -1,7 +1,7 @@
 import { getAddress, stringToHex } from "viem";
 import { createSiweMessage } from "viem/siwe";
-import { brand } from "@refract/config";
-import type { MeResponse } from "@refract/shared";
+import { brand } from "@dualyne/config";
+import type { MeResponse } from "@dualyne/shared";
 import { apiFetch } from "./api";
 import { publicConfig } from "./config";
 

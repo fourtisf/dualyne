@@ -1,4 +1,4 @@
-import type { CompareEvents, Lane } from "@refract/shared";
+import type { CompareEvents, Lane } from "@dualyne/shared";
 
 export class CompareError extends Error {
   constructor(

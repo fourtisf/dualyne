@@ -1,10 +1,10 @@
 import type { Tier } from "./tiers";
 
 /**
- * Display metadata and the launch mapping for every Refract model id.
+ * Display metadata and the launch mapping for every Dualyne model id.
  * The database `models` table is seeded from this list; after that the daily job keeps
  * prices, context length and the upstream name in sync with OpenRouter's catalog.
- * OpenRouter ids change often: `pnpm --filter @refract/api models:resolve` prints the newest
+ * OpenRouter ids change often: `pnpm --filter @dualyne/api models:resolve` prints the newest
  * id for each family so the mapping can be updated.
  */
 export interface ModelDef {

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import type { KeyInfo, MeResponse } from "@refract/shared";
+import type { KeyInfo, MeResponse } from "@dualyne/shared";
 import { ApiRequestError, apiFetch } from "@/lib/api";
 import { publicConfig } from "@/lib/config";
 import { store, today } from "@/lib/storage";
@@ -77,7 +77,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void refresh();
-    const c = store.get<{ remaining: number; at: number } | null>("refract.compare", null);
+    const c = store.get<{ remaining: number; at: number } | null>("dualyne.compare", null);
     if (c && Date.now() - c.at < HOUR_MS) setCompare(c);
   }, [refresh]);
 
@@ -135,14 +135,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const setCompareRemaining = useCallback((remaining: number) => {
     const c = { remaining, at: Date.now() };
-    store.set("refract.compare", c);
+    store.set("dualyne.compare", c);
     setCompare(c);
   }, []);
 
   const recordRun = useCallback(() => {
-    const h = store.get<Record<string, number>>("refract.hist", {});
+    const h = store.get<Record<string, number>>("dualyne.hist", {});
     h[today()] = (h[today()] ?? 0) + 1;
-    store.set("refract.hist", h);
+    store.set("dualyne.hist", h);
     setVersion((v) => v + 1);
   }, []);
 

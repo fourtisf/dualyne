@@ -1,5 +1,5 @@
-# Refract: Nginx site config. deploy/scripts/server-setup.sh renders this file with
-# envsubst (only ${DOMAIN} is replaced) into /etc/nginx/sites-available/refract.conf.
+# Dualyne: Nginx site config. deploy/scripts/server-setup.sh renders this file with
+# envsubst (only ${DOMAIN} is replaced) into /etc/nginx/sites-available/dualyne.conf.
 
 # Real client IPs from Cloudflare (list refreshed weekly by update-cloudflare-ips.sh).
 include /etc/nginx/cloudflare-realip.conf;
@@ -23,7 +23,7 @@ server {
   server_name www.${DOMAIN};
   ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
   ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
-  include /etc/nginx/refract-ssl.conf;
+  include /etc/nginx/dualyne-ssl.conf;
   return 301 https://${DOMAIN}$request_uri;
 }
 
@@ -34,7 +34,7 @@ server {
   server_name ${DOMAIN};
   ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
   ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
-  include /etc/nginx/refract-ssl.conf;
+  include /etc/nginx/dualyne-ssl.conf;
 
   client_max_body_size 1m;
 
@@ -56,7 +56,7 @@ server {
   server_name api.${DOMAIN};
   ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
   ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
-  include /etc/nginx/refract-ssl.conf;
+  include /etc/nginx/dualyne-ssl.conf;
 
   client_max_body_size 8m;
 

@@ -24,7 +24,7 @@ describe("API key auth", () => {
   });
 
   it("rejects a well-formed key that does not exist", async () => {
-    const res = await chat(t.app, `rf_live_${"0".repeat(32)}`, hello("claude-swift"));
+    const res = await chat(t.app, `dly_live_${"0".repeat(32)}`, hello("claude-swift"));
     expect(res.statusCode).toBe(401);
     expect(res.json().error).toMatchObject({ code: "invalid_api_key", type: "authentication_error" });
   });

@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { CatalogModel } from "@refract/shared";
+import type { CatalogModel } from "@dualyne/shared";
 import { getDict, type Locale } from "@/lib/i18n";
 import { CompareConsole } from "../CompareConsole";
 import { OpenWalletButton } from "../WalletProvider";

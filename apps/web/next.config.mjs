@@ -48,7 +48,7 @@ const nextConfig = {
   output: "standalone",
   reactStrictMode: true,
   poweredByHeader: false,
-  transpilePackages: ["@refract/config", "@refract/shared"],
+  transpilePackages: ["@dualyne/config", "@dualyne/shared"],
   experimental: {
     // Trace workspace packages into the standalone output.
     outputFileTracingRoot: path.join(dirname, "../../"),

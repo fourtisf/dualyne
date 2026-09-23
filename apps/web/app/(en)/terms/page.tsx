@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { brand, tokenTicker } from "@refract/config";
+import { brand, tokenTicker } from "@dualyne/config";
 
 // Draft terms. Have them reviewed by a lawyer (including governing law and the legal entity)
 // before public launch.

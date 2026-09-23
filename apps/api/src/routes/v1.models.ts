@@ -1,4 +1,4 @@
-import { tierAllows } from "@refract/shared";
+import { tierAllows } from "@dualyne/shared";
 import type { FastifyPluginAsync } from "fastify";
 
 interface RouteOpts {

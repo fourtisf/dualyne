@@ -7,7 +7,7 @@ import type { AppContext } from "../context";
 import { ApiError } from "../lib/errors";
 import { microToUsd } from "../lib/money";
 import { utcDayStart } from "../lib/time";
-import { brand } from "@refract/config";
+import { brand } from "@dualyne/config";
 import { tokenAmount } from "../tierService";
 
 /** Everything the dashboard needs about the signed-in wallet. */

@@ -12,7 +12,7 @@ export function UnshareButton({ id }: { id: string }) {
   const [state, setState] = useState<"idle" | "confirm" | "busy" | "error">("idle");
 
   useEffect(() => {
-    setToken(store.get<Record<string, string>>("refract.shares", {})[id] ?? null);
+    setToken(store.get<Record<string, string>>("dualyne.shares", {})[id] ?? null);
   }, [id]);
 
   if (!token) return null;
@@ -30,9 +30,9 @@ export function UnshareButton({ id }: { id: string }) {
         body: JSON.stringify({ token }),
       });
       if (!res.ok && res.status !== 404) throw new Error();
-      const all = store.get<Record<string, string>>("refract.shares", {});
+      const all = store.get<Record<string, string>>("dualyne.shares", {});
       delete all[id];
-      store.set("refract.shares", all);
+      store.set("dualyne.shares", all);
       router.replace("/");
     } catch {
       setState("error");

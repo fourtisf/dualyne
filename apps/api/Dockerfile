@@ -1,6 +1,6 @@
-# Refract API. Build from the repository root:
+# Dualyne API. Build from the repository root:
 # The base image already has libssl 3 (needed by Prisma) and busybox wget (healthcheck).
-#   docker build -f apps/api/Dockerfile -t refract-api .
+#   docker build -f apps/api/Dockerfile -t dualyne-api .
 FROM node:22-alpine AS base
 RUN corepack enable
 WORKDIR /repo
@@ -14,14 +14,14 @@ COPY packages/config/package.json packages/config/
 COPY packages/shared/package.json packages/shared/
 
 FROM manifests AS build
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --filter @refract/api...
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --filter @dualyne/api...
 COPY packages packages
 COPY apps/api apps/api
-RUN pnpm --filter @refract/api build
+RUN pnpm --filter @dualyne/api build
 
 # Production dependencies only (prisma CLI is a dependency: the migrate step needs it).
 FROM manifests AS prod
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prod --filter @refract/api...
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prod --filter @dualyne/api...
 COPY packages packages
 COPY apps/api/prisma apps/api/prisma
 RUN cd apps/api && node_modules/.bin/prisma generate

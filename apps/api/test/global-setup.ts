@@ -5,7 +5,7 @@ import { execSync } from "node:child_process";
  * uses in beforeEach, so no database reset is needed.
  */
 export default function setup() {
-  const url = process.env.DATABASE_URL_TEST ?? "postgresql://refract:refract@localhost:5432/refract_test";
+  const url = process.env.DATABASE_URL_TEST ?? "postgresql://dualyne:dualyne@localhost:5432/dualyne_test";
   if (!/_test\b/.test(new URL(url).pathname)) {
     throw new Error(`Refusing to run tests against "${url}": the database name must end in _test.`);
   }

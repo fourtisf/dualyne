@@ -1,4 +1,4 @@
-// Refract database schema. Tables are added phase by phase; see PLAN.md §3.
+// Dualyne database schema. Tables are added phase by phase; see PLAN.md §3.
 
 generator client {
   provider      = "prisma-client-js"
@@ -16,9 +16,9 @@ enum Tier {
   builder
 }
 
-/// Maps a public Refract model id to the OpenRouter model that serves it.
+/// Maps a public Dualyne model id to the OpenRouter model that serves it.
 model Model {
-  id               String     @id // Refract id, e.g. "claude-swift"
+  id               String     @id // Dualyne id, e.g. "claude-swift"
   name             String // "Claude Swift"
   menuName         String // "OpenAI GPT" (Compare menus)
   provider         String // "Anthropic"

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { brand } from "@refract/config";
+import { brand } from "@dualyne/config";
 
 // Drafted to match what the code actually does. Have it reviewed by a lawyer before public launch.
 export const metadata: Metadata = {
@@ -93,7 +93,7 @@ export default function PrivacyPage() {
 
           <h2>Cookies</h2>
           <p>
-            We use one essential cookie, <code>rf_session</code>, to keep you signed in for up to 30 days. It
+            We use one essential cookie, <code>dly_session</code>, to keep you signed in for up to 30 days. It
             is HttpOnly, is only sent to our API and contains a random value, not your address. We don&apos;t
             use tracking or advertising cookies.
           </p>

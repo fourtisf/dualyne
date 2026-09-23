@@ -1,8 +1,8 @@
 /**
- * Show how each Refract model maps onto OpenRouter's live catalog, and update a mapping.
+ * Show how each Dualyne model maps onto OpenRouter's live catalog, and update a mapping.
  *
- *   pnpm --filter @refract/api models:resolve
- *   pnpm --filter @refract/api models:resolve --set gpt=openai/gpt-5.1
+ *   pnpm --filter @dualyne/api models:resolve
+ *   pnpm --filter @dualyne/api models:resolve --set gpt=openai/gpt-5.1
  *
  * Run it on the server (it needs OPENROUTER_API_KEY and DATABASE_URL). After --set, the daily
  * check refreshes prices on its next run; run with --verify to refresh immediately.
@@ -35,11 +35,11 @@ async function main() {
 
     for (const pair of values.set ?? []) {
       const [id, orId] = pair.split("=");
-      if (!id || !orId) throw new Error(`--set expects refractId=openrouter/id, got "${pair}"`);
+      if (!id || !orId) throw new Error(`--set expects dualyneId=openrouter/id, got "${pair}"`);
       const upstream = byId.get(orId);
       if (!upstream) throw new Error(`"${orId}" is not in OpenRouter's catalog`);
       const model = await prisma.model.findUnique({ where: { id } });
-      if (!model) throw new Error(`No Refract model "${id}"`);
+      if (!model) throw new Error(`No Dualyne model "${id}"`);
       await prisma.model.update({
         where: { id },
         data: {

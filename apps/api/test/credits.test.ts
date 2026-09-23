@@ -155,7 +155,7 @@ describe("Builder charging", () => {
     const { key, walletId } = await builderWithKey(25n);
     const res = await chat(t.app, key, hello("claude-deep"));
     expect(res.statusCode).toBe(200);
-    expect(res.headers["x-refract-remaining"]).toBeUndefined();
+    expect(res.headers["x-dualyne-remaining"]).toBeUndefined();
     const acc = await t.prisma.creditAccount.findUniqueOrThrow({ where: { walletId } });
     // json mode costs $0.0005 = 500 micro → charged ceil(575).
     expect(acc.balanceMicroUsd).toBe(25_000_000n - 575n);
@@ -189,6 +189,6 @@ describe("Builder charging", () => {
     expect(me.tier).toBe("explorer");
     const res = await chat(t.app, key, hello("claude-swift"));
     expect(res.statusCode).toBe(200);
-    expect(res.headers["x-refract-remaining"]).toBe("19");
+    expect(res.headers["x-dualyne-remaining"]).toBe("19");
   });
 });

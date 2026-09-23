@@ -1,4 +1,4 @@
-import { brand, tokenTicker } from "@refract/config";
+import { brand, tokenTicker } from "@dualyne/config";
 import type { Dict } from "./en";
 
 /** Bahasa Indonesia. Same shape as en.ts; model, tier and token names are not translated. */

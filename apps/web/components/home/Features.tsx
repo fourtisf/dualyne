@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { brand } from "@refract/config";
+import { brand } from "@dualyne/config";
 import { getDict, type Locale } from "@/lib/i18n";
 
 const bar = (w: string, c: string) => ({ "--w": w, "--c": c }) as CSSProperties;

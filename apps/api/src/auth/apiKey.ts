@@ -1,6 +1,6 @@
 import type { PrismaClient, Tier } from "@prisma/client";
 import type { TierService, TierSource } from "../tierService";
-import { brand } from "@refract/config";
+import { brand } from "@dualyne/config";
 import type { Redis } from "ioredis";
 import { randomBytes } from "node:crypto";
 import { ApiError } from "../lib/errors";

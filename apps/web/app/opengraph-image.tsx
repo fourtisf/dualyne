@@ -1,4 +1,4 @@
-import { brand } from "@refract/config";
+import { brand } from "@dualyne/config";
 import { ogImage, ogSize } from "@/lib/og";
 
 export const alt = `${brand.name}: ${brand.tagline}`;

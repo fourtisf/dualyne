@@ -49,7 +49,7 @@ export interface BuildOptions {
 /** Paths called from the website with the session cookie: CORS limited to our own origins. */
 const CREDENTIALED_PREFIXES = ["/internal/compare", "/auth/", "/me", "/votes"];
 
-export const EXPOSED_HEADERS = ["x-request-id", "x-refract-remaining", "x-compare-remaining", "retry-after"];
+export const EXPOSED_HEADERS = ["x-request-id", "x-dualyne-remaining", "x-compare-remaining", "retry-after"];
 
 export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
   const { env } = opts;
@@ -99,8 +99,8 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
     chain && env.DEPOSIT_ADDRESS && (env.USDG_TOKEN_ADDRESS || env.ETH_USD_FEED_ADDRESS),
   );
   const tierService = new TierService(prisma, redis, chain, {
-    rfxToken: env.RFX_TOKEN_ADDRESS as `0x${string}` | undefined,
-    holderMin: env.HOLDER_MIN_RFX,
+    dlynToken: env.DLYN_TOKEN_ADDRESS as `0x${string}` | undefined,
+    holderMin: env.HOLDER_MIN_DLYN,
     credits: creditsEnabled,
   });
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import type { CatalogModel, Lane, VoteResponse } from "@refract/shared";
+import type { CatalogModel, Lane, VoteResponse } from "@dualyne/shared";
 import { ApiRequestError, apiFetch } from "@/lib/api";
 import { CompareError, runCompare } from "@/lib/compare-client";
 import { publicConfig } from "@/lib/config";
@@ -143,7 +143,7 @@ export function CompareConsole({
 
   useEffect(() => {
     if (/Mac|iPhone|iPad/.test(navigator.platform)) setKmod("⌘");
-    setVotes(store.get<Match[]>("refract.matches", []).length);
+    setVotes(store.get<Match[]>("dualyne.matches", []).length);
   }, []);
 
   useEffect(() => {
@@ -299,14 +299,14 @@ export function CompareConsole({
   const saveLocalVote = (pair: [string, string], w: Match["w"], compareId: string | null) => {
     const r = runRef.current;
     if (!r) return;
-    const ms = store.get<Match[]>("refract.matches", []);
+    const ms = store.get<Match[]>("dualyne.matches", []);
     if (r.matchIdx == null) {
       ms.push({ a: pair[0], b: pair[1], w, ...(compareId ? { compareId } : {}) });
       r.matchIdx = ms.length - 1;
     } else if (ms[r.matchIdx]) {
       ms[r.matchIdx]!.w = w;
     }
-    store.set("refract.matches", ms);
+    store.set("dualyne.matches", ms);
     setVotes(ms.length);
     wallet.bump();
   };
@@ -352,9 +352,9 @@ export function CompareConsole({
         throw new Error(json.error ? apiErrorText(t, json.error.code, json.error.message) : "");
       }
       if (json.token) {
-        const all = store.get<Record<string, string>>("refract.shares", {});
+        const all = store.get<Record<string, string>>("dualyne.shares", {});
         all[json.id] = json.token;
-        store.set("refract.shares", all);
+        store.set("dualyne.shares", all);
       }
       const url = `${window.location.origin}/s/${json.id}`;
       try {

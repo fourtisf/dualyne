@@ -1,4 +1,4 @@
-import { TIER_DEFAULTS, type Tier, type TierPolicy } from "@refract/shared";
+import { TIER_DEFAULTS, type Tier, type TierPolicy } from "@dualyne/shared";
 import type { Env } from "./env";
 
 export type TierPolicies = Record<Tier, TierPolicy>;

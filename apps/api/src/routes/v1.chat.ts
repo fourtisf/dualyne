@@ -1,4 +1,4 @@
-import { MODEL_ID_RE, tierAllows } from "@refract/shared";
+import { MODEL_ID_RE, tierAllows } from "@dualyne/shared";
 import type { FastifyPluginAsync, FastifyReply } from "fastify";
 import { z } from "zod";
 import type { AppContext } from "../context";
@@ -157,10 +157,10 @@ export const chatRoutes: FastifyPluginAsync<RouteOpts> = async (app, opts) => {
           429,
           "quota_exceeded",
           `Daily allowance used up (${policy.dailyRequests} requests for ${policy.label}). It resets at 00:00 UTC.`,
-          { "retry-after": secondsUntilUtcMidnight(ctx.clock()), "x-refract-remaining": 0 },
+          { "retry-after": secondsUntilUtcMidnight(ctx.clock()), "x-dualyne-remaining": 0 },
         );
       }
-      if (quota.remaining !== null) reply.header("x-refract-remaining", quota.remaining);
+      if (quota.remaining !== null) reply.header("x-dualyne-remaining", quota.remaining);
 
       const base = {
         source: "api" as const,
@@ -210,7 +210,7 @@ export const chatRoutes: FastifyPluginAsync<RouteOpts> = async (app, opts) => {
         await ctx.quota.refund(quota.key);
         await ctx.budget.settle(reservation, 0);
         await settleCredits(0);
-        if (quota.remaining !== null) reply.header("x-refract-remaining", quota.remaining + 1);
+        if (quota.remaining !== null) reply.header("x-dualyne-remaining", quota.remaining + 1);
         const upstreamMessage = parseUpstreamError(text);
         req.log.warn({ status: res.status, model: model.id, upstreamMessage }, "upstream returned an error");
         if (res.status === 402) {

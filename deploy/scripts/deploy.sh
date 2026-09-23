@@ -1,5 +1,5 @@
 #!/bin/bash
-# Deploy (or roll back) Refract on the server. Run as the deploy user from anywhere:
+# Deploy (or roll back) Dualyne on the server. Run as the deploy user from anywhere:
 #   deploy.sh                 deploy the latest origin/main
 #   deploy.sh <git-sha>       deploy a specific commit
 #   deploy.sh --rollback      go back to the previously deployed commit
@@ -40,8 +40,8 @@ log "Deploying $target (current: ${current:-none})"
 git checkout --quiet --force --detach "$target"
 export IMAGE_TAG="${target:0:12}"
 
-if docker image inspect "refract-api:$IMAGE_TAG" >/dev/null 2>&1 &&
-   docker image inspect "refract-web:$IMAGE_TAG" >/dev/null 2>&1; then
+if docker image inspect "dualyne-api:$IMAGE_TAG" >/dev/null 2>&1 &&
+   docker image inspect "dualyne-web:$IMAGE_TAG" >/dev/null 2>&1; then
   log "Images for $IMAGE_TAG already exist, skipping build"
 else
   log "Building images $IMAGE_TAG"
@@ -86,7 +86,7 @@ log "Healthy. $target is live."
 
 # Keep the images of the last $KEEP_IMAGES deployed versions for fast rollbacks.
 keep="$(tail -n "$KEEP_IMAGES" "$STATE/history" | cut -c1-12 | sort -u)"
-for repo in refract-api refract-web; do
+for repo in dualyne-api dualyne-web; do
   docker image ls "$repo" --format '{{.Tag}}' | while read -r tag; do
     if [ "$tag" != "latest" ] && ! grep -qx "$tag" <<<"$keep"; then
       docker image rm "$repo:$tag" >/dev/null 2>&1 || true

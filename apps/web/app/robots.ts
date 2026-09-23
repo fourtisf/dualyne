@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { brand } from "@refract/config";
+import { brand } from "@dualyne/config";
 
 export default function robots(): MetadataRoute.Robots {
   return {

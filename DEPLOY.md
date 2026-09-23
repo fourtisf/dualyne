@@ -1,4 +1,4 @@
-# Panduan Deploy Refract
+# Panduan Deploy Dualyne
 
 Panduan ini membawa Anda dari **server kosong** sampai **website live di `https://domainanda.com`**, lengkap dengan deploy otomatis setiap kali ada perubahan di branch `main`. Tidak perlu bisa coding: cukup ikuti langkahnya satu per satu dan salin perintahnya persis.
 
@@ -16,7 +16,7 @@ Perkiraan waktu: 1–2 jam, sebagian besar menunggu DNS dan build pertama.
 | Akun Cloudflare | Gratis, di [cloudflare.com](https://cloudflare.com)                                                                  |
 | VPS             | Ubuntu **22.04 atau 24.04**, minimal **2 vCPU, 4 GB RAM**, 40 GB disk. Contoh: DigitalOcean, Vultr, Hetzner, Contabo |
 | Akun OpenRouter | [openrouter.ai](https://openrouter.ai), isi saldo awal (disarankan $300–1.000)                                       |
-| Akses GitHub    | Repository `refract` dengan akses admin                                                                              |
+| Akses GitHub    | Repository `dualyne` dengan akses admin                                                                              |
 
 ---
 
@@ -70,7 +70,7 @@ Server memakai token ini untuk membuat dan memperpanjang sertifikat HTTPS secara
 ## 6. Buat Cloudflare Turnstile (anti-bot untuk Compare)
 
 1. Buka dashboard Cloudflare → **Turnstile → Add widget**.
-2. Isi nama `Refract`, lalu tambahkan hostname `domainanda.com` dan `www.domainanda.com`.
+2. Isi nama `Dualyne`, lalu tambahkan hostname `domainanda.com` dan `www.domainanda.com`.
 3. _Widget mode_: **Managed**.
 4. Salin **Site Key** dan **Secret Key**.
 
@@ -128,7 +128,7 @@ Script ini akan:
 
 - memasang Docker, Nginx, certbot dan firewall;
 - membuat user `deploy`;
-- mengunduh kode ke `/opt/refract`;
+- mengunduh kode ke `/opt/dualyne`;
 - membuat sertifikat HTTPS dan mengatur Nginx;
 - menutup port web kecuali untuk Cloudflare.
 
@@ -137,7 +137,7 @@ Script aman dijalankan ulang.
 ## 9. Isi file rahasia `.env`
 
 ```bash
-sudo -u deploy nano /opt/refract/.env
+sudo -u deploy nano /opt/dualyne/.env
 ```
 
 Isi setiap nilai yang masih `change-me` atau kosong. Untuk membuat kata sandi acak, buka jendela SSH kedua dan jalankan:
@@ -170,7 +170,7 @@ Simpan dengan `Ctrl+O`, `Enter`, `Ctrl+X`.
 ## 10. Deploy pertama
 
 ```bash
-sudo -u deploy /opt/refract/deploy/scripts/deploy.sh
+sudo -u deploy /opt/dualyne/deploy/scripts/deploy.sh
 ```
 
 Build pertama memakan waktu 5–15 menit. Jika berhasil, baris terakhirnya berbunyi:
@@ -186,7 +186,7 @@ Buka `https://domainanda.com`. Website Anda sudah live.
 Nama model di OpenRouter sering berubah. Cek pemetaannya:
 
 ```bash
-cd /opt/refract
+cd /opt/dualyne
 docker compose -f docker-compose.prod.yml exec api node dist/resolve-models.js
 ```
 
@@ -211,7 +211,7 @@ docker compose -f docker-compose.prod.yml exec api node dist/resolve-models.js -
 
    ```bash
    curl https://api.domainanda.com/v1/chat/completions \
-     -H "Authorization: Bearer rf_live_..." \
+     -H "Authorization: Bearer dly_live_..." \
      -H "Content-Type: application/json" \
      -d '{"model":"gpt","messages":[{"role":"user","content":"Halo"}],"stream":true}'
    ```
@@ -248,13 +248,13 @@ Selesai. Anda bisa melihat prosesnya di tab **Actions** di GitHub: workflow **CI
 - **Manual, ke versi tepat sebelumnya:**
 
   ```bash
-  sudo -u deploy /opt/refract/deploy/scripts/deploy.sh --rollback
+  sudo -u deploy /opt/dualyne/deploy/scripts/deploy.sh --rollback
   ```
 
 - **Manual, ke commit tertentu** (kodenya bisa dilihat di tab Commits di GitHub):
 
   ```bash
-  sudo -u deploy /opt/refract/deploy/scripts/deploy.sh --rollback 37d0b98...
+  sudo -u deploy /opt/dualyne/deploy/scripts/deploy.sh --rollback 37d0b98...
   ```
 
 - **Lewat GitHub:** buka Pull Request yang bermasalah → **Revert**. Setelah di-merge, deploy otomatis mengembalikan versi lama.
@@ -263,17 +263,17 @@ Selesai. Anda bisa melihat prosesnya di tab **Actions** di GitHub: workflow **CI
 
 ## 15. Backup database
 
-- Backup dibuat otomatis setiap hari pukul **03:00 UTC** di folder `/var/backups/refract/`. Hanya **7 hari terakhir** yang disimpan.
+- Backup dibuat otomatis setiap hari pukul **03:00 UTC** di folder `/var/backups/dualyne/`. Hanya **7 hari terakhir** yang disimpan.
 - Untuk backup sekarang juga:
 
   ```bash
-  cd /opt/refract && docker compose -f docker-compose.prod.yml exec backup sh /backup.sh --now
+  cd /opt/dualyne && docker compose -f docker-compose.prod.yml exec backup sh /backup.sh --now
   ```
 
 - Untuk mengunduh backup ke komputer Anda (dijalankan di komputer Anda, bukan di server):
 
   ```bash
-  scp root@203.0.113.10:/var/backups/refract/refract-2026-09-23.dump .
+  scp root@203.0.113.10:/var/backups/dualyne/dualyne-2026-09-23.dump .
   ```
 
   Sebaiknya lakukan rutin, supaya ada salinan di luar server.
@@ -281,12 +281,12 @@ Selesai. Anda bisa melihat prosesnya di tab **Actions** di GitHub: workflow **CI
 - **Restore** (mengganti isi database dengan backup; script akan meminta konfirmasi):
 
   ```bash
-  cd /opt/refract && ./deploy/backup/restore.sh /var/backups/refract/refract-2026-09-23.dump
+  cd /opt/dualyne && ./deploy/backup/restore.sh /var/backups/dualyne/dualyne-2026-09-23.dump
   ```
 
 ## 16. Perintah harian yang berguna
 
-Jalankan dari folder `/opt/refract`:
+Jalankan dari folder `/opt/dualyne`:
 
 | Tujuan               | Perintah                                                                                                  |
 | -------------------- | --------------------------------------------------------------------------------------------------------- |
@@ -321,7 +321,7 @@ Perintah-perintah berikut **menghapus database secara permanen**. Jangan pernah 
 
 Selain itu:
 
-- **Jangan mengedit file di `/opt/refract` langsung di server** (kecuali `.env`). Setiap deploy mengembalikan kode ke versi GitHub.
+- **Jangan mengedit file di `/opt/dualyne` langsung di server** (kecuali `.env`). Setiap deploy mengembalikan kode ke versi GitHub.
 - **Jangan membagikan `.env`**, dan jangan menaruh key OpenRouter di website atau di GitHub.
 
 ## 19. Opsional: notifikasi masalah
@@ -336,18 +336,18 @@ Isi `ALERT_WEBHOOK_URL` di `.env` dengan URL webhook **Slack** atau **Discord** 
 
 Setelah kontrak token dan dompet treasury siap, isi nilai berikut di `.env` (langkah 9), lalu jalankan `deploy.sh`:
 
-| Variabel                    | Isi                                                                            |
-| --------------------------- | ------------------------------------------------------------------------------ |
-| `SIWE_CHAIN_ID`             | ID jaringan token (1 = Ethereum, 8453 = Base, 42161 = Arbitrum)                |
-| `RPC_URL`                   | Endpoint RPC untuk jaringan itu (Alchemy, Infura, QuickNode, dll.)             |
-| `RFX_TOKEN_ADDRESS`         | Alamat kontrak token                                                           |
-| `HOLDER_MIN_RFX`            | Jumlah token untuk tier Holder (default `100000`)                              |
-| `TREASURY_WALLET_ADDRESS`   | Alamat dompet treasury yang menerima fee                                       |
-| `USDG_TOKEN_ADDRESS`        | Alamat kontrak stablecoin (USDG) di jaringan yang sama                         |
-| `TREASURY_START_BLOCK`      | Nomor blok saat dompet treasury mulai dipakai, supaya semua pemasukan tercatat |
-| `NEXT_PUBLIC_RFX_BUY_URL`   | Link tombol **Buy** (misalnya halaman swap)                                    |
-| `NEXT_PUBLIC_RFX_CHART_URL` | Link tombol **View chart** (misalnya DexScreener)                              |
-| `NEXT_PUBLIC_EXPLORER_URL`  | Explorer jaringan, misalnya `https://basescan.org`                             |
+| Variabel                     | Isi                                                                            |
+| ---------------------------- | ------------------------------------------------------------------------------ |
+| `SIWE_CHAIN_ID`              | ID jaringan token (1 = Ethereum, 8453 = Base, 42161 = Arbitrum)                |
+| `RPC_URL`                    | Endpoint RPC untuk jaringan itu (Alchemy, Infura, QuickNode, dll.)             |
+| `DLYN_TOKEN_ADDRESS`         | Alamat kontrak token                                                           |
+| `HOLDER_MIN_DLYN`            | Jumlah token untuk tier Holder (default `100000`)                              |
+| `TREASURY_WALLET_ADDRESS`    | Alamat dompet treasury yang menerima fee                                       |
+| `USDG_TOKEN_ADDRESS`         | Alamat kontrak stablecoin (USDG) di jaringan yang sama                         |
+| `TREASURY_START_BLOCK`       | Nomor blok saat dompet treasury mulai dipakai, supaya semua pemasukan tercatat |
+| `NEXT_PUBLIC_DLYN_BUY_URL`   | Link tombol **Buy** (misalnya halaman swap)                                    |
+| `NEXT_PUBLIC_DLYN_CHART_URL` | Link tombol **View chart** (misalnya DexScreener)                              |
+| `NEXT_PUBLIC_EXPLORER_URL`   | Explorer jaringan, misalnya `https://basescan.org`                             |
 
 Untuk **tier Builder** (kredit prabayar), isi juga:
 
@@ -360,7 +360,7 @@ Untuk **tier Builder** (kredit prabayar), isi juga:
 
 Setelah deploy:
 
-- Wallet yang memegang token minimal `HOLDER_MIN_RFX` otomatis menjadi **Holder**. Saldo dicek ulang tiap 5 menit.
+- Wallet yang memegang token minimal `HOLDER_MIN_DLYN` otomatis menjadi **Holder**. Saldo dicek ulang tiap 5 menit.
 - Bagian **Treasury** di website otomatis berganti dari "Sample data" ke angka asli setelah sinkronisasi pertama, paling lama 1 jam.
 - Konversi fee ke stablecoin dan top-up saldo OpenRouter tetap dilakukan manual. Website hanya mencatat apa yang terlihat di blockchain.
 - Top-up Builder dicek otomatis lewat hash transaksi dan dikreditkan satu kali saja. Tombol **Top up credits** di dashboard aktif setelah `DEPOSIT_ADDRESS` diisi.

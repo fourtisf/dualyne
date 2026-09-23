@@ -60,7 +60,7 @@ export async function startFakeUpstream(): Promise<FakeUpstream> {
     if (path.startsWith("/turnstile")) {
       const token = new URLSearchParams(raw).get("response");
       res.setHeader("content-type", "application/json");
-      res.end(JSON.stringify({ success: token === "good", hostname: "refract.dev", action: "compare" }));
+      res.end(JSON.stringify({ success: token === "good", hostname: "dualyne.com", action: "compare" }));
       return;
     }
     if (path === "/v1/models") {
@@ -328,7 +328,7 @@ export async function siweMessage(
   return createSiweMessage({
     domain: "localhost:3000",
     address: account.address,
-    statement: "Sign in to Refract.",
+    statement: "Sign in to Dualyne.",
     uri: WEB_ORIGIN,
     version: "1",
     chainId: 1,

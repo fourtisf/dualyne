@@ -1,4 +1,4 @@
-import { brand } from "@refract/config";
+import { brand } from "@dualyne/config";
 import { getDict } from "@/lib/i18n";
 import { ogImage, ogSize } from "@/lib/og";
 

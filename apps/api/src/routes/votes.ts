@@ -1,6 +1,6 @@
 import { randomInt } from "node:crypto";
 import type { FastifyPluginAsync } from "fastify";
-import { voteRequestSchema, type LeaderboardResponse, type VoteResponse } from "@refract/shared";
+import { voteRequestSchema, type LeaderboardResponse, type VoteResponse } from "@dualyne/shared";
 import { SESSION_COOKIE } from "../auth/sessions";
 import type { AppContext } from "../context";
 import { recomputeElo } from "../elo";

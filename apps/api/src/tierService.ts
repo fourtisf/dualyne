@@ -11,8 +11,8 @@ export interface TierInfo {
 }
 
 export interface TierOptions {
-  /** RFX token contract; without it (or without a chain) nobody is Holder by balance. */
-  rfxToken?: Address;
+  /** DLYN token contract; without it (or without a chain) nobody is Holder by balance. */
+  dlynToken?: Address;
   /** Whole tokens needed for Holder. */
   holderMin: number;
   /** When Builder credits are enabled, a positive balance makes the wallet Builder. */
@@ -35,17 +35,17 @@ export class TierService {
   ) {}
 
   get tokenEnabled(): boolean {
-    return Boolean(this.opts.rfxToken && this.chain);
+    return Boolean(this.opts.dlynToken && this.chain);
   }
 
   get holderMin(): number {
     return this.opts.holderMin;
   }
 
-  /** Whole-token RFX balance (5-minute cache), or null when the token isn't configured. */
+  /** Whole-token DLYN balance (5-minute cache), or null when the token isn't configured. */
   async tokenBalance(address: string): Promise<{ units: bigint; decimals: number } | null> {
-    if (!this.opts.rfxToken || !this.chain) return null;
-    const key = `rfx:${address.toLowerCase()}`;
+    if (!this.opts.dlynToken || !this.chain) return null;
+    const key = `dlyn:${address.toLowerCase()}`;
     const cached = await this.redis.get(key);
     if (cached) {
       const [u, d] = cached.split(":");
@@ -53,8 +53,8 @@ export class TierService {
     }
     try {
       const [units, decimals] = await Promise.all([
-        this.chain.tokenBalance(this.opts.rfxToken, getAddress(address)),
-        this.chain.tokenDecimals(this.opts.rfxToken),
+        this.chain.tokenBalance(this.opts.dlynToken, getAddress(address)),
+        this.chain.tokenDecimals(this.opts.dlynToken),
       ]);
       const value = `${units}:${decimals}`;
       await this.redis

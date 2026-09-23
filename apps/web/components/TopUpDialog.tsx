@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { encodeFunctionData, erc20Abi, parseEther, parseUnits, toHex, type Address } from "viem";
-import type { CreditsResponse, DepositResponse } from "@refract/shared";
+import type { CreditsResponse, DepositResponse } from "@dualyne/shared";
 import { ApiRequestError, apiFetch } from "@/lib/api";
 import { shortAddr } from "@/lib/format";
 import { apiErrorText } from "@/lib/i18n";

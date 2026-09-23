@@ -6,7 +6,7 @@ export interface TierPolicy {
   rank: number;
   /** Requests per UTC day. null = no cap. */
   dailyRequests: number | null;
-  /** Ceiling applied to max_tokens. null = no Refract ceiling (the model's own limit applies). */
+  /** Ceiling applied to max_tokens. null = no Dualyne ceiling (the model's own limit applies). */
   maxTokens: number | null;
   /** API keys per wallet. null = unlimited. */
   maxKeys: number | null;

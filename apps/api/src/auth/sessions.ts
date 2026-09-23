@@ -2,7 +2,7 @@ import type { PrismaClient, Wallet } from "@prisma/client";
 import { createHmac, randomBytes } from "node:crypto";
 import type { Clock } from "../lib/time";
 
-export const SESSION_COOKIE = "rf_session";
+export const SESSION_COOKIE = "dly_session";
 export const SESSION_TTL_MS = 30 * 24 * 3600 * 1000;
 const TOUCH_EVERY_MS = 5 * 60 * 1000;
 

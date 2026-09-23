@@ -1,4 +1,4 @@
-import type { StatusResponse } from "@refract/shared";
+import type { StatusResponse } from "@dualyne/shared";
 import { getDict, href, type Locale } from "@/lib/i18n";
 import { AutoRefresh } from "./AutoRefresh";
 

@@ -1,4 +1,4 @@
-/* Refract styles. Ported verbatim from docs/refract.html (v1–v6 layers, same cascade order).
+/* Dualyne styles. Ported verbatim from docs/refract.html (v1–v6 layers, same cascade order).
    Deliberate changes are marked "v7" and listed at the end of this file. */
 :root{
   --bg:#050507; --s0:#0A0A0E; --s1:#0F0F14; --s2:#15151C;

@@ -1,5 +1,5 @@
 import "server-only";
-import type { StatusResponse } from "@refract/shared";
+import type { StatusResponse } from "@dualyne/shared";
 
 /** Service status for the status page, or null when the API can't be reached. */
 export async function getStatus(): Promise<StatusResponse | null> {

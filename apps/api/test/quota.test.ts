@@ -11,20 +11,20 @@ beforeEach(async () => {
 afterAll(async () => t?.close());
 
 describe("quota counting", () => {
-  it("counts down x-refract-remaining and returns 429 after the daily limit", async () => {
+  it("counts down x-dualyne-remaining and returns 429 after the daily limit", async () => {
     const { key } = await createKey(t.prisma, "explorer");
     const remaining: string[] = [];
     for (let i = 0; i < 3; i++) {
       const res = await chat(t.app, key, hello("claude-swift"));
       expect(res.statusCode).toBe(200);
-      remaining.push(String(res.headers["x-refract-remaining"]));
+      remaining.push(String(res.headers["x-dualyne-remaining"]));
     }
     expect(remaining).toEqual(["2", "1", "0"]);
 
     const over = await chat(t.app, key, hello("claude-swift"));
     expect(over.statusCode).toBe(429);
     expect(over.json().error.code).toBe("quota_exceeded");
-    expect(over.headers["x-refract-remaining"]).toBe("0");
+    expect(over.headers["x-dualyne-remaining"]).toBe("0");
     expect(Number(over.headers["retry-after"])).toBe(12 * 3600);
     expect(t.upstream.requests).toHaveLength(3);
   });
@@ -56,7 +56,7 @@ describe("quota counting", () => {
     t.now.value = new Date("2026-09-24T00:00:01Z");
     const res = await chat(t.app, key, hello("claude-swift"));
     expect(res.statusCode).toBe(200);
-    expect(res.headers["x-refract-remaining"]).toBe("2");
+    expect(res.headers["x-dualyne-remaining"]).toBe("2");
   });
 
   it("refunds the request when the provider fails", async () => {
@@ -82,7 +82,7 @@ describe("quota counting", () => {
     for (let i = 0; i < 5; i++) {
       const res = await chat(t.app, key, hello("claude-swift"));
       expect(res.statusCode).toBe(200);
-      expect(res.headers["x-refract-remaining"]).toBeUndefined();
+      expect(res.headers["x-dualyne-remaining"]).toBeUndefined();
     }
   });
 });

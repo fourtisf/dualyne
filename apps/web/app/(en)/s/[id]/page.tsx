@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { brand } from "@refract/config";
+import { brand } from "@dualyne/config";
 import { getCatalog } from "@/lib/catalog";
 import { md } from "@/lib/markdown";
 import { UnshareButton } from "./UnshareButton";

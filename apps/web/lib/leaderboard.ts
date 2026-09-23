@@ -1,5 +1,5 @@
 import "server-only";
-import type { LeaderboardResponse } from "@refract/shared";
+import type { LeaderboardResponse } from "@dualyne/shared";
 
 /** Community leaderboard for server components, or null when it can't be read. */
 export async function getLeaderboard(): Promise<LeaderboardResponse | null> {

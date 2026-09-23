@@ -43,7 +43,7 @@ describe("Sign-In With Ethereum", () => {
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ address: account.address.toLowerCase(), tier: "explorer" });
     const cookie = String(res.headers["set-cookie"]);
-    expect(cookie).toMatch(/^rf_session=/);
+    expect(cookie).toMatch(/^dly_session=/);
     expect(cookie).toContain("HttpOnly");
     expect(cookie).toContain("SameSite=Lax");
     // Only an HMAC of the token is stored.
@@ -147,7 +147,7 @@ describe("self-serve API keys", () => {
     const created = await createKey(cookie, { name: "my bot" });
     expect(created.statusCode).toBe(201);
     const body = created.json();
-    expect(body.key).toMatch(/^rf_live_[0-9a-f]{32}$/);
+    expect(body.key).toMatch(/^dly_live_[0-9a-f]{32}$/);
     expect(body.last4).toBe(body.key.slice(-4));
 
     const list = (await me(cookie, "/me/keys")).json();

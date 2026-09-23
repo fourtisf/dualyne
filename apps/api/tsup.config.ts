@@ -14,5 +14,5 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   // Workspace packages ship TypeScript source, so bundle them into the output.
-  noExternal: ["@refract/config", "@refract/shared"],
+  noExternal: ["@dualyne/config", "@dualyne/shared"],
 });

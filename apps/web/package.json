@@ -1,5 +1,5 @@
 {
-  "name": "@refract/web",
+  "name": "@dualyne/web",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -11,8 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@refract/config": "workspace:*",
-    "@refract/shared": "workspace:*",
+    "@dualyne/config": "workspace:*",
+    "@dualyne/shared": "workspace:*",
     "@walletconnect/ethereum-provider": "2.25.0",
     "geist": "1.7.2",
     "next": "14.2.35",

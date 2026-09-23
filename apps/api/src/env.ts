@@ -9,7 +9,7 @@ const schema = z
     HOST: z.string().default("0.0.0.0"),
     API_PORT: z.coerce.number().int().min(1).max(65535).default(4000),
     LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
-    SITE_DOMAIN: z.string().min(1).default("refract.dev"),
+    SITE_DOMAIN: z.string().min(1).default("dualyne.com"),
     /** Comma-separated origins allowed to call /internal/compare. Defaults to https://{SITE_DOMAIN} and www. */
     WEB_ORIGINS: z.string().optional(),
     /** Set to true only when the API sits behind the Nginx config in deploy/ (it overwrites X-Forwarded-For). */
@@ -20,7 +20,7 @@ const schema = z
 
     OPENROUTER_API_KEY: z.string().default(""),
     OPENROUTER_BASE_URL: z.string().url().default("https://openrouter.ai/api/v1"),
-    OPENROUTER_APP_TITLE: z.string().default("Refract"),
+    OPENROUTER_APP_TITLE: z.string().default("Dualyne"),
 
     TURNSTILE_SECRET_KEY: z.string().default(""),
     TURNSTILE_VERIFY_URL: z
@@ -71,12 +71,12 @@ const schema = z
     EXPLORER_API_KEY: z.string().default(""),
 
     // Token tier and treasury (Phase 4)
-    RFX_TOKEN_ADDRESS: z
+    DLYN_TOKEN_ADDRESS: z
       .string()
       .regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x address")
       .optional()
       .or(z.literal("").transform(() => undefined)),
-    HOLDER_MIN_RFX: z.coerce.number().positive().default(100_000),
+    HOLDER_MIN_DLYN: z.coerce.number().positive().default(100_000),
     TREASURY_WALLET_ADDRESS: z
       .string()
       .regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x address")

@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { MODEL_DEFS } from "@refract/shared";
+import { MODEL_DEFS } from "@dualyne/shared";
 import { pathToFileURL } from "node:url";
 
 /**

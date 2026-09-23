@@ -1,11 +1,11 @@
 #!/bin/bash
-# One-time setup of a fresh Ubuntu 22.04 / 24.04 server for Refract.
+# One-time setup of a fresh Ubuntu 22.04 / 24.04 server for Dualyne.
 # Run as root:
 #   DOMAIN=example.com EMAIL=you@example.com CF_API_TOKEN=... \
 #   REPO=git@github.com:OWNER/refract.git bash server-setup.sh
 #
 # It installs Docker, Nginx, certbot (Cloudflare DNS challenge) and a firewall, creates the
-# "deploy" user, clones the repo into /opt/refract, gets the HTTPS certificate and configures
+# "deploy" user, clones the repo into /opt/dualyne, gets the HTTPS certificate and configures
 # Nginx. It never deletes data and can be re-run safely.
 set -euo pipefail
 
@@ -14,7 +14,7 @@ set -euo pipefail
 : "${CF_API_TOKEN:?Set CF_API_TOKEN (Cloudflare token with Zone:DNS:Edit on this domain)}"
 : "${REPO:?Set REPO, e.g. git@github.com:OWNER/refract.git}"
 DEPLOY_USER="${DEPLOY_USER:-deploy}"
-APP_DIR="${APP_DIR:-/opt/refract}"
+APP_DIR="${APP_DIR:-/opt/dualyne}"
 
 [ "$(id -u)" -eq 0 ] || { echo "Run as root (sudo -i)." >&2; exit 1; }
 log() { printf '\n\033[1;35m==> %s\033[0m\n' "$*"; }
@@ -51,13 +51,13 @@ chown "$DEPLOY_USER:$DEPLOY_USER" "/home/$DEPLOY_USER/.ssh/authorized_keys"
 chmod 600 "/home/$DEPLOY_USER/.ssh/authorized_keys"
 # Key the server uses to pull the (private) GitHub repo: add it as a read-only Deploy key.
 if [ ! -f "/home/$DEPLOY_USER/.ssh/id_ed25519" ]; then
-  sudo -u "$DEPLOY_USER" ssh-keygen -q -t ed25519 -N "" -C "refract-server" -f "/home/$DEPLOY_USER/.ssh/id_ed25519"
+  sudo -u "$DEPLOY_USER" ssh-keygen -q -t ed25519 -N "" -C "dualyne-server" -f "/home/$DEPLOY_USER/.ssh/id_ed25519"
 fi
 sudo -u "$DEPLOY_USER" sh -c 'ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null; sort -u -o ~/.ssh/known_hosts ~/.ssh/known_hosts'
 
 log "Preparing $APP_DIR and backup folder"
 install -d -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$APP_DIR"
-install -d -m 750 -o root -g "$DEPLOY_USER" /var/backups/refract
+install -d -m 750 -o root -g "$DEPLOY_USER" /var/backups/dualyne
 if [ ! -d "$APP_DIR/.git" ]; then
   if ! sudo -u "$DEPLOY_USER" git clone -q "$REPO" "$APP_DIR"; then
     echo
@@ -84,11 +84,11 @@ fi
 systemctl enable --now certbot.timer 2>/dev/null || true
 
 log "Configuring Nginx"
-install -m 644 "$APP_DIR/deploy/nginx/refract-ssl.conf" /etc/nginx/refract-ssl.conf
+install -m 644 "$APP_DIR/deploy/nginx/dualyne-ssl.conf" /etc/nginx/dualyne-ssl.conf
 [ -f /etc/nginx/cloudflare-realip.conf ] || echo "# filled by update-cloudflare-ips.sh" > /etc/nginx/cloudflare-realip.conf
 # shellcheck disable=SC2016 # literal ${DOMAIN}: envsubst replaces only that variable
-DOMAIN="$DOMAIN" envsubst '${DOMAIN}' < "$APP_DIR/deploy/nginx/refract.conf.template" > /etc/nginx/sites-available/refract.conf
-ln -sf /etc/nginx/sites-available/refract.conf /etc/nginx/sites-enabled/refract.conf
+DOMAIN="$DOMAIN" envsubst '${DOMAIN}' < "$APP_DIR/deploy/nginx/dualyne.conf.template" > /etc/nginx/sites-available/dualyne.conf
+ln -sf /etc/nginx/sites-available/dualyne.conf /etc/nginx/sites-enabled/dualyne.conf
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
 systemctl enable --now nginx
@@ -98,11 +98,11 @@ log "Firewall: SSH from anywhere, web ports only from Cloudflare"
 ufw allow OpenSSH >/dev/null
 "$APP_DIR/deploy/nginx/update-cloudflare-ips.sh"
 ufw --force enable
-cat > /etc/cron.weekly/refract-cloudflare-ips <<CRON
+cat > /etc/cron.weekly/dualyne-cloudflare-ips <<CRON
 #!/bin/sh
-$APP_DIR/deploy/nginx/update-cloudflare-ips.sh >/var/log/refract-cloudflare-ips.log 2>&1
+$APP_DIR/deploy/nginx/update-cloudflare-ips.sh >/var/log/dualyne-cloudflare-ips.log 2>&1
 CRON
-chmod +x /etc/cron.weekly/refract-cloudflare-ips
+chmod +x /etc/cron.weekly/dualyne-cloudflare-ips
 
 if [ ! -f "$APP_DIR/.env" ]; then
   install -m 600 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$APP_DIR/.env.production.example" "$APP_DIR/.env"

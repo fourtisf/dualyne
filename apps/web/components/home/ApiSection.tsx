@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { brand } from "@refract/config";
+import { brand } from "@dualyne/config";
 import type { Dict } from "@/lib/i18n";
 import { useT } from "../LocaleProvider";
 import { Check } from "./Check";

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { brand } from "@refract/config";
-import type { KeyInfo, MeResponse } from "@refract/shared";
+import { brand } from "@dualyne/config";
+import type { KeyInfo, MeResponse } from "@dualyne/shared";
 import { ApiRequestError } from "@/lib/api";
 import { apiErrorText, type Dict } from "@/lib/i18n";
 import { shortAddr } from "@/lib/format";

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { brand } from "@refract/config";
+import { brand } from "@dualyne/config";
 import { shortAddr } from "@/lib/format";
 import { href, switchPath } from "@/lib/i18n";
 import { Logo } from "./Logo";

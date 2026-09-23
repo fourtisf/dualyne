@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { brand } from "@refract/config";
+import { brand } from "@dualyne/config";
 import { getDict, type Locale } from "./i18n";
 
 /** Site-wide metadata for a language's root layout. */

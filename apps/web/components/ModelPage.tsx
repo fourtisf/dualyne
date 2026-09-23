@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import { brand } from "@refract/config";
-import { TIER_DEFAULTS, type CatalogModel, type LeaderboardResponse } from "@refract/shared";
+import { brand } from "@dualyne/config";
+import { TIER_DEFAULTS, type CatalogModel, type LeaderboardResponse } from "@dualyne/shared";
 import { formatContext, formatPerMTok } from "@/lib/format";
 import { getDict, href, type Locale } from "@/lib/i18n";
 import { OpenWalletButton } from "./WalletProvider";

@@ -10,7 +10,7 @@ import {
   type TestContext,
 } from "./helpers";
 
-const RFX = "0x1111111111111111111111111111111111111111";
+const DLYN = "0x1111111111111111111111111111111111111111";
 const TREASURY = "0x2222222222222222222222222222222222222222";
 const USDG = "0x3333333333333333333333333333333333333333";
 const E18 = 10n ** 18n;
@@ -21,8 +21,8 @@ beforeEach(async () => {
   if (!t) {
     t = await createTestContext(
       {
-        RFX_TOKEN_ADDRESS: RFX,
-        HOLDER_MIN_RFX: "100000",
+        DLYN_TOKEN_ADDRESS: DLYN,
+        HOLDER_MIN_DLYN: "100000",
         TREASURY_WALLET_ADDRESS: TREASURY,
         USDG_TOKEN_ADDRESS: USDG,
         CHAIN_CONFIRMATIONS: "3",
@@ -41,58 +41,58 @@ beforeEach(async () => {
 });
 afterAll(async () => t?.close());
 
-const setRfx = (address: string, whole: bigint) =>
-  chain.tokenBalances.set(`${RFX}:${address.toLowerCase()}`, whole * E18);
+const setDlyn = (address: string, whole: bigint) =>
+  chain.tokenBalances.set(`${DLYN}:${address.toLowerCase()}`, whole * E18);
 
-describe("Holder tier from the on-chain RFX balance", () => {
-  it("makes a wallet Holder at exactly 100,000 RFX, not below", async () => {
+describe("Holder tier from the on-chain DLYN balance", () => {
+  it("makes a wallet Holder at exactly 100,000 DLYN, not below", async () => {
     const below = await createKey(t.prisma, "explorer", `0x${"4".repeat(40)}`);
     await t.prisma.wallet.update({ where: { address: below.address }, data: { tierOverride: null } });
-    setRfx(below.address, 99_999n);
+    setDlyn(below.address, 99_999n);
     expect((await chat(t.app, below.key, hello("gpt"))).statusCode).toBe(403);
 
     const at = await createKey(t.prisma, "explorer", `0x${"5".repeat(40)}`);
     await t.prisma.wallet.update({ where: { address: at.address }, data: { tierOverride: null } });
-    setRfx(at.address, 100_000n);
+    setDlyn(at.address, 100_000n);
     const res = await chat(t.app, at.key, hello("gpt"));
     expect(res.statusCode).toBe(200);
-    expect(res.headers["x-refract-remaining"]).toBe("249");
+    expect(res.headers["x-dualyne-remaining"]).toBe("249");
   });
 
   it("caches the balance for 5 minutes", async () => {
     const tiers = t.app.ctx.tierService;
     const addr = `0x${"6".repeat(40)}`;
-    setRfx(addr, 200_000n);
+    setDlyn(addr, 200_000n);
     expect(await tiers.isHolder(addr)).toBe(true);
     const calls = chain.calls;
-    setRfx(addr, 0n);
+    setDlyn(addr, 0n);
     expect(await tiers.isHolder(addr)).toBe(true); // cached
     expect(chain.calls).toBe(calls);
-    expect(await t.redis.ttl(`rfx:${addr}`)).toBeLessThanOrEqual(300);
-    await t.redis.del(`rfx:${addr}`);
+    expect(await t.redis.ttl(`dlyn:${addr}`)).toBeLessThanOrEqual(300);
+    await t.redis.del(`dlyn:${addr}`);
     expect(await tiers.isHolder(addr)).toBe(false);
   });
 
   it("keeps the last known balance when the chain is briefly unreachable", async () => {
     const tiers = t.app.ctx.tierService;
     const addr = `0x${"7".repeat(40)}`;
-    setRfx(addr, 150_000n);
+    setDlyn(addr, 150_000n);
     expect(await tiers.isHolder(addr)).toBe(true);
-    await t.redis.del(`rfx:${addr}`); // 5-minute cache expired
+    await t.redis.del(`dlyn:${addr}`); // 5-minute cache expired
     chain.failing = true;
     expect(await tiers.isHolder(addr)).toBe(true);
   });
 
   it("shows the balance and tier source in /me", async () => {
     const account = newAccount();
-    setRfx(account.address, 123_456n); // bought before signing in
+    setDlyn(account.address, 123_456n); // bought before signing in
     const { cookie } = await signIn(t, account);
     const me = (await t.app.inject({ method: "GET", url: "/me", headers: { cookie } })).json();
     expect(me).toMatchObject({
       tier: "holder",
       tierSource: "token",
       keys: { max: 5 },
-      token: { balance: 123456, holderMin: 100000, symbol: "RFX" },
+      token: { balance: 123456, holderMin: 100000, symbol: "DLYN" },
     });
   });
 });

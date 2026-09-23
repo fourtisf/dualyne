@@ -18,8 +18,8 @@ from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
 from fontTools.ttLib import TTFont
 
-NAME = "refract"  # the wordmark is set lowercase
-TOKEN = "$RFX"
+NAME = "dualyne"  # the wordmark is set lowercase
+TOKEN = "$DLYN"
 TAGLINE = "Every AI model, one prompt away."
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -98,7 +98,7 @@ variants = {
     "-black": ("#000000",) * 3,
 }
 for suffix, (ink, a, b) in variants.items():
-    write(f"svg/refract-mark{suffix}.svg", svg_doc(MARK_VIEW, mark(ink, a, b)))
+    write(f"svg/dualyne-mark{suffix}.svg", svg_doc(MARK_VIEW, mark(ink, a, b)))
 
 # Horizontal logo: mark + wordmark, laid out like the site's nav (font 100 units).
 F = 100
@@ -115,7 +115,7 @@ LOGO_VIEW = f"{left - PAD:.2f} {top - PAD:.2f} {right - left + 2 * PAD:.2f} {bot
 LOGO_W, LOGO_H = right - left + 2 * PAD, bottom - top + 2 * PAD
 for suffix, (ink, a, b) in variants.items():
     body = mark(ink, a, b, K) + f'<path d="{word_d}" fill="{ink}"/>'
-    write(f"svg/refract-logo{suffix}.svg", svg_doc(LOGO_VIEW, body))
+    write(f"svg/dualyne-logo{suffix}.svg", svg_doc(LOGO_VIEW, body))
 
 # App icon: the mark on the brand background, rounded like an iOS icon (radius 22.37%).
 APP = svg_doc(
@@ -124,16 +124,16 @@ APP = svg_doc(
     f'<rect x="1" y="1" width="1022" height="1022" rx="228" fill="none" stroke="#FFFFFF" stroke-opacity=".07" stroke-width="2"/>'
     + mark(INK_DARK_BG, CYAN, PINK, k=10.24 * 0.78, dx=512 - 49.5 * 10.24 * 0.78, dy=512 - 50.5 * 10.24 * 0.78),
 )
-write("svg/refract-app-icon.svg", APP)
+write("svg/dualyne-app-icon.svg", APP)
 # Square avatar for X, Telegram, Discord (they crop to a circle; the mark stays inside it).
 AVATAR = svg_doc(
     "0 0 800 800",
     f'<rect width="800" height="800" fill="{BG}"/>'
     + mark(INK_DARK_BG, CYAN, PINK, k=5.2, dx=400 - 49.5 * 5.2, dy=400 - 50.5 * 5.2),
 )
-write("svg/refract-avatar.svg", AVATAR)
+write("svg/dualyne-avatar.svg", AVATAR)
 
-# $RFX token: the brand spectrum disc with the white mark.
+# $DLYN token: the brand spectrum disc with the white mark.
 COIN = svg_doc(
     "0 0 512 512",
     '<defs><linearGradient id="c" x1="0" y1="0" x2="1" y2="1">'
@@ -143,7 +143,7 @@ COIN = svg_doc(
     '<circle cx="256" cy="256" r="244" fill="none" stroke="#FFFFFF" stroke-opacity=".28" stroke-width="10"/>'
     + mark("#FFFFFF", "#FFFFFF", "#FFFFFF", k=3.3, dx=256 - 49.5 * 3.3, dy=256 - 50.5 * 3.3),
 )
-write("svg/rfx-token.svg", COIN)
+write("svg/dlyn-token.svg", COIN)
 
 # X / Twitter header 1500×500: logo left, tagline under it.
 tag_d, (tx0, ty0, tx1, ty1), _ = text_path(SANS, TAGLINE, 44, -0.01, 0, 0)
@@ -158,7 +158,7 @@ BANNER = svg_doc(
     f'<rect width="1500" height="500" fill="{BG}"/>'
     f'{banner_logo}<path d="{tag_d}" fill="#8A8A94" transform="translate({150 + 13 * K * lk - tx0:.2f} 300)"/>',
 )
-write("svg/refract-x-banner.svg", BANNER)
+write("svg/dualyne-x-banner.svg", BANNER)
 
 # ---------- PNG (Chromium) ----------
 
@@ -198,22 +198,22 @@ for suffix, (ink, a, b) in variants.items():
         + f'<path d="{word_d}" fill="{ink}"/></g>'
     )
     src = on_background(f"logo{suffix}", 2400, 1200, fill, logo)
-    jobs.append((src, f"png/refract-logo{suffix}-2400x1200.png", 2400, 1200, False))
+    jobs.append((src, f"png/dualyne-logo{suffix}-2400x1200.png", 2400, 1200, False))
     # Mark: 1024 square, the mark 60% wide.
     k = 7.5
     src = on_background(f"mark{suffix}", 1024, 1024, fill, mark(ink, a, b, k, 512 - 49.5 * k, 512 - 50.5 * k))
-    jobs.append((src, f"png/refract-mark{suffix}-1024.png", 1024, 1024, False))
+    jobs.append((src, f"png/dualyne-mark{suffix}-1024.png", 1024, 1024, False))
     # Transparent copies.
     h = round(2000 * LOGO_H / LOGO_W)
-    jobs.append((f"svg/refract-logo{suffix}.svg", f"png/transparent/refract-logo{suffix}-2000.png", 2000, h, True))
-    jobs.append((f"svg/refract-mark{suffix}.svg", f"png/transparent/refract-mark{suffix}-1024.png", 1024, 1024, True))
+    jobs.append((f"svg/dualyne-logo{suffix}.svg", f"png/transparent/dualyne-logo{suffix}-2000.png", 2000, h, True))
+    jobs.append((f"svg/dualyne-mark{suffix}.svg", f"png/transparent/dualyne-mark{suffix}-1024.png", 1024, 1024, True))
 
 # App icon PNGs are full squares with no transparency (app stores require it; the phone
 # rounds the corners itself). The SVG keeps its rounded corners for the web.
 k = 10.24 * 0.78
 app_square = on_background("app", 1024, 1024, BG, mark(INK_DARK_BG, CYAN, PINK, k, 512 - 49.5 * k, 512 - 50.5 * k))
 for size in (1024, 512, 192, 180, 32):
-    jobs.append((app_square, f"png/refract-app-icon-{size}.png", size, size, False))
+    jobs.append((app_square, f"png/dualyne-app-icon-{size}.png", size, size, False))
 
 # Token PNGs: the brand gradient edge to edge with the white mark, so a platform's round
 # crop shows the coin and the square file has no empty corners.
@@ -228,10 +228,10 @@ with open(coin_square, "w") as f:
     f.write(svg_doc("0 0 512 512", COIN_GRADIENT + '<rect width="512" height="512" fill="url(#bgg)"/>'
                     + mark("#FFFFFF", "#FFFFFF", "#FFFFFF", k, 256 - 49.5 * k, 256 - 50.5 * k)))
 for size in (1024, 512, 256, 200):
-    jobs.append((coin_square, f"png/rfx-token-{size}.png", size, size, False))
+    jobs.append((coin_square, f"png/dlyn-token-{size}.png", size, size, False))
 
-jobs.append(("svg/refract-avatar.svg", "png/refract-avatar-800.png", 800, 800, False))
-jobs.append(("svg/refract-x-banner.svg", "png/refract-x-banner-1500x500.png", 1500, 500, False))
+jobs.append(("svg/dualyne-avatar.svg", "png/dualyne-avatar-800.png", 800, 800, False))
+jobs.append(("svg/dualyne-x-banner.svg", "png/dualyne-x-banner-1500x500.png", 1500, 500, False))
 
 # Brand sheet: one page with the logo, variants, colours, type and usage rules.
 def inline(rel):
@@ -275,14 +275,14 @@ ul{{margin:28px 0 0;padding:0;list-style:none;display:grid;gap:10px}}
 li{{color:#C9C9D1;font-size:14.5px;padding-left:18px;position:relative}}
 li:before{{content:"";position:absolute;left:0;top:9px;width:8px;height:3px;border-radius:2px;background:{CYAN}}}
 </style></head><body>
-<div class="top"><div style="width:420px;height:78px">{inline("svg/refract-logo.svg")}</div>
+<div class="top"><div style="width:420px;height:78px">{inline("svg/dualyne-logo.svg")}</div>
 <div class="meta">brand kit · v1<br>{TOKEN} · {TAGLINE}</div></div>
 <h2>Logo</h2>
 <div class="grid logos">
-<div class="card"><div style="width:100%;height:52px">{inline("svg/refract-logo.svg")}</div></div>
-<div class="card" style="background:#FAF9F5"><div style="width:100%;height:52px">{inline("svg/refract-logo-on-light.svg")}</div></div>
-<div class="card" style="background:#7C3AED;border:0"><div style="width:100%;height:52px">{inline("svg/refract-logo-white.svg")}</div></div>
-<div class="card" style="background:#E7E7EA"><div style="width:100%;height:52px">{inline("svg/refract-logo-black.svg")}</div></div>
+<div class="card"><div style="width:100%;height:52px">{inline("svg/dualyne-logo.svg")}</div></div>
+<div class="card" style="background:#FAF9F5"><div style="width:100%;height:52px">{inline("svg/dualyne-logo-on-light.svg")}</div></div>
+<div class="card" style="background:#7C3AED;border:0"><div style="width:100%;height:52px">{inline("svg/dualyne-logo-white.svg")}</div></div>
+<div class="card" style="background:#E7E7EA"><div style="width:100%;height:52px">{inline("svg/dualyne-logo-black.svg")}</div></div>
 </div>
 <div class="row"><div>
 <h2>Colour</h2>
@@ -303,9 +303,9 @@ li:before{{content:"";position:absolute;left:0;top:9px;width:8px;height:3px;bord
 </div><div>
 <h2>Icons</h2>
 <div class="grid apps">
-<div class="card"><div>{inline("svg/refract-app-icon.svg")}</div><small>App icon</small></div>
-<div class="card"><div>{inline("svg/rfx-token.svg")}</div><small>{TOKEN} token</small></div>
-<div class="card"><div style="border-radius:52px;overflow:hidden">{inline("svg/refract-avatar.svg")}</div><small>Social avatar</small></div>
+<div class="card"><div>{inline("svg/dualyne-app-icon.svg")}</div><small>App icon</small></div>
+<div class="card"><div>{inline("svg/dlyn-token.svg")}</div><small>{TOKEN} token</small></div>
+<div class="card"><div style="border-radius:52px;overflow:hidden">{inline("svg/dualyne-avatar.svg")}</div><small>Social avatar</small></div>
 </div>
 <ul>
 <li>Keep clear space around the logo of at least the caret's height.</li>
@@ -329,7 +329,7 @@ subprocess.run(
 # favicon.ico (16, 32, 48) from the app icon.
 from PIL import Image  # noqa: E402
 
-Image.open(os.path.join(HERE, "png", "refract-app-icon-512.png")).save(
+Image.open(os.path.join(HERE, "png", "dualyne-app-icon-512.png")).save(
     os.path.join(HERE, "favicon.ico"), sizes=[(16, 16), (32, 32), (48, 48)]
 )
 os.remove(os.path.join(HERE, "sheet.html"))
