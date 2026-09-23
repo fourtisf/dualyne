@@ -6,26 +6,30 @@ import type { CreditsResponse, MeResponse, UsageResponse } from "@refract/shared
 import { apiFetch } from "@/lib/api";
 import { publicConfig } from "@/lib/config";
 import { formatRunCost, shortAddr } from "@/lib/format";
+import type { Dict } from "@/lib/i18n";
+import { useT } from "./LocaleProvider";
 import { TopUpDialog } from "./TopUpDialog";
 import { useWallet } from "./WalletProvider";
 
 const HOLDER_MIN = "100,000";
 
-function tierNote(me: MeResponse): string {
+function tierNote(t: Dict["dashboard"], me: MeResponse): string {
   switch (me.tierSource) {
     case "override":
-      return "Set by the team";
+      return t.tierOverride;
     case "credits":
-      return "Paid from your prepaid credits";
+      return t.tierCredits;
     case "token":
-      return `Holding ${brand.tokenSymbol}. Paid for by the treasury.`;
+      return t.tierToken;
     default:
-      return `Hold ${me.token ? me.token.holderMin.toLocaleString("en-US") : HOLDER_MIN} ${brand.tokenSymbol} to unlock Holder`;
+      return t.tierHold(me.token ? me.token.holderMin.toLocaleString("en-US") : HOLDER_MIN);
   }
 }
 
 export function DashboardView() {
   const w = useWallet();
+  const d = useT();
+  const t = d.dashboard;
   const [usage, setUsage] = useState<UsageResponse | null>(null);
   const [credits, setCredits] = useState<CreditsResponse | null>(null);
   const [topUp, setTopUp] = useState(false);
@@ -52,7 +56,7 @@ export function DashboardView() {
   if (me === undefined) {
     return (
       <div className="dash-head">
-        <h1 className="grad">Dashboard</h1>
+        <h1 className="grad">{t.title}</h1>
       </div>
     );
   }
@@ -61,13 +65,13 @@ export function DashboardView() {
     return (
       <>
         <div className="dash-head">
-          <h1 className="grad">Dashboard</h1>
+          <h1 className="grad">{t.title}</h1>
         </div>
         <div className="gate">
-          <h2>Connect a wallet to see your usage</h2>
-          <p>Your wallet is your account. Signing in takes one signature and no gas.</p>
+          <h2>{t.gateTitle}</h2>
+          <p>{t.gateText}</p>
           <button className="btn lg" type="button" id="dashConnect" onClick={w.openModal}>
-            Connect wallet
+            {t.connect}
           </button>
         </div>
       </>
@@ -75,12 +79,15 @@ export function DashboardView() {
   }
 
   const limit = me.limits.dailyRequests;
-  const days = (usage?.days ?? []).map((d) => ({
-    ...d,
-    lab: new Date(`${d.day}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }),
+  const days = (usage?.days ?? []).map((x) => ({
+    ...x,
+    lab: new Date(`${x.day}T12:00:00Z`).toLocaleDateString(d.dateLocale, {
+      weekday: "short",
+      timeZone: "UTC",
+    }),
   }));
-  const max = Math.max(1, ...days.map((d) => d.requests));
-  const week = days.reduce((a, d) => a + d.requests, 0);
+  const max = Math.max(1, ...days.map((x) => x.requests));
+  const week = days.reduce((a, x) => a + x.requests, 0);
 
   return (
     <>
@@ -90,29 +97,29 @@ export function DashboardView() {
             <i />
             {shortAddr(me.address)}
           </div>
-          <h1 className="grad">Dashboard</h1>
+          <h1 className="grad">{t.title}</h1>
         </div>
         <span className="sp" />
         <button className="btn dark" type="button" id="dKeys" onClick={w.openModal}>
-          Manage keys
+          {t.manageKeys}
         </button>
         <button
           className="btn"
           type="button"
           disabled={!creditsOn}
-          title={creditsOn ? undefined : "Available when the Builder tier launches"}
+          title={creditsOn ? undefined : t.topUpSoon}
           onClick={() => setTopUp(true)}
         >
-          Top up credits
+          {t.topUp}
         </button>
       </div>
       <div className="dgrid">
         <div className="card">
-          <div className="l">Requests today</div>
+          <div className="l">{t.requestsToday}</div>
           <div className="v">
             {me.usage.today}{" "}
             <span style={{ fontSize: 16, color: "var(--muted)", letterSpacing: 0 }}>
-              {limit === null ? "no cap" : `of ${limit}`}
+              {limit === null ? t.noCap : `${t.of} ${limit}`}
             </span>
           </div>
           <div className="meter">
@@ -120,49 +127,50 @@ export function DashboardView() {
           </div>
         </div>
         <div className="card">
-          <div className="l">Current tier</div>
+          <div className="l">{t.tier}</div>
           <div className="v">{me.tierLabel}</div>
-          <div className="s">{tierNote(me)}</div>
+          <div className="s">{tierNote(t, me)}</div>
         </div>
         <div className="card">
-          <div className="l">Active keys</div>
+          <div className="l">{t.keys}</div>
           <div className="v">
             {me.keys.count}
             {me.keys.max !== null && (
-              <span style={{ fontSize: 16, color: "var(--muted)", letterSpacing: 0 }}> of {me.keys.max}</span>
+              <span style={{ fontSize: 16, color: "var(--muted)", letterSpacing: 0 }}>
+                {" "}
+                {t.of} {me.keys.max}
+              </span>
             )}
           </div>
-          <div className="s">
-            {me.keys.count ? "Revoke any key from Manage keys" : "Create a key to call the API"}
-          </div>
+          <div className="s">{me.keys.count ? t.keysSome : t.keysNone}</div>
         </div>
         <div className="card span3">
           <div className="l" style={{ display: "flex", justifyContent: "space-between" }}>
-            <span>Requests, last 7 days</span>
-            <span>{week} total</span>
+            <span>{t.week}</span>
+            <span>{t.total(week)}</span>
           </div>
           <div className="bars">
-            {days.map((d) => (
-              <div key={d.day}>
+            {days.map((x) => (
+              <div key={x.day}>
                 <i
-                  style={{ height: `${Math.max(2, (d.requests / max) * 100)}%` }}
-                  title={`${d.requests} requests`}
+                  style={{ height: `${Math.max(2, (x.requests / max) * 100)}%` }}
+                  title={t.requestsTitle(x.requests)}
                 />
-                <span>{d.lab}</span>
+                <span>{x.lab}</span>
               </div>
             ))}
           </div>
         </div>
         <div className="card span3">
-          <div className="l">Usage per key, last 7 days</div>
+          <div className="l">{t.perKey}</div>
           {usage && usage.byKey.length ? (
             <div className="tbl" style={{ marginTop: 10 }}>
               <table>
                 <thead>
                   <tr>
-                    <th>Key</th>
-                    <th className="num">Requests</th>
-                    <th className="num">Model cost</th>
+                    <th>{t.th.key}</th>
+                    <th className="num">{t.th.requests}</th>
+                    <th className="num">{t.th.cost}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -182,51 +190,45 @@ export function DashboardView() {
               </table>
             </div>
           ) : (
-            <div className="s">
-              No keys yet. Create one from Manage keys, then call the API to see usage here.
-            </div>
+            <div className="s">{t.perKeyEmpty}</div>
           )}
         </div>
         {creditsOn && (
           <div className="card span3">
             <div className="l" style={{ display: "flex", justifyContent: "space-between" }}>
-              <span>Prepaid credits</span>
-              <span>Model cost + {Math.round((creditsOn.markup - 1) * 100)}%</span>
+              <span>{t.credits}</span>
+              <span>{t.markup(Math.round((creditsOn.markup - 1) * 100))}</span>
             </div>
             <div className="v">${creditsOn.balanceUsd.toFixed(2)}</div>
-            <div className="s">
-              {creditsOn.balanceUsd > 0
-                ? "Builder: no daily cap. Requests are paid from this balance."
-                : "Top up in USDG or ETH to become a Builder: no daily cap, every model, unlimited keys."}
-            </div>
+            <div className="s">{creditsOn.balanceUsd > 0 ? t.creditsOn : t.creditsOff}</div>
             {creditsOn.deposits.length > 0 && (
               <div className="tbl" style={{ marginTop: 14 }}>
                 <table>
                   <thead>
                     <tr>
-                      <th>Date</th>
-                      <th>Paid</th>
-                      <th className="num">Credited</th>
+                      <th>{t.th.date}</th>
+                      <th>{t.th.paid}</th>
+                      <th className="num">{t.th.credited}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {creditsOn.deposits.map((d) => (
-                      <tr key={d.txHash}>
-                        <td>{new Date(d.createdAt).toLocaleDateString()}</td>
+                    {creditsOn.deposits.map((dep) => (
+                      <tr key={dep.txHash}>
+                        <td>{new Date(dep.createdAt).toLocaleDateString()}</td>
                         <td>
                           {publicConfig.explorerUrl ? (
                             <a
-                              href={`${publicConfig.explorerUrl}/tx/${d.txHash}`}
+                              href={`${publicConfig.explorerUrl}/tx/${dep.txHash}`}
                               target="_blank"
                               rel="noopener"
                             >
-                              {d.amount} {d.asset}
+                              {dep.amount} {dep.asset}
                             </a>
                           ) : (
-                            `${d.amount} ${d.asset}`
+                            `${dep.amount} ${dep.asset}`
                           )}
                         </td>
-                        <td className="num in">+${d.usd.toFixed(2)}</td>
+                        <td className="num in">+${dep.usd.toFixed(2)}</td>
                       </tr>
                     ))}
                   </tbody>

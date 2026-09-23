@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { brand, tokenTicker } from "@refract/config";
+import { getDict, href, type Locale } from "@/lib/i18n";
 import { Logo } from "./Logo";
 
 const icons = {
@@ -30,7 +31,10 @@ const icons = {
 };
 const socialLabel = { x: "X", telegram: "Telegram", github: "GitHub" } as const;
 
-export function Footer() {
+export function Footer({ locale }: { locale: Locale }) {
+  const t = getDict(locale).footer;
+  const n = getDict(locale).nav;
+  const h = (path: string) => href(locale, path);
   // Only real links are shown; placeholder "#" links are never rendered.
   const socials = (Object.keys(icons) as (keyof typeof icons)[]).filter((k) => brand.social[k]);
   return (
@@ -38,20 +42,15 @@ export function Footer() {
       <div className="wrap">
         <div className="fgrid">
           <div>
-            <Link className="brand" href="/">
+            <Link className="brand" href={h("/")}>
               <Logo />
               {brand.name}
             </Link>
-            <p>Every AI model, one prompt away. Compare for free, ship with one key.</p>
+            <p>{t.blurb}</p>
             {socials.length > 0 && (
               <div className="social">
                 {socials.map((k) => (
-                  <a
-                    key={k}
-                    href={brand.social[k]}
-                    aria-label={`${brand.name} on ${socialLabel[k]}`}
-                    rel="noopener"
-                  >
+                  <a key={k} href={brand.social[k]} aria-label={t.on(socialLabel[k])} rel="noopener">
                     {icons[k]}
                   </a>
                 ))}
@@ -59,58 +58,58 @@ export function Footer() {
             )}
           </div>
           <div>
-            <h5>Product</h5>
+            <h5>{t.product}</h5>
             <ul>
               <li>
-                <a href="/#compare">Compare</a>
+                <a href={h("/#compare")}>{n.compare}</a>
               </li>
               <li>
-                <a href="/#models">Models</a>
+                <a href={h("/#models")}>{n.models}</a>
               </li>
               <li>
-                <a href="/#pricing">Pricing</a>
+                <a href={h("/#pricing")}>{n.pricing}</a>
               </li>
               <li>
-                <a href="/#models">Leaderboard</a>
+                <a href={h("/#models")}>{t.leaderboard}</a>
               </li>
               <li>
-                <a href="/#token">Treasury</a>
+                <a href={h("/#token")}>{t.treasury}</a>
               </li>
             </ul>
           </div>
           <div>
-            <h5>Developers</h5>
+            <h5>{t.developers}</h5>
             <ul>
               <li>
-                <Link href="/docs">Documentation</Link>
+                <Link href="/docs">{t.documentation}</Link>
               </li>
               <li>
-                <Link href="/dashboard">Dashboard</Link>
+                <Link href={h("/dashboard")}>{n.dashboard}</Link>
               </li>
               <li>
-                <a href="/#api">API</a>
+                <a href={h("/#api")}>{n.api}</a>
               </li>
               <li>
-                <a href="/#faq">FAQ</a>
+                <a href={h("/#faq")}>{n.faq}</a>
               </li>
               {brand.contactEmail && (
                 <li>
-                  <a href={`mailto:${brand.contactEmail}`}>Contact</a>
+                  <a href={`mailto:${brand.contactEmail}`}>{t.contact}</a>
                 </li>
               )}
             </ul>
           </div>
           <div>
-            <h5>Token</h5>
+            <h5>{t.token}</h5>
             <ul>
               <li>
-                <a href="/#token">{tokenTicker}</a>
+                <a href={h("/#token")}>{tokenTicker}</a>
               </li>
               <li>
-                <a href="/#token">Fee split</a>
+                <a href={h("/#token")}>{t.feeSplit}</a>
               </li>
               <li>
-                <a href="/#token">Ledger</a>
+                <a href={h("/#token")}>{t.ledger}</a>
               </li>
             </ul>
           </div>
@@ -118,10 +117,10 @@ export function Footer() {
         <div className="fbot">
           <span>
             © {brand.copyrightYear} {brand.name}
-            <Link href="/terms">Terms</Link>
-            <Link href="/privacy">Privacy</Link>
+            <Link href="/terms">{t.terms}</Link>
+            <Link href="/privacy">{t.privacy}</Link>
           </span>
-          <span>Early access. Every model runs live through the same API you can call.</span>
+          <span>{t.tagline}</span>
         </div>
       </div>
     </footer>

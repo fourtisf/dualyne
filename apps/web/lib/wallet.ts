@@ -16,7 +16,15 @@ declare global {
   }
 }
 
-export class WalletFlowError extends Error {}
+/** A sign-in step the user can fix; `code` picks the message in the page's language. */
+export class WalletFlowError extends Error {
+  constructor(
+    public readonly code: "cancelled" | "noAddress" | "signCancelled",
+    message: string,
+  ) {
+    super(message);
+  }
+}
 
 /** Sign-In With Ethereum: one signature, no transaction, no gas. */
 export async function signInWithWallet(provider: Eip1193): Promise<MeResponse> {
@@ -24,10 +32,13 @@ export async function signInWithWallet(provider: Eip1193): Promise<MeResponse> {
   try {
     accounts = (await provider.request({ method: "eth_requestAccounts" })) as string[];
   } catch {
-    throw new WalletFlowError("Connection was cancelled in your wallet. Connect again when you're ready.");
+    throw new WalletFlowError(
+      "cancelled",
+      "Connection was cancelled in your wallet. Connect again when you're ready.",
+    );
   }
   const raw = accounts?.[0];
-  if (!raw) throw new WalletFlowError("Your wallet didn't share an address. Try again.");
+  if (!raw) throw new WalletFlowError("noAddress", "Your wallet didn't share an address. Try again.");
   const address = getAddress(raw);
 
   const { nonce, chainId } = await apiFetch<{ nonce: string; chainId: number }>("/auth/nonce");
@@ -51,7 +62,10 @@ export async function signInWithWallet(provider: Eip1193): Promise<MeResponse> {
       params: [stringToHex(message), address],
     })) as string;
   } catch {
-    throw new WalletFlowError("Signing was cancelled in your wallet. Connect again when you're ready.");
+    throw new WalletFlowError(
+      "signCancelled",
+      "Signing was cancelled in your wallet. Connect again when you're ready.",
+    );
   }
   return apiFetch<MeResponse>("/auth/verify", { method: "POST", body: { message, signature } });
 }

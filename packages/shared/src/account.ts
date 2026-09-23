@@ -10,7 +10,13 @@ export interface MeResponse {
   usage: { today: number; remaining: number | null };
   keys: { count: number; max: number | null };
   /** Explorer-tier sybil check; null when it doesn't apply. */
-  eligibility: { eligible: boolean; reason: string } | null;
+  eligibility: {
+    eligible: boolean;
+    /** English explanation. */
+    reason: string;
+    code?: "requirement" | "check_failed";
+    requirement?: { minEth: number; minAgeDays: number };
+  } | null;
   /** Prepaid Builder credit, in USD (present once credits are enabled). */
   credits?: { balanceUsd: number; enabled: boolean };
   /** Token holdings used for the Holder tier (present once the token is configured). */

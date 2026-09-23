@@ -5,6 +5,7 @@ import { TIER_DEFAULTS, type CatalogModel, type LeaderboardResponse } from "@ref
 import { publicConfig } from "@/lib/config";
 import { formatContext, formatPerMTok } from "@/lib/format";
 import { store } from "@/lib/storage";
+import { useT } from "../LocaleProvider";
 import { useWallet } from "../WalletProvider";
 
 interface Match {
@@ -48,16 +49,17 @@ function RankTable({
   rows: { id: string; r: number; w: number; n: number }[];
   name: (id: string) => string;
 }) {
+  const t = useT().models.lb.th;
   return (
     <div className="tbl">
       <table>
         <thead>
           <tr>
             <th />
-            <th>Model</th>
-            <th className="num">Rating</th>
-            <th>Win rate</th>
-            <th className="num">Votes</th>
+            <th>{t.model}</th>
+            <th className="num">{t.rating}</th>
+            <th>{t.winRate}</th>
+            <th className="num">{t.votes}</th>
           </tr>
         </thead>
         <tbody>
@@ -88,6 +90,7 @@ function RankTable({
 
 function Leaderboard({ models }: { models: CatalogModel[] }) {
   const { version } = useWallet();
+  const t = useT().models.lb;
   const [mine, setMine] = useState<ReturnType<typeof ratings>>({ rows: [], total: 0 });
   const [community, setCommunity] = useState<LeaderboardResponse | null>(null);
   const [scope, setScope] = useState<"everyone" | "mine" | null>(null);
@@ -104,12 +107,12 @@ function Leaderboard({ models }: { models: CatalogModel[] }) {
 
   const meta =
     active === "everyone" && community
-      ? `Based on ${community.totalVotes.toLocaleString("en-US")} community vote${community.totalVotes === 1 ? "" : "s"}${community.blindOnly ? ", blind runs only" : ""}. Updated nightly.`
+      ? t.metaCommunity(community.totalVotes, community.blindOnly)
       : mine.total
-        ? `Based on your ${mine.total} vote${mine.total > 1 ? "s" : ""}.${hasCommunity ? "" : " Community rankings appear after the first nightly update."}`
+        ? t.metaMine(mine.total, hasCommunity)
         : hasCommunity
-          ? "Vote on a comparison to build your own ranking."
-          : "Community rankings appear after the first nightly update.";
+          ? t.metaInvite
+          : t.metaNone;
 
   const rows =
     active === "everyone" && community
@@ -119,18 +122,18 @@ function Leaderboard({ models }: { models: CatalogModel[] }) {
   return (
     <div className="lb-wrap">
       <div className="lb-top">
-        <div className={hasCommunity ? "seg show" : "seg"} role="group" aria-label="Leaderboard scope">
+        <div className={hasCommunity ? "seg show" : "seg"} role="group" aria-label={t.scope}>
           <button type="button" aria-pressed={active === "mine"} onClick={() => setScope("mine")}>
-            Your votes
+            {t.yours}
           </button>
           <button
             type="button"
             aria-pressed={active === "everyone"}
             disabled={!hasCommunity}
-            title={hasCommunity ? undefined : "Rankings appear after the first votes"}
+            title={hasCommunity ? undefined : t.everyoneDisabled}
             onClick={() => setScope("everyone")}
           >
-            Everyone
+            {t.everyone}
           </button>
         </div>
         <span className="sp" />
@@ -139,10 +142,10 @@ function Leaderboard({ models }: { models: CatalogModel[] }) {
       <div id="lbBody">
         {!rows.length ? (
           <div className="lb-empty">
-            No votes yet. Run a comparison and pick the better answer to start your ranking.
+            {t.empty}
             <br />
             <a className="btn dark" href="#compare">
-              Run a comparison
+              {t.run}
             </a>
           </div>
         ) : (
@@ -155,22 +158,23 @@ function Leaderboard({ models }: { models: CatalogModel[] }) {
 
 export function ModelsSection({ models }: { models: CatalogModel[] }) {
   const [tab, setTab] = useState<"cat" | "lb">("cat");
+  const t = useT().models;
   return (
     <section className="block" id="models">
       <div className="wrap">
         <div className="head">
           <div className="kick">
             <i />
-            Models
+            {t.kick}
           </div>
-          <h2>Every leading model, one endpoint.</h2>
-          <p>Browse the catalog, or see how models rank when people compare them head to head.</p>
+          <h2>{t.h2}</h2>
+          <p>{t.p}</p>
         </div>
-        <div className="seg mtabs" role="tablist" aria-label="Models view">
+        <div className="seg mtabs" role="tablist" aria-label={t.tabs}>
           {(
             [
-              ["cat", "Catalog"],
-              ["lb", "Leaderboard"],
+              ["cat", t.catalog],
+              ["lb", t.leaderboard],
             ] as const
           ).map(([k, label]) => (
             <button
@@ -190,14 +194,14 @@ export function ModelsSection({ models }: { models: CatalogModel[] }) {
             <table>
               <thead>
                 <tr>
-                  <th>Model</th>
-                  <th>Provider</th>
-                  <th>Best for</th>
-                  <th>Speed</th>
-                  <th>Context</th>
-                  <th>In / out per 1M</th>
-                  <th>Tier</th>
-                  <th>Status</th>
+                  <th>{t.th.model}</th>
+                  <th>{t.th.provider}</th>
+                  <th>{t.th.bestFor}</th>
+                  <th>{t.th.speed}</th>
+                  <th>{t.th.context}</th>
+                  <th>{t.th.price}</th>
+                  <th>{t.th.tier}</th>
+                  <th>{t.th.status}</th>
                 </tr>
               </thead>
               <tbody>
@@ -213,9 +217,9 @@ export function ModelsSection({ models }: { models: CatalogModel[] }) {
                         {m.provider}
                       </span>
                     </td>
-                    <td>{m.bestFor}</td>
+                    <td>{t.bestFor[m.id] ?? m.bestFor}</td>
                     <td>
-                      <span className="spd" aria-label={`Speed ${m.speed} of 4`}>
+                      <span className="spd" aria-label={t.speedAria(m.speed)}>
                         {[1, 2, 3, 4].map((n) => (
                           <b key={n} className={n <= m.speed ? "on" : undefined} />
                         ))}
@@ -230,9 +234,9 @@ export function ModelsSection({ models }: { models: CatalogModel[] }) {
                     <td>{TIER_DEFAULTS[m.minTier].label}</td>
                     <td>
                       {m.live ? (
-                        <span className="st live">Live</span>
+                        <span className="st live">{t.live}</span>
                       ) : (
-                        <span className="st off">Unavailable</span>
+                        <span className="st off">{t.unavailable}</span>
                       )}
                     </td>
                   </tr>
@@ -242,8 +246,7 @@ export function ModelsSection({ models }: { models: CatalogModel[] }) {
           </div>
         </div>
         <p className="fine" hidden={tab !== "cat"}>
-          Prices are what the provider charges per million input / output tokens. Explorer and Holder requests
-          are free, paid for by the treasury; Builder pays cost + 15%.
+          {t.fine}
         </p>
         <div id="leaderboard" role="tabpanel" hidden={tab !== "lb"}>
           <Leaderboard models={models} />

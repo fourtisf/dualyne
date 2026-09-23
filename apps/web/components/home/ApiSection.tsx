@@ -2,13 +2,15 @@
 
 import { useRef, useState } from "react";
 import { brand } from "@refract/config";
+import type { Dict } from "@/lib/i18n";
+import { useT } from "../LocaleProvider";
 import { Check } from "./Check";
 
 const base = brand.apiBaseUrl;
 const envName = `${brand.name.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_KEY`;
 
-/** Highlighted snippets (static strings from config, no user input). */
-const CODE: Record<"curl" | "py" | "js", string> = {
+/** Highlighted snippets (static strings from config and the dictionary, no user input). */
+const code = (t: Dict): Record<"curl" | "py" | "js", string> => ({
   curl: `<span class="f">curl</span> ${base}/chat/completions \\
   -H <span class="s">"Authorization: Bearer $${envName}"</span> \\
   -H <span class="s">"Content-Type: application/json"</span> \\
@@ -26,7 +28,7 @@ client = <span class="f">OpenAI</span>(
 )
 
 reply = client.chat.completions.<span class="f">create</span>(
-    model=<span class="s">"gemini"</span>,  <span class="c"># swap to any model id</span>
+    model=<span class="s">"gemini"</span>,  <span class="c">${t.api.swap}</span>
     messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: <span class="s">"Hello"</span>}],
 )`,
   js: `<span class="k">import</span> OpenAI <span class="k">from</span> <span class="s">"openai"</span>;
@@ -40,7 +42,7 @@ reply = client.chat.completions.<span class="f">create</span>(
   model: <span class="s">"gpt"</span>,
   messages: [{ role: <span class="s">"user"</span>, content: <span class="s">"Hello"</span> }],
 });`,
-};
+});
 
 const TABS = [
   ["curl", "cURL"],
@@ -49,18 +51,21 @@ const TABS = [
 ] as const;
 
 export function ApiSection() {
+  const d = useT();
+  const t = d.api;
+  const CODE = code(d);
   const [tab, setTab] = useState<keyof typeof CODE>("curl");
-  const [copyLabel, setCopyLabel] = useState("Copy");
+  const [copyState, setCopyState] = useState<"copy" | "copied" | "select">("copy");
   const box = useRef<HTMLPreElement>(null);
 
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(box.current?.textContent ?? "");
-      setCopyLabel("Copied");
+      setCopyState("copied");
     } catch {
-      setCopyLabel("Select to copy");
+      setCopyState("select");
     }
-    setTimeout(() => setCopyLabel("Copy"), 1600);
+    setTimeout(() => setCopyState("copy"), 1600);
   };
 
   return (
@@ -70,41 +75,32 @@ export function ApiSection() {
           <div className="head" style={{ margin: 0 }}>
             <div className="kick">
               <i />
-              API
+              {t.kick}
             </div>
-            <h2>One key. The whole catalog.</h2>
-            <p>Switch models by changing one string. Keep the SDKs and tools you already use.</p>
+            <h2>{t.h2}</h2>
+            <p>{t.p}</p>
           </div>
           <ul className="list">
-            <li>
-              <Check size={16} color="var(--cyan)" width={1.7} />
-              <span>
-                <strong>Streaming, tools and JSON mode</strong> pass straight through.
-              </span>
-            </li>
-            <li>
-              <Check size={16} color="var(--cyan)" width={1.7} />
-              <span>
-                <strong>Usage per key,</strong> so you know what each app spends.
-              </span>
-            </li>
-            <li>
-              <Check size={16} color="var(--cyan)" width={1.7} />
-              <span>
-                <strong>Pay per request</strong> in USDG or ETH once you outgrow the free tier.
-              </span>
-            </li>
+            {t.list.map(([strong, rest]) => (
+              <li key={strong}>
+                <Check size={16} color="var(--cyan)" width={1.7} />
+                <span>
+                  <strong>{strong}</strong>
+                  {rest}
+                </span>
+              </li>
+            ))}
           </ul>
         </div>
         <div className="code">
-          <div className="tabs" role="tablist" aria-label="Code examples">
+          <div className="tabs" role="tablist" aria-label={t.tabs}>
             {TABS.map(([k, label]) => (
               <button key={k} role="tab" type="button" aria-selected={tab === k} onClick={() => setTab(k)}>
                 {label}
               </button>
             ))}
             <button className="copy" id="copyCode" type="button" onClick={copy}>
-              {copyLabel}
+              {d.copy[copyState]}
             </button>
           </div>
           <pre id="codeBox" ref={box} dangerouslySetInnerHTML={{ __html: CODE[tab] }} />

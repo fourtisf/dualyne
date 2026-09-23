@@ -1,19 +1,21 @@
 import type { CSSProperties } from "react";
 import { brand } from "@refract/config";
+import { getDict, type Locale } from "@/lib/i18n";
 
 const bar = (w: string, c: string) => ({ "--w": w, "--c": c }) as CSSProperties;
 
-export function Features() {
+export function Features({ locale }: { locale: Locale }) {
+  const t = getDict(locale).features;
   return (
     <section className="block" id="features">
       <div className="wrap">
         <div className="head">
           <div className="kick">
             <i />
-            Product
+            {t.kick}
           </div>
-          <h2>Built for choosing, then shipping.</h2>
-          <p>Everything you need to find the right model and put it to work, without a single signup form.</p>
+          <h2>{t.h2}</h2>
+          <p>{t.p}</p>
         </div>
         <div className="bento">
           <div className="tile w4">
@@ -50,19 +52,16 @@ export function Features() {
               </div>
             </div>
             <div className="txt">
-              <h3>See speed and quality in the same view</h3>
-              <p>
-                Every run shows time to first word, total time and length for each model, next to the answer
-                itself.
-              </p>
+              <h3>{t.speedTitle}</h3>
+              <p>{t.speedText}</p>
             </div>
           </div>
           <div className="tile w2">
             <div className="viz">
               <div className="keycard" aria-hidden="true">
                 <div className="top">
-                  <span>{brand.name} key</span>
-                  <span className="on">Active</span>
+                  <span>{t.keyLabel}</span>
+                  <span className="on">{t.active}</span>
                 </div>
                 <div className="k">{brand.keyPrefix}8c3f…a91e</div>
                 <div className="w">
@@ -72,8 +71,8 @@ export function Features() {
               </div>
             </div>
             <div className="txt">
-              <h3>Your wallet is your account</h3>
-              <p>No email, no card. Sign once, create keys, revoke them any time.</p>
+              <h3>{t.walletTitle}</h3>
+              <p>{t.walletText}</p>
             </div>
           </div>
           <div className="tile w3">
@@ -86,11 +85,8 @@ export function Features() {
               </div>
             </div>
             <div className="txt">
-              <h3>A one-line migration</h3>
-              <p>
-                {brand.name} uses the OpenAI format. Change the base URL and your app, bot or agent keeps
-                working.
-              </p>
+              <h3>{t.migrateTitle}</h3>
+              <p>{t.migrateText}</p>
             </div>
           </div>
           <div className="tile w3">
@@ -120,11 +116,8 @@ export function Features() {
               </svg>
             </div>
             <div className="txt">
-              <h3>Free access, paid for in public</h3>
-              <p>
-                Trading fees fill a treasury that covers everyone&apos;s free requests. Every dollar in and
-                out is on the ledger.
-              </p>
+              <h3>{t.treasuryTitle}</h3>
+              <p>{t.treasuryText}</p>
             </div>
           </div>
         </div>

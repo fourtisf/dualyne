@@ -1,21 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { brand } from "@refract/config";
 import { publicConfig } from "@/lib/config";
+import { useT } from "../LocaleProvider";
 
 /** Contract address with Copy, and Buy / View chart links. Disabled until launch values are set. */
 export function TokenActions() {
   const { rfxTokenAddress: ca, rfxBuyUrl, rfxChartUrl, explorerUrl } = publicConfig;
-  const [label, setLabel] = useState("Copy");
+  const d = useT();
+  const t = d.token;
+  const [state, setState] = useState<"copy" | "copied" | "select">("copy");
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(ca);
-      setLabel("Copied");
+      setState("copied");
     } catch {
-      setLabel("Select to copy");
+      setState("select");
     }
-    setTimeout(() => setLabel("Copy"), 1600);
+    setTimeout(() => setState("copy"), 1600);
   };
   return (
     <>
@@ -29,29 +31,29 @@ export function TokenActions() {
             <span className="ca-addr">{ca}</span>
           )
         ) : (
-          <span>Contract address is published at launch</span>
+          <span>{t.caPending}</span>
         )}
         <button className="btn dark sm" type="button" disabled={!ca} onClick={copy}>
-          {label}
+          {d.copy[state]}
         </button>
       </div>
       <div className="tk-actions">
         {rfxBuyUrl ? (
           <a className="btn" href={rfxBuyUrl} target="_blank" rel="noopener">
-            Buy {brand.tokenSymbol}
+            {t.buy}
           </a>
         ) : (
           <button className="btn" type="button" disabled>
-            Buy {brand.tokenSymbol}
+            {t.buy}
           </button>
         )}
         {rfxChartUrl ? (
           <a className="btn dark" href={rfxChartUrl} target="_blank" rel="noopener">
-            View chart
+            {t.chart}
           </a>
         ) : (
           <button className="btn dark" type="button" disabled>
-            View chart
+            {t.chart}
           </button>
         )}
       </div>

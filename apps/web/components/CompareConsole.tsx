@@ -5,37 +5,13 @@ import type { CatalogModel, Lane, VoteResponse } from "@refract/shared";
 import { ApiRequestError, apiFetch } from "@/lib/api";
 import { CompareError, runCompare } from "@/lib/compare-client";
 import { publicConfig } from "@/lib/config";
-import { formatRunCost, formatWait } from "@/lib/format";
+import { formatRunCost } from "@/lib/format";
+import { apiErrorText, formatWait, type Dict } from "@/lib/i18n";
 import { esc, md } from "@/lib/markdown";
 import { store } from "@/lib/storage";
 import { TurnstileRunner } from "@/lib/turnstile";
+import { useT } from "./LocaleProvider";
 import { useWallet } from "./WalletProvider";
-
-/* Example run so the console never looks empty (from the prototype). */
-const EX_PROMPT =
-  "Explain how an automated market maker sets a token's price, in five sentences a beginner can follow.";
-const EX_A =
-  "An AMM is a pool holding two tokens, say ETH and USDC.\n\nThe price is simply the **ratio** between them: if the pool holds 10 ETH and 30,000 USDC, one ETH costs about 3,000 USDC.\n\nWhen you buy ETH, you add USDC and remove ETH, so ETH becomes scarcer in the pool and its price rises.\n\nThe pool keeps `x × y = k` constant, which is why big trades move the price more.\n\nArbitrage traders keep this price in line with other markets.";
-const EX_B =
-  "### The short version\nAn automated market maker replaces the order book with a **pool of two tokens** and a formula.\n\n1. The pool holds reserves of both tokens, for example ETH and USDC.\n2. The price is the ratio of those reserves, not a match between buyers and sellers.\n3. Every trade changes the reserves, so every trade changes the price.\n4. The rule `x × y = k` keeps the product of reserves fixed, which makes larger trades cost more per unit (slippage).\n5. When the pool drifts from the wider market, arbitrageurs trade it back and pocket the gap.\n\nThe result: prices update continuously, with no one quoting them.";
-
-const CHIPS = [
-  {
-    label: "Explain an AMM",
-    prompt:
-      "Explain how an automated market maker sets a token's price, in five sentences a beginner can follow.",
-  },
-  {
-    label: "Draft launch tweets",
-    prompt:
-      "Write three short launch tweets for a new AI tool that lets people compare model answers side by side. Keep each under 200 characters.",
-  },
-  {
-    label: "Review token risks",
-    prompt:
-      "What are the three most common security mistakes in ERC-20 token contracts, and how do you avoid each one?",
-  },
-];
 
 const SHIMMER =
   '<div class="shim" style="width:82%"></div><div class="shim" style="width:64%"></div><div class="shim" style="width:74%"></div>';
@@ -63,38 +39,42 @@ const exampleLane = (text: string, stats: string[]): LaneState => ({
   stats,
 });
 
-function statsFor(o: {
-  first: number | null;
-  total: number | null;
-  tokens: number;
-  cost?: number | null;
-}): string[] {
+function statsFor(
+  st: Dict["compare"]["stat"],
+  o: {
+    first: number | null;
+    total: number | null;
+    tokens: number;
+    cost?: number | null;
+  },
+): string[] {
   const p: string[] = [];
-  if (o.first != null) p.push(`${(o.first / 1000).toFixed(1)}s first`);
-  if (o.total != null) p.push(`${(o.total / 1000).toFixed(1)}s total`);
-  if (o.tokens) p.push(`~${o.tokens} tok`);
+  if (o.first != null) p.push(st.first((o.first / 1000).toFixed(1)));
+  if (o.total != null) p.push(st.total((o.total / 1000).toFixed(1)));
+  if (o.tokens) p.push(st.tokens(o.tokens));
   if (o.cost != null) p.push(formatRunCost(o.cost));
   return p;
 }
 
-function errText(code: string, message: string, retry: number | null, limit: number): string {
+function errText(t: Dict, code: string, message: string, retry: number | null, limit: number): string {
+  const e = t.compare.errors;
   switch (code) {
     case "cancelled":
-      return "Stopped.";
+      return e.stopped;
     case "rate_limited":
-      return `You've used your ${limit} free comparisons for this hour.${retry ? ` Try again in ${formatWait(retry)}.` : ""}`;
+      return e.rateLimited(limit, retry ? formatWait(t, retry) : null);
     case "budget_exhausted":
-      return "Free comparisons are paused for today. They come back at 00:00 UTC.";
+      return e.budget;
     case "turnstile_failed":
     case "turnstile":
-      return "We couldn't verify this browser. Reload the page and try again.";
+      return e.turnstile;
     case "model_not_allowed":
     case "model_not_found":
-      return message || "That model isn't available for free comparisons.";
+      return apiErrorText(t, code, message) || e.modelNotFree;
     case "network":
-      return "Couldn't reach the server. Check your connection, then run again.";
+      return e.network;
     default:
-      return "The model didn't finish this answer. Run the comparison again.";
+      return e.generic;
   }
 }
 
@@ -106,20 +86,22 @@ export function CompareConsole({
   blindMode?: "optional" | "always";
 }) {
   const wallet = useWallet();
+  const t = useT();
+  const c = t.compare;
   const free = useMemo(() => models.filter((m) => m.minTier === "explorer" && m.live), [models]);
   const keyed = useMemo(() => models.filter((m) => !(m.minTier === "explorer" && m.live)), [models]);
   const liveCount = models.filter((m) => m.live).length;
   const byId = useCallback((id: string) => models.find((m) => m.id === id), [models]);
 
-  const [prompt, setPrompt] = useState(EX_PROMPT);
-  const [placeholder, setPlaceholder] = useState("Ask anything. Both models get the exact same words.");
+  const [prompt, setPrompt] = useState(c.exPrompt);
+  const [placeholder, setPlaceholder] = useState(c.placeholder);
   const [modelA, setModelA] = useState(free[0]?.id ?? "claude-swift");
   const [modelB, setModelB] = useState(
     free.find((m) => m.id === "llama")?.id ?? free[1]?.id ?? free[0]?.id ?? "llama",
   );
   const [lanes, setLanes] = useState<Record<Lane, LaneState>>({
-    a: exampleLane(EX_A, ["0.4s first", "1.9s total", "~96 tok"]),
-    b: exampleLane(EX_B, ["1.1s first", "5.2s total", "~168 tok"]),
+    a: exampleLane(c.exA, [c.stat.first("0.4"), c.stat.total("1.9"), c.stat.tokens(96)]),
+    b: exampleLane(c.exB, [c.stat.first("1.1"), c.stat.total("5.2"), c.stat.tokens(168)]),
   });
   const [busy, setBusy] = useState(false);
   const [example, setExample] = useState(true);
@@ -134,7 +116,7 @@ export function CompareConsole({
   /** Set while the shown answers come from a blind run; `revealed` holds the models after voting. */
   const [blindRun, setBlindRun] = useState<{ revealed: { a: string; b: string } | null } | null>(null);
   const [voteNote, setVoteNote] = useState("");
-  const [shareLabel, setShareLabel] = useState("Share");
+  const [share, setShare] = useState<"share" | "sharing" | "linkCopied" | "linkOpened">("share");
 
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const tsSlot = useRef<HTMLDivElement>(null);
@@ -162,7 +144,7 @@ export function CompareConsole({
   const run = async () => {
     const text = prompt.trim();
     if (!text) {
-      setPlaceholder("Type a prompt first, or pick one of the examples below.");
+      setPlaceholder(c.placeholderEmpty);
       promptRef.current?.focus();
       return;
     }
@@ -173,7 +155,7 @@ export function CompareConsole({
     runRef.current = { pair: blind ? null : [modelA, modelB], compareId: null, matchIdx: null, blind };
     setBlindRun(blind ? { revealed: null } : null);
     setVoteNote("");
-    setShareLabel("Share");
+    setShare("share");
     setBusy(true);
     setExample(false);
     setVerdictShown(false);
@@ -182,14 +164,13 @@ export function CompareConsole({
       a: { status: "loading", text: "", error: null, stats: [] },
       b: { status: "loading", text: "", error: null, stats: [] },
     });
-    setAnnounce("Comparison started.");
+    setAnnounce(c.announce.started);
 
     const t0 = performance.now();
     const acc: Record<Lane, { text: string; first: number | null; ok: boolean; ended: boolean }> = {
       a: { text: "", first: null, ok: false, ended: false },
       b: { text: "", first: null, ok: false, ended: false },
     };
-    const side = (L: Lane) => (L === "a" ? "Left" : "Right");
     const failLanes = (msg: string) => {
       for (const L of ["a", "b"] as const) {
         if (acc[L].ended) continue;
@@ -202,7 +183,11 @@ export function CompareConsole({
             text: acc[L].text,
             error: msg,
             stats: acc[L].text
-              ? statsFor({ first: acc[L].first, total: now, tokens: Math.round(acc[L].text.length / 4) })
+              ? statsFor(c.stat, {
+                  first: acc[L].first,
+                  total: now,
+                  tokens: Math.round(acc[L].text.length / 4),
+                })
               : [],
           },
         }));
@@ -241,7 +226,7 @@ export function CompareConsole({
                 status: "streaming",
                 text: snapshot,
                 error: null,
-                stats: statsFor({ first, total: null, tokens: Math.round(snapshot.length / 4) }),
+                stats: statsFor(c.stat, { first, total: null, tokens: Math.round(snapshot.length / 4) }),
               },
             }));
           },
@@ -253,9 +238,14 @@ export function CompareConsole({
             patch(L, {
               status: "done",
               text: acc[L].text,
-              stats: statsFor({ first: acc[L].first, total, tokens: d.outputTokens, cost: d.costUsd }),
+              stats: statsFor(c.stat, {
+                first: acc[L].first,
+                total,
+                tokens: d.outputTokens,
+                cost: d.costUsd,
+              }),
             });
-            setAnnounce(`${side(L)} answer finished.`);
+            setAnnounce(c.announce.finished(L === "a"));
           },
           onLaneError: (L, code) => {
             if (acc[L].ended) return;
@@ -264,10 +254,14 @@ export function CompareConsole({
             patch(L, {
               status: "error",
               text: acc[L].text,
-              error: errText(code, "", null, wallet.compareLimit),
-              stats: statsFor({ first: acc[L].first, total, tokens: Math.round(acc[L].text.length / 4) }),
+              error: errText(t, code, "", null, wallet.compareLimit),
+              stats: statsFor(c.stat, {
+                first: acc[L].first,
+                total,
+                tokens: Math.round(acc[L].text.length / 4),
+              }),
             });
-            setAnnounce(`${side(L)} answer failed.`);
+            setAnnounce(c.announce.failed(L === "a"));
           },
         },
         ac.signal,
@@ -276,7 +270,7 @@ export function CompareConsole({
     } catch (e) {
       const err = e instanceof CompareError ? e : new CompareError("unknown", "");
       if (err.code === "rate_limited") wallet.setCompareRemaining(0);
-      const msg = errText(err.code, err.message, err.retryAfterSeconds, wallet.compareLimit);
+      const msg = errText(t, err.code, err.message, err.retryAfterSeconds, wallet.compareLimit);
       failLanes(msg);
       setAnnounce(msg);
     } finally {
@@ -286,7 +280,7 @@ export function CompareConsole({
 
     if (acc.a.ok && acc.b.ok) {
       setVerdictShown(true);
-      setAnnounce("Both answers finished. Which answer was better?");
+      setAnnounce(c.announce.both);
     }
   };
 
@@ -321,28 +315,30 @@ export function CompareConsole({
         setBlindRun({ revealed: { a: res.a, b: res.b } });
         saveLocalVote(r.pair, w, r.compareId);
       }
-      setVoteNote(
-        res.counted
-          ? "Vote counted on the community leaderboard"
-          : "Same model on both sides, so this vote isn't ranked",
-      );
+      setVoteNote(res.counted ? c.voteCounted : c.voteNotRanked);
     } catch (e) {
-      setVoteNote(e instanceof ApiRequestError ? e.message : "Couldn't save your vote. Try again.");
+      setVoteNote(e instanceof ApiRequestError ? apiErrorText(t, e.code, e.message) : c.voteFailed);
     }
   };
 
   const shareRun = async () => {
     const r = runRef.current;
     if (!r?.compareId) return;
-    setShareLabel("Sharing…");
+    setShare("sharing");
     try {
       const res = await fetch(`${publicConfig.apiUrl}/shares`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ compareId: r.compareId }),
       });
-      const json = (await res.json()) as { id?: string; token?: string | null; error?: { message: string } };
-      if (!res.ok || !json.id) throw new Error(json.error?.message ?? "");
+      const json = (await res.json()) as {
+        id?: string;
+        token?: string | null;
+        error?: { code: string; message: string };
+      };
+      if (!res.ok || !json.id) {
+        throw new Error(json.error ? apiErrorText(t, json.error.code, json.error.message) : "");
+      }
       if (json.token) {
         const all = store.get<Record<string, string>>("refract.shares", {});
         all[json.id] = json.token;
@@ -351,14 +347,14 @@ export function CompareConsole({
       const url = `${window.location.origin}/s/${json.id}`;
       try {
         await navigator.clipboard.writeText(url);
-        setShareLabel("Link copied");
+        setShare("linkCopied");
       } catch {
         window.open(url, "_blank", "noopener");
-        setShareLabel("Link opened");
+        setShare("linkOpened");
       }
     } catch (e) {
-      setShareLabel("Share");
-      setVoteNote(e instanceof Error && e.message ? e.message : "Couldn't create a link. Try again.");
+      setShare("share");
+      setVoteNote(e instanceof Error && e.message ? e.message : c.shareFailed);
     }
   };
 
@@ -382,10 +378,8 @@ export function CompareConsole({
 
   const remainingLeft = wallet.compareLimit - wallet.compareUsed;
   const record = [
-    voteNote || (votes ? `${votes} vote${votes > 1 ? "s" : ""} in your ranking` : ""),
-    wallet.compareUsed > 0 && remainingLeft <= 3
-      ? `${remainingLeft} free comparison${remainingLeft === 1 ? "" : "s"} left this hour`
-      : "",
+    voteNote || (votes ? c.votesInRanking(votes) : ""),
+    wallet.compareUsed > 0 && remainingLeft <= 3 ? c.runsLeft(remainingLeft) : "",
   ]
     .filter(Boolean)
     .join(" · ");
@@ -396,7 +390,7 @@ export function CompareConsole({
         {label}
       </label>
       <select id={id} value={value} onChange={(e) => onChange(e.target.value)} disabled={busy}>
-        <optgroup label="Free to compare">
+        <optgroup label={c.groupFree}>
           {free.map((m) => (
             <option key={m.id} value={m.id}>
               {m.menuName}
@@ -404,11 +398,11 @@ export function CompareConsole({
           ))}
         </optgroup>
         {keyed.length > 0 && (
-          <optgroup label="With an API key">
+          <optgroup label={c.groupKey}>
             {keyed.map((m) => (
               <option key={m.id} value={m.id} disabled>
                 {m.menuName}
-                {m.live ? "" : " (unavailable)"}
+                {m.live ? "" : c.unavailable}
               </option>
             ))}
           </optgroup>
@@ -429,18 +423,18 @@ export function CompareConsole({
             <span className="blind-name">
               {blindRun.revealed ? (
                 <>
-                  {byId(blindRun.revealed[L])?.menuName ?? blindRun.revealed[L]} <small>revealed</small>
+                  {byId(blindRun.revealed[L])?.menuName ?? blindRun.revealed[L]} <small>{c.revealed}</small>
                 </>
               ) : (
                 <>
-                  Model {L.toUpperCase()} <small>hidden until you vote</small>
+                  {c.hiddenModel(L.toUpperCase())} <small>{c.hiddenNote}</small>
                 </>
               )}
             </span>
           ) : L === "a" ? (
-            select("modelA", modelA, setModelA, "Left model")
+            select("modelA", modelA, setModelA, c.leftModel)
           ) : (
-            select("modelB", modelB, setModelB, "Right model")
+            select("modelB", modelB, setModelB, c.rightModel)
           )}
           <div className="stats" id={L === "a" ? "statsA" : "statsB"}>
             {s.stats.map((x) => (
@@ -452,7 +446,7 @@ export function CompareConsole({
           className="lb"
           id={L === "a" ? "outA" : "outB"}
           aria-busy={s.status === "loading" || s.status === "streaming"}
-          aria-label={`${L === "a" ? "Left" : "Right"} answer${byId(L === "a" ? modelA : modelB) ? `, ${byId(L === "a" ? modelA : modelB)!.menuName}` : ""}`}
+          aria-label={c.answerAria(L === "a", byId(L === "a" ? modelA : modelB)?.menuName ?? null)}
           role="region"
           dangerouslySetInnerHTML={{ __html: html }}
         />
@@ -461,9 +455,9 @@ export function CompareConsole({
             className="lcopy"
             type="button"
             onClick={() => copyLane(L)}
-            aria-label={`Copy the ${L === "a" ? "left" : "right"} answer`}
+            aria-label={c.copyAria(L === "a")}
           >
-            {copied === L ? "Copied" : "Copy"}
+            {copied === L ? t.copy.copied : t.copy.copy}
           </button>
         )}
       </div>
@@ -474,19 +468,19 @@ export function CompareConsole({
     <div className="stage rise" id="compare" style={{ "--d": ".5s" } as CSSProperties}>
       <div className="console">
         <div className="bar">
-          <span className="t">Compare</span>
-          <span className="sub">Two models, one prompt</span>
+          <span className="t">{c.title}</span>
+          <span className="sub">{c.sub}</span>
           <span className="tag" id="exTag" hidden={!example}>
-            Example run
+            {c.example}
           </span>
           <span className="live">
             <i />
-            {liveCount} models live
+            {c.live(liveCount)}
           </span>
         </div>
         <div className="composer">
           <label htmlFor="prompt" className="sr">
-            Your prompt
+            {c.promptLabel}
           </label>
           <textarea
             id="prompt"
@@ -503,27 +497,23 @@ export function CompareConsole({
             }}
           />
           <div className="cbar">
-            {CHIPS.map((c) => (
+            {c.chips.map((chip) => (
               <button
-                key={c.label}
+                key={chip.label}
                 className="chip"
                 type="button"
                 onClick={() => {
-                  setPrompt(c.prompt);
+                  setPrompt(chip.prompt);
                   promptRef.current?.focus();
                 }}
               >
-                {c.label}
+                {chip.label}
               </button>
             ))}
             <span className="sp" />
             {blindMode === "always" ? (
-              <span
-                className="chip blind-toggle"
-                aria-disabled="true"
-                title="Every comparison is blind right now"
-              >
-                Blind
+              <span className="chip blind-toggle" aria-disabled="true" title={c.blindAlways}>
+                {c.blind}
               </span>
             ) : (
               <button
@@ -531,13 +521,13 @@ export function CompareConsole({
                 type="button"
                 aria-pressed={blind}
                 disabled={busy}
-                title="Two random free models, names hidden until you vote"
+                title={c.blindTitle}
                 onClick={() => {
                   setBlindPref((b) => !b);
                   if (!busy) setBlindRun(null);
                 }}
               >
-                Blind
+                {c.blind}
               </button>
             )}
             <span className="hint">
@@ -551,10 +541,10 @@ export function CompareConsole({
               hidden={!busy}
               onClick={() => ctrl.current?.abort()}
             >
-              Stop
+              {c.stop}
             </button>
             <button className="btn sm" id="runBtn" type="button" disabled={busy} onClick={() => void run()}>
-              {busy ? "Running…" : "Run comparison"}
+              {busy ? c.running : c.run}
             </button>
           </div>
           <div className="ts-slot" ref={tsSlot} />
@@ -564,12 +554,12 @@ export function CompareConsole({
           {lane("b")}
         </div>
         <div className={verdictShown ? "verdict show" : "verdict"} id="verdict">
-          <span className="q">Which answer was better?</span>
+          <span className="q">{c.verdictQ}</span>
           {(
             [
-              ["a", "Left"],
-              ["tie", "About the same"],
-              ["b", "Right"],
+              ["a", c.left],
+              ["tie", c.tie],
+              ["b", c.right],
             ] as const
           ).map(([v, label]) => (
             <button
@@ -586,14 +576,10 @@ export function CompareConsole({
             className="chip"
             type="button"
             onClick={() => void shareRun()}
-            disabled={Boolean(blindRun && !blindRun.revealed) || shareLabel === "Sharing…"}
-            title={
-              blindRun && !blindRun.revealed
-                ? "Vote first, then share"
-                : "Copy a public link to these answers"
-            }
+            disabled={Boolean(blindRun && !blindRun.revealed) || share === "sharing"}
+            title={blindRun && !blindRun.revealed ? c.shareVoteFirst : c.shareTitle}
           >
-            {shareLabel}
+            {c[share]}
           </button>
           <span className="record" id="record">
             {record}

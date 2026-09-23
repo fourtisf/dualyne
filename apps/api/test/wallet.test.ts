@@ -224,7 +224,11 @@ describe("sybil check for free Explorer keys", () => {
     expect(res.statusCode).toBe(403);
     expect(res.json().error.code).toBe("not_eligible");
     expect(res.json().error.message).toContain("0.001 ETH");
-    expect((await me(cookie)).json().eligibility).toMatchObject({ eligible: false });
+    expect((await me(cookie)).json().eligibility).toMatchObject({
+      eligible: false,
+      code: "requirement",
+      requirement: { minEth: 0.001, minAgeDays: expect.any(Number) },
+    });
   });
 
   it("accepts a wallet with enough balance", async () => {

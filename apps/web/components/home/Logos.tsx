@@ -1,10 +1,12 @@
+import { getDict, type Locale } from "@/lib/i18n";
+
 const NAMES = ["Anthropic", "OpenAI", "Google", "Meta", "Mistral", "DeepSeek", "Qwen", "xAI", "Cohere"];
 
-export function Logos() {
+export function Logos({ locale }: { locale: Locale }) {
   return (
     <section className="logos">
       <div className="wrap">
-        <p>One catalog for the models teams actually use</p>
+        <p>{getDict(locale).logos.caption}</p>
         <div className="marquee">
           <div className="track">
             <ul>

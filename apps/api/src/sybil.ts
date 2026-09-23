@@ -7,6 +7,10 @@ export interface Eligibility {
   eligible: boolean;
   /** Why the wallet is (not) eligible, for display. */
   reason: string;
+  /** Machine-readable reason when not eligible, so the website can show it in any language. */
+  code?: "requirement" | "check_failed";
+  /** The requirement behind code "requirement". */
+  requirement?: { minEth: number; minAgeDays: number };
 }
 
 const OK_TTL = 24 * 3600;
@@ -61,11 +65,17 @@ export class SybilCheck {
             : {
                 eligible: false,
                 reason: `To get a free Explorer key, your wallet needs to ${this.requirement()}.`,
+                code: "requirement",
+                requirement: { minEth: Number(this.opts.minWei) / 1e18, minAgeDays: this.opts.minAgeDays },
               };
       }
     } catch {
       // Chain unreachable: don't cache, ask the user to retry.
-      return { eligible: false, reason: "We couldn't check your wallet right now. Try again in a minute." };
+      return {
+        eligible: false,
+        reason: "We couldn't check your wallet right now. Try again in a minute.",
+        code: "check_failed",
+      };
     }
     await this.redis.set(key, JSON.stringify(result), "EX", result.eligible ? OK_TTL : NO_TTL);
     return result;

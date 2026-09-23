@@ -5,6 +5,8 @@ import { encodeFunctionData, erc20Abi, parseEther, parseUnits, toHex, type Addre
 import type { CreditsResponse, DepositResponse } from "@refract/shared";
 import { ApiRequestError, apiFetch } from "@/lib/api";
 import { shortAddr } from "@/lib/format";
+import { apiErrorText } from "@/lib/i18n";
+import { useT } from "./LocaleProvider";
 import { useWallet } from "./WalletProvider";
 
 type Enabled = Extract<CreditsResponse, { enabled: true }>;
@@ -36,6 +38,8 @@ export function TopUpDialog({
   onCredited(): void;
 }) {
   const w = useWallet();
+  const d = useT();
+  const t = d.topup;
   const ref = useRef<HTMLDialogElement>(null);
   const [asset, setAsset] = useState<"USDG" | "ETH">(credits.usdgAddress ? "USDG" : "ETH");
   const [amount, setAmount] = useState(credits.usdgAddress ? "25" : "0.01");
@@ -70,13 +74,13 @@ export function TopUpDialog({
           body: { txHash },
         });
         if (res.status === "credited") {
-          setStatus(`Added $${res.usd.toFixed(2)}. Your balance is $${res.balanceUsd.toFixed(2)}.`);
+          setStatus(t.added(res.usd.toFixed(2), res.balanceUsd.toFixed(2)));
           onCredited();
           return;
         }
-        setStatus(`Payment sent. Waiting for confirmations: ${res.confirmations} of ${res.required}…`);
+        setStatus(t.waiting(res.confirmations, res.required));
       } catch (e) {
-        setError(e instanceof ApiRequestError ? e.message : "Couldn't check the payment. Try again.");
+        setError(e instanceof ApiRequestError ? apiErrorText(d, e.code, e.message) : t.errors.check);
         setStatus("");
         return;
       }
@@ -84,7 +88,7 @@ export function TopUpDialog({
     }
     if (!cancelled.current) {
       setStatus("");
-      setError("This is taking longer than usual. Paste the transaction hash below later to finish.");
+      setError(t.errors.slow);
     }
   };
 
@@ -95,23 +99,19 @@ export function TopUpDialog({
     const provider = w.provider();
     if (!me) return;
     if (!provider) {
-      setError(
-        "No wallet connection found. Send the payment manually to the address below, then paste the transaction hash.",
-      );
+      setError(t.errors.noProvider);
       return;
     }
     const value = Number(amount);
     if (!Number.isFinite(value) || value <= 0) {
-      setError("Enter an amount above zero.");
+      setError(t.errors.amount);
       return;
     }
     setBusy(true);
     try {
       const [from] = (await provider.request({ method: "eth_requestAccounts" })) as string[];
       if (!from || from.toLowerCase() !== me.address.toLowerCase()) {
-        setError(
-          `Your wallet is on another account. Switch to ${shortAddr(me.address)}: top-ups are credited to the signed-in wallet.`,
-        );
+        setError(t.errors.account(shortAddr(me.address)));
         return;
       }
       const current = parseInt(String(await provider.request({ method: "eth_chainId" })), 16);
@@ -122,7 +122,7 @@ export function TopUpDialog({
             params: [{ chainId: toHex(credits.chainId) }],
           });
         } catch {
-          setError(`Switch your wallet to ${chain}, then try again.`);
+          setError(t.errors.chain(chain));
           return;
         }
       }
@@ -139,15 +139,13 @@ export function TopUpDialog({
               }),
             }
           : { from, to: deposit, value: toHex(parseEther(amount)) };
-      setStatus("Confirm the payment in your wallet…");
+      setStatus(t.confirm);
       const hash = String(await provider.request({ method: "eth_sendTransaction", params: [tx] }));
       await waitForCredit(hash);
     } catch (e) {
       setStatus("");
       const msg =
-        e instanceof Error && /reject|denied|cancel/i.test(e.message)
-          ? "Payment was cancelled in your wallet."
-          : "The payment didn't go through. Nothing was charged.";
+        e instanceof Error && /reject|denied|cancel/i.test(e.message) ? t.errors.cancelled : t.errors.failed;
       setError(msg);
     } finally {
       setBusy(false);
@@ -157,7 +155,7 @@ export function TopUpDialog({
   const checkManual = async () => {
     setError("");
     if (!/^0x[0-9a-fA-F]{64}$/.test(manualHash.trim())) {
-      setError("That doesn't look like a transaction hash (0x followed by 64 characters).");
+      setError(t.errors.hash);
       return;
     }
     setBusy(true);
@@ -185,16 +183,12 @@ export function TopUpDialog({
       }}
     >
       <div className="m">
-        <button className="mx" aria-label="Close" type="button" onClick={onClose}>
+        <button className="mx" aria-label={d.wallet.close} type="button" onClick={onClose}>
           ×
         </button>
-        <h3 id="tuTitle">Top up credits</h3>
-        <p>
-          Builder requests cost the model price + {Math.round((credits.markup - 1) * 100)}%, with no daily
-          cap. Credit is added after {credits.confirmations} confirmation
-          {credits.confirmations === 1 ? "" : "s"} on {chain}.
-        </p>
-        <div className="seg" role="group" aria-label="Pay with" style={{ marginBottom: 14 }}>
+        <h3 id="tuTitle">{t.title}</h3>
+        <p>{t.intro(Math.round((credits.markup - 1) * 100), credits.confirmations, chain)}</p>
+        <div className="seg" role="group" aria-label={t.payWith} style={{ marginBottom: 14 }}>
           {credits.usdgAddress && (
             <button
               type="button"
@@ -221,12 +215,12 @@ export function TopUpDialog({
           )}
         </div>
         <label className="amt">
-          <span>{asset === "USDG" ? "Amount (USD)" : "Amount (ETH)"}</span>
+          <span>{asset === "USDG" ? t.amountUsd : t.amountEth}</span>
           <input
             inputMode="decimal"
             value={amount}
             onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-            aria-label="Amount"
+            aria-label={t.amount}
           />
         </label>
         <button
@@ -236,7 +230,7 @@ export function TopUpDialog({
           disabled={busy}
           onClick={payFromWallet}
         >
-          {busy ? "Working…" : `Pay ${amount || "0"} ${asset} from wallet`}
+          {busy ? t.working : t.pay(amount || "0", asset)}
         </button>
         {status && (
           <div className="tu-status" role="status">
@@ -250,21 +244,19 @@ export function TopUpDialog({
         )}
 
         <div className="tu-manual">
-          <div className="t">
-            Or send {asset} on {chain} from {w.me ? shortAddr(w.me.address) : "your wallet"} to:
-          </div>
+          <div className="t">{t.manual(asset, chain, w.me ? shortAddr(w.me.address) : t.yourWallet)}</div>
           <div className="addr">
             <span className="ca-addr">{credits.depositAddress}</span>
             <button className="link" type="button" style={{ color: "var(--muted)" }} onClick={copy}>
-              {copied ? "Copied" : "Copy"}
+              {copied ? d.copy.copied : d.copy.copy}
             </button>
           </div>
           <div className="tu-row">
             <input
-              placeholder="Paste the transaction hash (0x…)"
+              placeholder={t.hashPlaceholder}
               value={manualHash}
               onChange={(e) => setManualHash(e.target.value)}
-              aria-label="Transaction hash"
+              aria-label={t.hashLabel}
             />
             <button
               className="btn dark sm"
@@ -272,7 +264,7 @@ export function TopUpDialog({
               disabled={busy || !manualHash}
               onClick={checkManual}
             >
-              Check
+              {t.check}
             </button>
           </div>
         </div>

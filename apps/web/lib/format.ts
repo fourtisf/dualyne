@@ -20,9 +20,3 @@ export function formatRunCost(usd: number): string {
   if (usd < 0.01) return `$${usd.toFixed(4)}`;
   return `$${usd.toFixed(3)}`;
 }
-
-export function formatWait(seconds: number): string {
-  if (seconds < 90) return `${Math.max(1, Math.round(seconds))} seconds`;
-  const m = Math.round(seconds / 60);
-  return m < 90 ? `${m} minutes` : `${Math.round(m / 60)} hours`;
-}

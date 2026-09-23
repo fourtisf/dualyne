@@ -2,17 +2,31 @@
 
 import { useEffect, useRef, useState } from "react";
 import { brand } from "@refract/config";
-import type { KeyInfo } from "@refract/shared";
+import type { KeyInfo, MeResponse } from "@refract/shared";
 import { ApiRequestError } from "@/lib/api";
+import { apiErrorText, type Dict } from "@/lib/i18n";
 import { shortAddr } from "@/lib/format";
 import { walletConnectEnabled } from "@/lib/wallet";
+import { useT } from "./LocaleProvider";
 import { useWallet, type ConnectKind } from "./WalletProvider";
 
 const keyLabel = (k: KeyInfo) => `${brand.keyPrefix}…${k.last4}`;
 const made = (iso: string) => new Date(iso).toLocaleDateString();
 
+/** Why a wallet can't get a free key, in the page's language. */
+export function eligibilityText(t: Dict, e: NonNullable<MeResponse["eligibility"]>): string {
+  const tr = t.wallet.eligibility;
+  if (!tr) return e.reason;
+  if (e.code === "requirement" && e.requirement) {
+    return tr.requirement(e.requirement.minEth, e.requirement.minAgeDays);
+  }
+  return e.code === "check_failed" ? tr.checkFailed : e.reason;
+}
+
 export function WalletModal() {
   const w = useWallet();
+  const d = useT();
+  const t = d.wallet;
   const ref = useRef<HTMLDialogElement>(null);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState<ConnectKind | "key" | null>(null);
@@ -50,7 +64,7 @@ export function WalletModal() {
       setFresh(k.key ?? null);
       setCopied(false);
     } catch (e) {
-      setMsg(e instanceof ApiRequestError ? e.message : "Couldn't create a key. Try again.");
+      setMsg(e instanceof ApiRequestError ? apiErrorText(d, e.code, e.message) : t.createFailed);
     } finally {
       setBusy(null);
     }
@@ -67,7 +81,7 @@ export function WalletModal() {
     try {
       await w.revokeKey(id);
     } catch (e) {
-      setMsg(e instanceof ApiRequestError ? e.message : "Couldn't revoke the key. Try again.");
+      setMsg(e instanceof ApiRequestError ? apiErrorText(d, e.code, e.message) : t.revokeFailed);
     }
   };
 
@@ -85,13 +99,13 @@ export function WalletModal() {
   const limit = me?.limits.dailyRequests ?? null;
   const used = me?.usage.today ?? 0;
   const atMax = me ? me.keys.max !== null && me.keys.count >= me.keys.max : false;
-  const notEligible = me?.eligibility && !me.eligibility.eligible ? me.eligibility.reason : null;
+  const notEligible = me?.eligibility && !me.eligibility.eligible ? eligibilityText(d, me.eligibility) : null;
   const createTitle = notEligible
     ? notEligible
     : atMax
       ? me?.tier === "explorer"
-        ? "Explorer wallets get one key. Hold the token for five."
-        : `${me?.tierLabel} wallets can have ${me?.keys.max} keys.`
+        ? t.explorerOneKey
+        : t.tierKeys(me?.tierLabel ?? "", me?.keys.max ?? null)
       : undefined;
 
   return (
@@ -105,16 +119,13 @@ export function WalletModal() {
       }}
     >
       <div className="m" id="wmBody">
-        <button className="mx" aria-label="Close" type="button" onClick={w.closeModal}>
+        <button className="mx" aria-label={t.close} type="button" onClick={w.closeModal}>
           ×
         </button>
         {!me ? (
           <>
-            <h3 id="wmTitle">Connect a wallet</h3>
-            <p>
-              Your wallet is your account. You&apos;ll sign one message to prove it&apos;s yours. No
-              transaction, no gas.
-            </p>
+            <h3 id="wmTitle">{t.connectTitle}</h3>
+            <p>{t.connectText}</p>
             <div className="opts">
               <button
                 className="opt"
@@ -124,8 +135,8 @@ export function WalletModal() {
               >
                 <span className="ic" />
                 <span>
-                  {busy === "injected" ? "Check your wallet…" : "Browser wallet"}
-                  <small>MetaMask, Rabby or any injected wallet</small>
+                  {busy === "injected" ? t.check : t.browser}
+                  <small>{t.browserSub}</small>
                 </span>
               </button>
               {walletConnectEnabled() && (
@@ -137,8 +148,8 @@ export function WalletModal() {
                 >
                   <span className="ic alt" />
                   <span>
-                    {busy === "walletconnect" ? "Check your wallet…" : "WalletConnect"}
-                    <small>Scan with a wallet app on your phone</small>
+                    {busy === "walletconnect" ? t.check : t.walletConnect}
+                    <small>{t.walletConnectSub}</small>
                   </span>
                 </button>
               )}
@@ -149,24 +160,24 @@ export function WalletModal() {
           </>
         ) : (
           <>
-            <h3 id="wmTitle">Your access</h3>
+            <h3 id="wmTitle">{t.accessTitle}</h3>
             <p>
-              Everything below is tied to this wallet. Tier: <b className="tier-name">{me.tierLabel}</b>
+              {t.accessText} <b className="tier-name">{me.tierLabel}</b>
             </p>
             <div className="addr">
               <span>{shortAddr(me.address)}</span>
               <button className="link" type="button" onClick={() => void w.disconnect()}>
-                Disconnect
+                {t.disconnect}
               </button>
             </div>
             <div className="usage">
-              <span>API requests today</span>
+              <span>{t.requestsToday}</span>
               <span>
                 {limit === null ? (
-                  <b>No daily cap</b>
+                  <b>{t.noCap}</b>
                 ) : (
                   <>
-                    <b>{used}</b> of {limit}
+                    <b>{used}</b> {t.of} {limit}
                   </>
                 )}
               </span>
@@ -175,7 +186,7 @@ export function WalletModal() {
               <i style={{ width: `${limit ? Math.min(100, (used / limit) * 100) : 0}%` }} />
             </div>
             <div className="krow">
-              <strong>API keys</strong>
+              <strong>{t.keys}</strong>
               <button
                 className="btn sm"
                 id="newKey"
@@ -185,16 +196,16 @@ export function WalletModal() {
                 title={createTitle}
                 onClick={createKey}
               >
-                {busy === "key" ? "Creating…" : "Create key"}
+                {busy === "key" ? t.creating : t.createKey}
               </button>
             </div>
             {notEligible && <div className="msg">{notEligible}</div>}
             {fresh && (
               <div className="fresh">
-                <div className="t">Copy this key now. You won&apos;t see it again.</div>
+                <div className="t">{t.fresh}</div>
                 <code>{fresh}</code>
                 <button className="btn dark sm" id="copyKey" type="button" onClick={copyKey}>
-                  {copied ? "Copied" : "Copy key"}
+                  {copied ? d.copy.copied : t.copyKey}
                 </button>
               </div>
             )}
@@ -204,16 +215,17 @@ export function WalletModal() {
                   <li key={k.id}>
                     <code>{keyLabel(k)}</code>
                     <span className="when">
-                      {k.name ? `${k.name} · ` : ""}Created {made(k.createdAt)}
+                      {k.name ? `${k.name} · ` : ""}
+                      {t.created(made(k.createdAt))}
                     </span>
                     <button className="link" type="button" onClick={() => revoke(k.id)}>
-                      {confirming === k.id ? "Confirm revoke" : "Revoke"}
+                      {confirming === k.id ? t.confirmRevoke : t.revoke}
                     </button>
                   </li>
                 ))
               ) : (
                 <li style={{ color: "var(--faint)" }}>
-                  <span>No keys yet. Create one to use {brand.name} from your own apps.</span>
+                  <span>{t.noKeys}</span>
                 </li>
               )}
             </ul>

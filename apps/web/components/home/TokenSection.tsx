@@ -1,23 +1,27 @@
 import Link from "next/link";
 import { brand, tokenTicker } from "@refract/config";
+import { getDict, type Locale } from "@/lib/i18n";
 import { balancePaths, fmt, type TreasuryData } from "@/lib/treasury";
 import { TokenActions } from "./TokenActions";
 
 const SAMPLE_LINE =
   "M0 150 L25 146 L50 138 L75 140 L100 126 L125 118 L150 121 L175 104 L200 96 L225 99 L250 84 L275 76 L300 70 L325 58 L350 52 L375 44 L400 34";
 const SAMPLE_ROWS: [string, string, string][] = [
-  ["Sep 22", "+1,284", "−452"],
-  ["Sep 21", "+1,902", "−431"],
-  ["Sep 20", "+2,650", "−388"],
-  ["Sep 19", "+3,118", "−341"],
-  ["Sep 18", "+4,407", "−296"],
+  ["2026-09-22", "+1,284", "−452"],
+  ["2026-09-21", "+1,902", "−431"],
+  ["2026-09-20", "+2,650", "−388"],
+  ["2026-09-19", "+3,118", "−341"],
+  ["2026-09-18", "+4,407", "−296"],
 ];
 
 /**
  * Token facts, fee split and the treasury ledger. The ledger shows live numbers from the API once
  * the treasury is configured and has a recorded balance; until then it shows labelled sample data.
  */
-export function TokenSection({ treasury }: { treasury: TreasuryData | null }) {
+export function TokenSection({ locale, treasury }: { locale: Locale; treasury: TreasuryData | null }) {
+  const d = getDict(locale);
+  const t = d.token;
+  const tr = d.treasury;
   const live = treasury !== null;
   const paths = live ? balancePaths(treasury.days) : null;
   const line = paths?.line ?? SAMPLE_LINE;
@@ -26,30 +30,33 @@ export function TokenSection({ treasury }: { treasury: TreasuryData | null }) {
     ? treasury.days
         .slice(-5)
         .reverse()
-        .map((d) => [fmt.day(d.day), fmt.signed(d.inUsd), fmt.signed(-d.outUsd)])
-    : SAMPLE_ROWS;
+        .map((x) => [fmt.day(x.day, d.dateLocale), fmt.signed(x.inUsd), fmt.signed(-x.outUsd)])
+    : SAMPLE_ROWS.map(([day, i, o]) => [fmt.day(day, d.dateLocale), i, o]);
   const kpi = live
     ? {
         balance: fmt.usd(treasury.balanceUsd ?? 0),
-        balanceNote: `+ ${fmt.usd(treasury.inflowTodayUsd)} today`,
-        runway: treasury.runwayDays === null ? "—" : `${treasury.runwayDays.toLocaleString("en-US")} days`,
+        balanceNote: tr.today(fmt.usd(treasury.inflowTodayUsd)),
+        runway: treasury.runwayDays === null ? "—" : tr.days(treasury.runwayDays.toLocaleString("en-US")),
         runwayNote:
           treasury.runwayChangeDays === null
             ? ""
-            : `${treasury.runwayChangeDays < 0 ? "−" : "+"} ${Math.abs(treasury.runwayChangeDays)} days this week`,
+            : tr.runwayChange(treasury.runwayChangeDays < 0 ? "−" : "+", Math.abs(treasury.runwayChangeDays)),
         requests: treasury.requests7d.toLocaleString("en-US"),
         requestsNote:
           treasury.requestsChangePct === null
             ? ""
-            : `${treasury.requestsChangePct < 0 ? "−" : "+"} ${Math.abs(treasury.requestsChangePct)}% week over week`,
+            : tr.requestsChange(
+                treasury.requestsChangePct < 0 ? "−" : "+",
+                Math.abs(treasury.requestsChangePct),
+              ),
       }
     : {
         balance: "$18,420",
-        balanceNote: "+ $832 today",
-        runway: "41 days",
-        runwayNote: "+ 2 days this week",
+        balanceNote: tr.today("$832"),
+        runway: tr.days("41"),
+        runwayNote: tr.runwayChange("+", 2),
         requests: "312,480",
-        requestsNote: "+ 18% week over week",
+        requestsNote: tr.requestsChange("+", 18),
       };
   return (
     <section className="block" id="token">
@@ -57,10 +64,10 @@ export function TokenSection({ treasury }: { treasury: TreasuryData | null }) {
         <div className="head">
           <div className="kick">
             <i />
-            Token
+            {t.kick}
           </div>
-          <h2>The token that pays for the compute.</h2>
-          <p>Every trade adds to the treasury that funds free access. Holding it raises your limits.</p>
+          <h2>{t.h2}</h2>
+          <p>{t.p}</p>
         </div>
         <div className="token">
           <div className="tk-card">
@@ -73,19 +80,19 @@ export function TokenSection({ treasury }: { treasury: TreasuryData | null }) {
             </div>
             <dl className="facts">
               <div>
-                <dt>Total supply</dt>
+                <dt>{t.supply}</dt>
                 <dd>1,000,000,000</dd>
               </div>
               <div>
-                <dt>Trade fee</dt>
-                <dd>1% to the treasury</dd>
+                <dt>{t.fee}</dt>
+                <dd>{t.feeValue}</dd>
               </div>
               <div>
-                <dt>Team allocation</dt>
-                <dd>None at launch</dd>
+                <dt>{t.team}</dt>
+                <dd>{t.teamValue}</dd>
               </div>
               <div>
-                <dt>Holder tier</dt>
+                <dt>{t.holder}</dt>
                 <dd>100,000 {brand.tokenSymbol}</dd>
               </div>
             </dl>
@@ -93,8 +100,8 @@ export function TokenSection({ treasury }: { treasury: TreasuryData | null }) {
           </div>
           <div className="tk-card">
             <div className="tk-head">
-              <h4>Where each fee goes</h4>
-              <span className="sample">Proposal</span>
+              <h4>{t.splitTitle}</h4>
+              <span className="sample">{t.proposal}</span>
             </div>
             <div className="split" aria-hidden="true">
               <i style={{ width: "70%", background: "linear-gradient(90deg,#67E8F9,#8B5CF6)" }} />
@@ -105,24 +112,24 @@ export function TokenSection({ treasury }: { treasury: TreasuryData | null }) {
               <div>
                 <i style={{ background: "#8B5CF6" }} />
                 <span>
-                  <b>Inference treasury</b>
-                  <small>Pays for every free request on the platform.</small>
+                  <b>{t.split[0]![0]}</b>
+                  <small>{t.split[0]![1]}</small>
                 </span>
                 <em>70%</em>
               </div>
               <div>
                 <i style={{ background: "#F472B6" }} />
                 <span>
-                  <b>Product development</b>
-                  <small>New models, features and infrastructure.</small>
+                  <b>{t.split[1]![0]}</b>
+                  <small>{t.split[1]![1]}</small>
                 </span>
                 <em>20%</em>
               </div>
               <div>
                 <i style={{ background: "#FBBF24" }} />
                 <span>
-                  <b>Liquidity</b>
-                  <small>Keeps trading deep and stable.</small>
+                  <b>{t.split[2]![0]}</b>
+                  <small>{t.split[2]![1]}</small>
                 </span>
                 <em>10%</em>
               </div>
@@ -130,31 +137,29 @@ export function TokenSection({ treasury }: { treasury: TreasuryData | null }) {
           </div>
         </div>
         <p className="fine">
-          {tokenTicker} is a utility token that raises your usage limits on {brand.name}. It is not an
-          investment, share or promise of profit, and its price can fall to zero. Check the rules where you
-          live before buying. See the <Link href="/terms#token">Terms</Link>.
+          {t.disclaimer} <Link href="/terms#token">{t.terms}</Link>.
         </p>
         <div className="subhead">
-          <h3>Treasury</h3>
-          <p>Every fee in and every request out, published daily.</p>
-          {!live && <span className="sample">Sample data</span>}
+          <h3>{tr.title}</h3>
+          <p>{tr.p}</p>
+          {!live && <span className="sample">{tr.sample}</span>}
         </div>
         <div className="ledger" id="ledger">
           <div className="lg-top">
             <div className="kpi">
-              <div className="l">Treasury balance</div>
+              <div className="l">{tr.balance}</div>
               <div className="v">{kpi.balance}</div>
               <div className="d">{kpi.balanceNote}</div>
             </div>
             <div className="kpi">
-              <div className="l">Runway at current usage</div>
+              <div className="l">{tr.runway}</div>
               <div className="v">{kpi.runway}</div>
               {kpi.runwayNote && (
                 <div className={kpi.runwayNote.startsWith("−") ? "d neg" : "d"}>{kpi.runwayNote}</div>
               )}
             </div>
             <div className="kpi">
-              <div className="l">Requests served, 7 days</div>
+              <div className="l">{tr.requests}</div>
               <div className="v">{kpi.requests}</div>
               {kpi.requestsNote && (
                 <div className={kpi.requestsNote.startsWith("−") ? "d neg" : "d"}>{kpi.requestsNote}</div>
@@ -164,8 +169,8 @@ export function TokenSection({ treasury }: { treasury: TreasuryData | null }) {
           <div className="lg-body">
             <div className="lg-chart">
               <div className="l">
-                <span>Balance, last 30 days</span>
-                {!live && <span className="sample">Sample data</span>}
+                <span>{tr.chart}</span>
+                {!live && <span className="sample">{tr.sample}</span>}
               </div>
               <svg
                 viewBox="0 0 400 170"
@@ -192,15 +197,15 @@ export function TokenSection({ treasury }: { treasury: TreasuryData | null }) {
               <table>
                 <thead>
                   <tr>
-                    <th>Day</th>
-                    <th className="num">Fees in</th>
-                    <th className="num">Inference</th>
+                    <th>{tr.th.day}</th>
+                    <th className="num">{tr.th.in}</th>
+                    <th className="num">{tr.th.out}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map(([d, i, o]) => (
-                    <tr key={d}>
-                      <td>{d}</td>
+                  {rows.map(([day, i, o]) => (
+                    <tr key={day}>
+                      <td>{day}</td>
                       <td className="num in">{i}</td>
                       <td className="num">{o}</td>
                     </tr>

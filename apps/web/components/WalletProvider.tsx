@@ -5,6 +5,8 @@ import type { KeyInfo, MeResponse } from "@refract/shared";
 import { ApiRequestError, apiFetch } from "@/lib/api";
 import { publicConfig } from "@/lib/config";
 import { store, today } from "@/lib/storage";
+import { useT } from "./LocaleProvider";
+import { apiErrorText } from "@/lib/i18n";
 import { signInWithWallet, walletConnectProvider, WalletFlowError, type Eip1193 } from "@/lib/wallet";
 
 const HOUR_MS = 3_600_000;
@@ -48,6 +50,7 @@ export function useWallet(): WalletContextValue {
 }
 
 export function WalletProvider({ children }: { children: ReactNode }) {
+  const t = useT();
   const [me, setMe] = useState<MeResponse | null | undefined>(undefined);
   const [keys, setKeys] = useState<KeyInfo[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
@@ -88,7 +91,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           provider = p;
         } else {
           if (!window.ethereum) {
-            return "No browser wallet found. On a computer, install MetaMask or Rabby. On a phone, open this page in your wallet app's built-in browser, or use WalletConnect.";
+            return t.wallet.errors.noWallet;
           }
           provider = window.ethereum;
         }
@@ -97,11 +100,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         await loadKeys();
         return null;
       } catch (e) {
-        if (e instanceof WalletFlowError || e instanceof ApiRequestError) return e.message;
-        return "Sign-in didn't complete. Try again.";
+        if (e instanceof WalletFlowError) return t.wallet.errors[e.code];
+        if (e instanceof ApiRequestError) return apiErrorText(t, e.code, e.message);
+        return t.wallet.errors.failed;
       }
     },
-    [loadKeys],
+    [loadKeys, t],
   );
 
   const disconnect = useCallback(async () => {

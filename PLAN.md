@@ -383,6 +383,8 @@ Shared client state (the wallet and the local vote/usage history) lives in a `Wa
 
 Old hash links such as `/#/docs` get a tiny client redirect so shared URLs keep working.
 
+Languages: English lives in the `app/(en)` route group and Bahasa Indonesia in `app/(id)/id`. Each has its own root layout, so `<html lang>` is correct on the server. `/id` and `/id/dashboard` are translated. Docs, legal pages and shared results stay English, and the Indonesian pages link to them. All copy is in `apps/web/lib/i18n` (`en.ts` holds the exact English text; `id.ts` has the same shape, checked by a test). Unknown paths hit a catch-all per language that returns a 404.
+
 ### 5.3 Deliberate differences from the prototype
 
 Each of these is required by the prompt or HANDOFF. The exact new copy is in Q3.
@@ -627,6 +629,19 @@ Still untested: `server-setup.sh` on a real Ubuntu host (the sandbox has no syst
 - [x] Tests: 23 new API tests, including **6 against a real EVM (Ganache)** with a test ERC-20, stablecoin and price feed. These found and fixed a stale block-number cache in viem that under-counted confirmations. The browser run on that local chain covered: sign-in, Holder by RFX, a USDG top-up to Builder, a blind comparison with a vote, and the community leaderboard.
 - Not built (optional in HANDOFF): x402 pay-per-request for agents.
 
+## 11f. Extras status
+
+- [x] Share by link (opt-in): after both answers finish, the prompt and answers stay in Redis for 1 hour. **Share** saves them to a `Share` row and copies `/s/{id}`. Only the browser that created a link holds its delete token and sees **Remove this link**. The Privacy Policy and FAQ say this.
+- [x] Bahasa Indonesia at `/id` and `/id/dashboard`:
+  - an EN/ID switch in the nav and the mobile menu, keeping the same page;
+  - `hreflang` alternates, an Indonesian social card, and `/id` in the sitemap;
+  - translated compare examples and model "best for" text;
+  - common API error codes and the sybil eligibility reason (now returned with a `code`) shown in Indonesian.
+- [x] Checks:
+  - the English pages' server HTML was diffed against the previous build and is identical except for the language link, `hreflang` and `og:locale`;
+  - a browser run of `/id` covered compare, vote, share, the wallet modal, the dashboard gate, the language round trip, mobile layout and console errors.
+- Known limit (Next 14 with two root layouts): a 404 returns status 404 but its server HTML is a shell, and the page renders in the browser. Invalid `/s/…` links already behaved this way.
+
 ## 12. Before public launch
 
 - **Model ids:** on the server, run `pnpm --filter @refract/api models:resolve` and confirm or update each OpenRouter id. The seed ids (Claude Haiku/Sonnet/Opus 4.5, GPT-5, Gemini 2.5 Pro, Llama 3.3 70B, DeepSeek V3.1, Mistral Small 3.2) could not be verified from the sandbox.
@@ -635,4 +650,4 @@ Still untested: `server-setup.sh` on a real Ubuntu host (the sandbox has no syst
 - **Wallets:** WalletConnect is built in but only switches on with `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (free at cloud.reown.com). It could not be tested from the sandbox, so test it once on the real domain.
 - **Terms of resale:** read OpenRouter's and each provider's terms on reselling access (from HANDOFF).
 - **Load test:** load-test `/internal/compare` and confirm the budget cap trips (from HANDOFF).
-- **Not done, needs your decision:** an Indonesian (or other) language version, and sharing compare results by link. Sharing means storing answers, which changes the privacy promise.
+- **Translation review:** have a native speaker read `apps/web/lib/i18n/id.ts` once before launch, especially the token disclaimer.

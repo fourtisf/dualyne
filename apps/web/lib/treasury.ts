@@ -55,8 +55,8 @@ export const fmt = {
   usd: (n: number) => `$${money(n)}`,
   signed: (n: number, plus = "+", minus = "−") =>
     Math.round(Math.abs(n)) === 0 ? "0" : `${n < 0 ? minus : plus}${money(Math.abs(n))}`,
-  day: (d: string) =>
-    new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", {
+  day: (d: string, locale = "en-US") =>
+    new Date(`${d}T12:00:00Z`).toLocaleDateString(locale, {
       month: "short",
       day: "numeric",
       timeZone: "UTC",
