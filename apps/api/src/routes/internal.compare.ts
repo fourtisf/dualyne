@@ -144,6 +144,7 @@ export const compareRoutes: FastifyPluginAsync = async (app) => {
         blind,
       });
 
+      const answers: Record<Lane, string> = { a: "", b: "" };
       const lane = async (L: Lane, model: Model, reservation: Reservation) => {
         const startedAt = Date.now();
         const inspector = new StreamInspector();
@@ -170,7 +171,10 @@ export const compareRoutes: FastifyPluginAsync = async (app) => {
           } else {
             for await (const event of readEvents(res)) {
               inspector.inspect(event, true);
-              if (inspector.lastDelta) await send("delta", { lane: L, text: inspector.lastDelta });
+              if (inspector.lastDelta) {
+                answers[L] += inspector.lastDelta;
+                await send("delta", { lane: L, text: inspector.lastDelta });
+              }
             }
             if (inspector.errorCode) {
               status = 502;
@@ -232,12 +236,30 @@ export const compareRoutes: FastifyPluginAsync = async (app) => {
             .update({ where: { id: run.id }, data: L === "a" ? { completedA: true } : { completedB: true } })
             .catch((err: unknown) => req.log.error({ err }, "failed to mark compare lane complete"));
         }
+        return completed;
       };
 
+      let bothDone = false;
       try {
-        await Promise.all([lane("a", modelA, resA), lane("b", modelB, resB)]);
+        const done = await Promise.all([lane("a", modelA, resA), lane("b", modelB, resB)]);
+        bothDone = done.every(Boolean);
       } finally {
         clearInterval(ping);
+      }
+      if (bothDone) {
+        // Kept for one hour so the person can choose to share it; stored permanently only on Share.
+        await ctx.redis.set(
+          `cmpout:${run.id}`,
+          JSON.stringify({
+            prompt: body.prompt,
+            a: modelA.id,
+            b: modelB.id,
+            answerA: answers.a,
+            answerB: answers.b,
+          }),
+          "EX",
+          3600,
+        );
       }
       await send("end", {});
       if (!raw.writableEnded) raw.end();

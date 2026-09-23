@@ -18,10 +18,11 @@ const FAQ: [string, ReactNode][] = [
   [
     "What happens to my prompts?",
     <>
-      {brand.name} does not store the text of your prompts or the answers. We keep only what&apos;s needed to
-      run limits and publish the ledger: which model you used, token counts, cost and timing. Requests pass
-      through OpenRouter to the model&apos;s provider, whose own data policy applies. Details are in the{" "}
-      <Link href="/privacy">Privacy Policy</Link>.
+      {brand.name} does not keep the text of your prompts or the answers. After a comparison, they stay in
+      memory for up to an hour so you can choose to share them, and are saved only if you click Share. We keep
+      only what&apos;s needed to run limits and publish the ledger: which model you used, token counts, cost
+      and timing. Requests pass through OpenRouter to the model&apos;s provider, whose own data policy
+      applies. Details are in the <Link href="/privacy">Privacy Policy</Link>.
     </>,
   ],
   [

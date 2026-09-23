@@ -189,6 +189,7 @@ export async function createTestContext(
 export async function resetState(prisma: PrismaClient, redis: Redis): Promise<void> {
   await redis.flushdb();
   await prisma.session.deleteMany();
+  await prisma.share.deleteMany();
   await prisma.eloRating.deleteMany();
   await prisma.vote.deleteMany();
   await prisma.deposit.deleteMany();

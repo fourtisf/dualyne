@@ -20,16 +20,19 @@ export default function PrivacyPage() {
           <p>
             This policy explains what {brand.legalName} (&quot;{brand.name}&quot;, &quot;we&quot;) collects
             when you use {brand.domain}, the Compare tool and the {brand.name} API. The short version: we
-            don&apos;t store the text of your prompts or the answers, we don&apos;t use tracking cookies or
-            ads, and we keep only what we need to run limits, prevent abuse and publish the treasury ledger.
+            don&apos;t keep the text of your prompts or the answers unless you choose to share them, we
+            don&apos;t use tracking cookies or ads, and we keep only what we need to run limits, prevent abuse
+            and publish the treasury ledger.
           </p>
 
           <h2>What we collect</h2>
           <p>
             <strong>Compare tool.</strong> Your prompt is sent to the two models you picked so they can
-            answer. We don&apos;t store the prompt or the answers. For each run we record which models ran,
-            token counts, cost, timing, and a one-way keyed hash of your IP address that we use for the hourly
-            limit and to stop abuse. We never store your raw IP address.
+            answer. The prompt and both answers are held in memory for up to one hour so you can choose to
+            share them, then deleted. If you click <em>Share</em>, they are saved and anyone with the link can
+            read them, until you remove the link from the same browser. For each run we record which models
+            ran, token counts, cost, timing, and a one-way keyed hash of your IP address that we use for the
+            hourly limit and to stop abuse. We never store your raw IP address.
           </p>
           <p>
             <strong>API.</strong> For each request we record the key that made it (as a hash, never the key

@@ -221,3 +221,17 @@ model ChainCursor {
   block     BigInt
   updatedAt DateTime @updatedAt
 }
+
+/// A comparison someone chose to publish with a link. Only created when they click Share.
+model Share {
+  id              String   @id // short public id used in /s/<id>
+  compareId       String   @unique
+  prompt          String
+  modelA          String
+  modelB          String
+  answerA         String
+  answerB         String
+  /// SHA-256 of the delete token returned once to the creator's browser.
+  deleteTokenHash String
+  createdAt       DateTime @default(now())
+}

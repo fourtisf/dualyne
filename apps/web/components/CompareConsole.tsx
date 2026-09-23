@@ -134,6 +134,7 @@ export function CompareConsole({
   /** Set while the shown answers come from a blind run; `revealed` holds the models after voting. */
   const [blindRun, setBlindRun] = useState<{ revealed: { a: string; b: string } | null } | null>(null);
   const [voteNote, setVoteNote] = useState("");
+  const [shareLabel, setShareLabel] = useState("Share");
 
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const tsSlot = useRef<HTMLDivElement>(null);
@@ -172,6 +173,7 @@ export function CompareConsole({
     runRef.current = { pair: blind ? null : [modelA, modelB], compareId: null, matchIdx: null, blind };
     setBlindRun(blind ? { revealed: null } : null);
     setVoteNote("");
+    setShareLabel("Share");
     setBusy(true);
     setExample(false);
     setVerdictShown(false);
@@ -326,6 +328,37 @@ export function CompareConsole({
       );
     } catch (e) {
       setVoteNote(e instanceof ApiRequestError ? e.message : "Couldn't save your vote. Try again.");
+    }
+  };
+
+  const shareRun = async () => {
+    const r = runRef.current;
+    if (!r?.compareId) return;
+    setShareLabel("Sharing…");
+    try {
+      const res = await fetch(`${publicConfig.apiUrl}/shares`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ compareId: r.compareId }),
+      });
+      const json = (await res.json()) as { id?: string; token?: string | null; error?: { message: string } };
+      if (!res.ok || !json.id) throw new Error(json.error?.message ?? "");
+      if (json.token) {
+        const all = store.get<Record<string, string>>("refract.shares", {});
+        all[json.id] = json.token;
+        store.set("refract.shares", all);
+      }
+      const url = `${window.location.origin}/s/${json.id}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        setShareLabel("Link copied");
+      } catch {
+        window.open(url, "_blank", "noopener");
+        setShareLabel("Link opened");
+      }
+    } catch (e) {
+      setShareLabel("Share");
+      setVoteNote(e instanceof Error && e.message ? e.message : "Couldn't create a link. Try again.");
     }
   };
 
@@ -549,6 +582,19 @@ export function CompareConsole({
               {label}
             </button>
           ))}
+          <button
+            className="chip"
+            type="button"
+            onClick={() => void shareRun()}
+            disabled={Boolean(blindRun && !blindRun.revealed) || shareLabel === "Sharing…"}
+            title={
+              blindRun && !blindRun.revealed
+                ? "Vote first, then share"
+                : "Copy a public link to these answers"
+            }
+          >
+            {shareLabel}
+          </button>
           <span className="record" id="record">
             {record}
           </span>

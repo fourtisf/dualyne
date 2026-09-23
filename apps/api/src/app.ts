@@ -17,6 +17,7 @@ import { meRoutes } from "./routes/me";
 import { treasuryRoutes } from "./routes/treasury";
 import { creditRoutes } from "./routes/credits";
 import { voteRoutes } from "./routes/votes";
+import { shareRoutes } from "./routes/shares";
 import { Budget } from "./budget";
 import type { AppContext } from "./context";
 import { webOrigins, type Env } from "./env";
@@ -170,7 +171,7 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
       } else {
         cb(null, {
           origin: "*",
-          methods: ["GET", "POST"],
+          methods: ["GET", "POST", "DELETE"],
           allowedHeaders: ["authorization", "content-type"],
           exposedHeaders: EXPOSED_HEADERS,
           maxAge: 600,
@@ -248,6 +249,7 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
   await app.register(treasuryRoutes);
   await app.register(creditRoutes);
   await app.register(voteRoutes);
+  await app.register(shareRoutes);
 
   return app;
 }
