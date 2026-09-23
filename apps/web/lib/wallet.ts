@@ -105,11 +105,14 @@ export const KNOWN_WALLETS: {
   rdns: string;
   name: string;
   color: string;
+  /** App icon in public/wallets (from @web3icons/core, MIT). */
+  logo: string;
   install: string;
   openInApp?: (url: string) => string;
 }[] = [
   {
     rdns: "io.metamask",
+    logo: "/wallets/metamask.svg",
     name: "MetaMask",
     color: "#F6851B",
     install: "https://metamask.io/download/",
@@ -117,6 +120,7 @@ export const KNOWN_WALLETS: {
   },
   {
     rdns: "com.trustwallet.app",
+    logo: "/wallets/trust.svg",
     name: "Trust Wallet",
     color: "#0500FF",
     install: "https://trustwallet.com/download",
@@ -124,6 +128,7 @@ export const KNOWN_WALLETS: {
   },
   {
     rdns: "com.coinbase.wallet",
+    logo: "/wallets/coinbase.svg",
     name: "Coinbase Wallet",
     color: "#0052FF",
     install: "https://www.coinbase.com/wallet/downloads",
@@ -131,6 +136,7 @@ export const KNOWN_WALLETS: {
   },
   {
     rdns: "com.okex.wallet",
+    logo: "/wallets/okx.svg",
     name: "OKX Wallet",
     color: "#2B2B2B",
     install: "https://www.okx.com/web3",
@@ -138,13 +144,20 @@ export const KNOWN_WALLETS: {
   },
   {
     rdns: "app.phantom",
+    logo: "/wallets/phantom.svg",
     name: "Phantom",
     color: "#AB9FF2",
     install: "https://phantom.com/download",
     openInApp: (url) =>
       `https://phantom.app/ul/browse/${encodeURIComponent(url)}?ref=${encodeURIComponent(new URL(url).origin)}`,
   },
-  { rdns: "io.rabby", name: "Rabby", color: "#7084FF", install: "https://rabby.io/" },
+  {
+    rdns: "io.rabby",
+    logo: "/wallets/rabby.svg",
+    name: "Rabby",
+    color: "#7084FF",
+    install: "https://rabby.io/",
+  },
 ];
 
 export const isPhone = (): boolean =>

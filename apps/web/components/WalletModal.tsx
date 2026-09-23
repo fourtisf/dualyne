@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
 import { brand } from "@dualyne/config";
 import type { KeyInfo, MeResponse } from "@dualyne/shared";
 import { ApiRequestError } from "@/lib/api";
@@ -23,15 +23,26 @@ export function eligibilityText(t: Dict, e: NonNullable<MeResponse["eligibility"
   return e.code === "check_failed" ? tr.checkFailed : e.reason;
 }
 
-/** A wallet's own icon when it sent a valid one, else a letter tile in its colour. */
-function WalletIcon({ name, icon, color }: { name: string; icon?: string; color?: string }) {
-  const src = icon ? safeWalletIcon(icon) : null;
+/** The wallet's own icon (from the extension), else our copy of its logo, else a letter tile. */
+function WalletIcon({
+  name,
+  icon,
+  rdns,
+  color,
+}: {
+  name: string;
+  icon?: string;
+  rdns?: string;
+  color?: string;
+}) {
+  const src =
+    (icon ? safeWalletIcon(icon) : null) ?? KNOWN_WALLETS.find((k) => k.rdns === rdns)?.logo ?? null;
   if (src) {
-    // eslint-disable-next-line @next/next/no-img-element -- inline data URI from the wallet itself
+    // eslint-disable-next-line @next/next/no-img-element -- tiny local SVG or inline data URI
     return <img className="ic img" src={src} alt="" width={34} height={34} />;
   }
   return (
-    <svg className="ic img" viewBox="0 0 34 34" aria-hidden="true" style={{ "--c": color } as CSSProperties}>
+    <svg className="ic img" viewBox="0 0 34 34" aria-hidden="true">
       <rect width="34" height="34" rx="9" fill={color ?? "#2A2A33"} />
       <text x="17" y="22.5" textAnchor="middle" fontSize="15" fontWeight="600" fill="#fff">
         {name.charAt(0)}
@@ -162,7 +173,7 @@ export function WalletModal() {
                   disabled={busy !== null}
                   onClick={() => connect(x.info.uuid, { kind: "injected", wallet: x })}
                 >
-                  <WalletIcon name={x.info.name} icon={x.info.icon} />
+                  <WalletIcon name={x.info.name} icon={x.info.icon} rdns={x.info.rdns} />
                   <span>
                     {busy === x.info.uuid ? t.check : x.info.name}
                     <small>{t.detected}</small>
@@ -190,7 +201,8 @@ export function WalletModal() {
                   disabled={busy !== null}
                   onClick={() => connect("walletconnect", { kind: "walletconnect" })}
                 >
-                  <span className="ic alt" />
+                  {/* eslint-disable-next-line @next/next/no-img-element -- tiny local SVG */}
+                  <img className="ic img" src="/wallets/walletconnect.svg" alt="" width={34} height={34} />
                   <span>
                     {busy === "walletconnect" ? t.check : t.walletConnect}
                     <small>{t.walletConnectSub}</small>
@@ -213,7 +225,7 @@ export function WalletModal() {
                         target={inApp ? undefined : "_blank"}
                         rel="noopener"
                       >
-                        <WalletIcon name={k.name} color={k.color} />
+                        <WalletIcon name={k.name} rdns={k.rdns} color={k.color} />
                         <span>
                           {k.name}
                           <small>{inApp ? t.openInApp : t.install}</small>
