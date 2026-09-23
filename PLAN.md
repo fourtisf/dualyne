@@ -383,7 +383,7 @@ Shared client state (the wallet and the local vote/usage history) lives in a `Wa
 
 Old hash links such as `/#/docs` get a tiny client redirect so shared URLs keep working.
 
-Languages: English lives in the `app/(en)` route group and Bahasa Indonesia in `app/(id)/id`. Each has its own root layout, so `<html lang>` is correct on the server. `/id` and `/id/dashboard` are translated. Docs, legal pages and shared results stay English, and the Indonesian pages link to them. All copy is in `apps/web/lib/i18n` (`en.ts` holds the exact English text; `id.ts` has the same shape, checked by a test). Unknown paths hit a catch-all per language that returns a 404.
+Language: the site is English only, in the `app/(en)` route group. All copy is in `apps/web/lib/i18n/en.ts`. The Indonesian version that used to live at `/id` was retired; `/id` and `/id/*` redirect permanently to the English page. Unknown paths hit a catch-all that returns a 404.
 
 ### 5.3 Deliberate differences from the prototype
 
@@ -632,7 +632,7 @@ Still untested: `server-setup.sh` on a real Ubuntu host (the sandbox has no syst
 ## 11f. Extras status
 
 - [x] Share by link (opt-in): after both answers finish, the prompt and answers stay in Redis for 1 hour. **Share** saves them to a `Share` row and copies `/s/{id}`. Only the browser that created a link holds its delete token and sees **Remove this link**. The Privacy Policy and FAQ say this.
-- [x] Bahasa Indonesia at `/id` and `/id/dashboard`:
+- [x] Bahasa Indonesia at `/id` and `/id/dashboard` (later retired: the site is English only, `/id` redirects to `/`):
   - an EN/ID switch in the nav and the mobile menu, keeping the same page;
   - `hreflang` alternates, an Indonesian social card, and `/id` in the sitemap;
   - translated compare examples and model "best for" text;
@@ -682,4 +682,3 @@ The placeholder name Refract is replaced everywhere by **Dualyne**. Nearly every
 - **Brand:** the name and domain are set (Dualyne, dualyne.com). Still to add: the social links and `contactEmail` in `packages/config/src/brand.ts`, and register the domain and handles. The logo is chosen: direction G, "Prompt Lines" (a prompt caret plus two answer lines, with a lowercase Geist Mono wordmark). It is used in `components/Logo.tsx`, `app/icon.svg`, the token coin and the social cards (`lib/og.tsx`).
 - **Wallets:** WalletConnect is built in but only switches on with `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (free at cloud.reown.com). It could not be tested from the sandbox, so test it once on the real domain.
 - **Terms of resale:** read OpenRouter's and each provider's terms on reselling access (from HANDOFF).
-- **Translation review:** have a native speaker read `apps/web/lib/i18n/id.ts` once before launch, especially the token disclaimer.

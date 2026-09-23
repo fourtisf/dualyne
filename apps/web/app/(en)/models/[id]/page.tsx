@@ -19,7 +19,6 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     description: t.modelPage.metaDesc(m.name, m.provider, t.models.bestFor[m.id] ?? m.bestFor),
     alternates: {
       canonical: `/models/${m.id}`,
-      languages: { en: `/models/${m.id}`, id: `/id/models/${m.id}`, "x-default": `/models/${m.id}` },
     },
   };
 }

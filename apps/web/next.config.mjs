@@ -53,6 +53,13 @@ const nextConfig = {
     // Trace workspace packages into the standalone output.
     outputFileTracingRoot: path.join(dirname, "../../"),
   },
+  // The Indonesian version was retired; old /id links land on the English page.
+  async redirects() {
+    return [
+      { source: "/id", destination: "/", permanent: true },
+      { source: "/id/:path*", destination: "/:path*", permanent: true },
+    ];
+  },
   async headers() {
     const security = [
       { key: "X-Content-Type-Options", value: "nosniff" },

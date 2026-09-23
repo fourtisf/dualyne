@@ -1,11 +1,8 @@
 import { brand, tokenTicker } from "@dualyne/config";
 
-/**
- * English copy, exactly as the site shows it. Other languages implement the same shape
- * (see id.ts). Model, tier and token names stay the same in every language.
- */
+/** English copy, exactly as the site shows it. */
 export const en = {
-  locale: "en" as "en" | "id",
+  locale: "en" as const,
   /** BCP 47 tag for dates. Numbers and money keep en-US grouping in every language. */
   dateLocale: "en-US",
   meta: {
@@ -31,9 +28,6 @@ export const en = {
     closeMenu: "Close menu",
     mobile: "Mobile",
     /** The link to the other language. */
-    switchShort: "ID",
-    switchLong: "Bahasa Indonesia",
-    switchAria: "Baca dalam Bahasa Indonesia",
   },
   hero: {
     badgeNew: "New",

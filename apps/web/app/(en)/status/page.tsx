@@ -11,7 +11,6 @@ export const metadata: Metadata = {
   description: t.metaDesc,
   alternates: {
     canonical: "/status",
-    languages: { en: "/status", id: "/id/status", "x-default": "/status" },
   },
 };
 

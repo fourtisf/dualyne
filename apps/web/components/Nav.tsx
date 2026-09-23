@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { brand } from "@dualyne/config";
 import { shortAddr } from "@/lib/format";
-import { href, switchPath } from "@/lib/i18n";
+import { href } from "@/lib/i18n";
 import { Logo } from "./Logo";
 import { TopBar } from "./TopBar";
 import { useLocale, useT } from "./LocaleProvider";
@@ -15,11 +14,8 @@ export function Nav() {
   const { addr, openModal } = useWallet();
   const locale = useLocale();
   const t = useT().nav;
-  const pathname = usePathname() ?? "/";
   const [menuOpen, setMenuOpen] = useState(false);
   const h = (path: string) => href(locale, path);
-  const other = switchPath(pathname);
-  const otherLang = locale === "en" ? "id" : "en";
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -30,7 +26,6 @@ export function Nav() {
 
   const close = () => setMenuOpen(false);
 
-  // Switching language changes the root layout, so these are plain links (full page load).
   return (
     <>
       <header className="nav">
@@ -58,15 +53,6 @@ export function Nav() {
             </li>
           </ul>
           <div className="right">
-            <a
-              className="navlink lang"
-              href={other}
-              hrefLang={otherLang}
-              lang={otherLang}
-              aria-label={t.switchAria}
-            >
-              {t.switchShort}
-            </a>
             <Link className="navlink" href={h("/dashboard")}>
               {t.dashboard}
             </Link>
@@ -117,9 +103,6 @@ export function Nav() {
         <Link href={h("/dashboard")} onClick={close}>
           {t.dashboard}
         </Link>
-        <a className="lang" href={other} hrefLang={otherLang} lang={otherLang}>
-          {t.switchLong}
-        </a>
       </nav>
     </>
   );

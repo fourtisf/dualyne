@@ -6,7 +6,7 @@ import { getDict, type Locale } from "./i18n";
 export function siteMetadata(locale: Locale): Metadata {
   const t = getDict(locale);
   const title = `${brand.name} — ${t.meta.tagline.replace(/\.$/, "")}`;
-  const home = locale === "en" ? "/" : "/id";
+  const home = "/";
   return {
     metadataBase: new URL(brand.siteUrl),
     title: { default: title, template: `%s — ${brand.name}` },
@@ -26,11 +26,8 @@ export function siteMetadata(locale: Locale): Metadata {
   };
 }
 
-/** Home page alternates: each language points at the other (hreflang). */
-export const homeAlternates = (locale: Locale): Metadata["alternates"] => ({
-  canonical: locale === "en" ? "/" : "/id",
-  languages: { en: "/", id: "/id", "x-default": "/" },
-});
+/** Home page alternates. */
+export const homeAlternates = (_locale: Locale): Metadata["alternates"] => ({ canonical: "/" });
 
 export const siteViewport: Viewport = {
   width: "device-width",
