@@ -5,6 +5,15 @@
  * NAME and TOKEN at the top of brand/build.py.
  */
 
+const hasEnv = typeof process !== "undefined";
+/** Next.js inlines NEXT_PUBLIC_ values only when written out literally, hence the switch. */
+function env(name: "NEXT_PUBLIC_X_URL" | "NEXT_PUBLIC_TELEGRAM_URL"): string {
+  if (!hasEnv) return "";
+  const v =
+    name === "NEXT_PUBLIC_X_URL" ? process.env.NEXT_PUBLIC_X_URL : process.env.NEXT_PUBLIC_TELEGRAM_URL;
+  return v && /^https:\/\//.test(v) ? v : "";
+}
+
 // NEXT_PUBLIC_ is inlined into the browser bundle by Next.js; the API reads SITE_DOMAIN.
 const domain =
   (typeof process !== "undefined" && (process.env.NEXT_PUBLIC_SITE_DOMAIN || process.env.SITE_DOMAIN)) ||
@@ -24,10 +33,13 @@ export const brand = {
   tagline: "Every AI model, one prompt away.",
   description:
     "Send one prompt to two AI models at once and compare them side by side. Then ship the one you like through a single OpenAI-compatible API key.",
-  /** Leave a link empty to hide its icon. Dead "#" links are never rendered. */
+  /**
+   * Community links. Set NEXT_PUBLIC_X_URL / NEXT_PUBLIC_TELEGRAM_URL (or edit here). While X and
+   * Telegram are empty the site shows them as "coming soon"; an empty GitHub link is hidden.
+   */
   social: {
-    x: "",
-    telegram: "",
+    x: env("NEXT_PUBLIC_X_URL"),
+    telegram: env("NEXT_PUBLIC_TELEGRAM_URL"),
     github: "",
   },
   /** Shown in the footer and on the legal pages. Empty hides the contact link. */

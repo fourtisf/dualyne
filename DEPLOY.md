@@ -6,6 +6,8 @@ Perkiraan waktu: 1–2 jam, sebagian besar menunggu DNS dan build pertama.
 
 > Di panduan ini, `domainanda.com` adalah contoh. Ganti dengan domain Anda sendiri di setiap perintah.
 
+> **Sudah punya server yang menjalankan aplikasi lain dengan PM2?** Pakai [bagian 22](#22-deploy-dengan-pm2-di-server-yang-sudah-ada): lebih singkat, tanpa Docker, dan tidak mengganggu aplikasi yang sudah berjalan.
+
 ---
 
 ## 0. Yang perlu disiapkan
@@ -348,6 +350,10 @@ Setelah kontrak token dan dompet treasury siap, isi nilai berikut di `.env` (lan
 | `NEXT_PUBLIC_DLYN_BUY_URL`   | Link tombol **Buy** (misalnya halaman swap)                                    |
 | `NEXT_PUBLIC_DLYN_CHART_URL` | Link tombol **View chart** (misalnya DexScreener)                              |
 | `NEXT_PUBLIC_EXPLORER_URL`   | Explorer jaringan, misalnya `https://basescan.org`                             |
+| `NEXT_PUBLIC_X_URL`          | Link akun X, misalnya `https://x.com/dualyne` (boleh diisi sebelum peluncuran) |
+| `NEXT_PUBLIC_TELEGRAM_URL`   | Link grup Telegram, misalnya `https://t.me/dualyne`                            |
+
+Selama `DLYN_TOKEN_ADDRESS` kosong, kolom CA menampilkan **"Coming soon"** (tetap bisa disalin). Selama link X dan Telegram kosong, ikonnya tampil sebagai "coming soon" dan tidak bisa diklik. Setelah nilai diisi, jalankan `deploy.sh` lagi, karena nilai `NEXT_PUBLIC_*` dimasukkan ke website saat build.
 
 Untuk **tier Builder** (kredit prabayar), isi juga:
 
@@ -368,3 +374,100 @@ Setelah deploy:
 ## 21. Jika ada kecurangan voting
 
 Jika leaderboard terlihat dimanipulasi, ubah `COMPARE_BLIND_MODE=always` di `.env` lalu jalankan `deploy.sh`. Semua perbandingan menjadi _blind_ (nama model disembunyikan sampai pengguna memilih), dan hanya vote blind yang dihitung di leaderboard mulai update malam berikutnya.
+
+## 22. Deploy dengan PM2 di server yang sudah ada
+
+Untuk server Ubuntu yang sudah menjalankan aplikasi lain dengan PM2 dan Nginx. Dualyne berjalan di sampingnya sebagai dua aplikasi PM2, `dualyne-api` dan `dualyne-web`:
+
+- Memakai Node 22 sendiri di folder `.runtime/`; Node sistem dan aplikasi lain tidak berubah.
+- Mendengarkan di `127.0.0.1` saja (port 3100 dan 4100).
+- Punya file Nginx sendiri (`dualyne.conf`), dan tidak menyentuh situs, database, atau aplikasi PM2 lain.
+- DNS boleh tetap di Hostinger. Sertifikat HTTPS diambil dengan certbot biasa.
+
+### 22.1 DNS (di panel domain)
+
+Tiga record berikut harus mengarah ke IP server:
+
+| Jenis | Nama  | Konten           |
+| ----- | ----- | ---------------- |
+| A     | `@`   | IP server        |
+| CNAME | `www` | `domainanda.com` |
+| A     | `api` | IP server        |
+
+### 22.2 Beri server akses baca ke repository (sekali)
+
+Jalankan di server sebagai root:
+
+```bash
+ssh-keygen -t ed25519 -N "" -C "dualyne-server" -f /root/.ssh/dualyne_deploy
+cat /root/.ssh/dualyne_deploy.pub
+```
+
+Salin baris yang muncul. Di GitHub, buka **repository → Settings → Deploy keys → Add deploy key**, tempel, dan **jangan** centang _Allow write access_.
+
+### 22.3 Ambil kode
+
+```bash
+GIT_SSH_COMMAND="ssh -i /root/.ssh/dualyne_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
+  git clone -b BRANCH git@github.com:OWNER/REPO.git /var/www/dualyne
+cd /var/www/dualyne
+git config core.sshCommand "ssh -i /root/.ssh/dualyne_deploy -o IdentitiesOnly=yes"
+```
+
+### 22.4 Siapkan server (sekali, aman diulang)
+
+```bash
+cd /var/www/dualyne
+EMAIL=emailanda@contoh.com bash deploy/pm2/setup.sh
+```
+
+Script ini:
+
+- memasang yang belum ada saja (Postgres, Redis, Nginx, certbot);
+- membuat database `dualyne` dan file `.env` berisi rahasia acak;
+- menambahkan situs Nginx dan mengambil sertifikat HTTPS untuk nama yang DNS-nya sudah benar.
+
+Jika port 3100/4100 sudah dipakai, script berhenti dan memberi tahu. Pilih port lain: `WEB_PORT=3200 API_PORT=4200 bash deploy/pm2/setup.sh`.
+
+### 22.5 Isi tiga kunci di `.env`
+
+```bash
+nano /var/www/dualyne/.env
+```
+
+- `OPENROUTER_API_KEY`: dari openrouter.ai → Keys (langkah 7).
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` dan `TURNSTILE_SECRET_KEY`: dari dash.cloudflare.com → Turnstile → Add widget, domain `domainanda.com` (gratis; DNS **tidak** perlu dipindah ke Cloudflare).
+- Opsional: `NEXT_PUBLIC_X_URL` dan `NEXT_PUBLIC_TELEGRAM_URL`.
+
+Simpan dengan Ctrl+O, Enter, lalu Ctrl+X.
+
+### 22.6 Deploy
+
+```bash
+cd /var/www/dualyne
+bash deploy/pm2/deploy.sh
+```
+
+Build pertama makan waktu 2–5 menit dan butuh sekitar 1,5 GB RAM kosong (cek dengan `free -h`). Di akhir, `pm2 list` menampilkan `dualyne-api` dan `dualyne-web` berstatus **online**, di samping aplikasi Anda yang lain.
+
+### 22.7 Update berikutnya
+
+```bash
+cd /var/www/dualyne && bash deploy/pm2/deploy.sh
+```
+
+### 22.8 Perintah berguna
+
+```bash
+pm2 list                                  # semua aplikasi, termasuk dualyne-api dan dualyne-web
+pm2 logs dualyne-api --lines 100          # log API
+pm2 logs dualyne-web --lines 100          # log website
+pm2 restart dualyne-api dualyne-web       # restart Dualyne saja
+bash deploy/pm2/setup.sh                  # ulangi jika sertifikat api.* belum terbit karena DNS
+```
+
+Cek model OpenRouter (seperti langkah 11):
+
+```bash
+cd /var/www/dualyne/apps/api && set -a && . ../../.env && set +a && ../../.runtime/node/bin/node dist/resolve-models.js
+```

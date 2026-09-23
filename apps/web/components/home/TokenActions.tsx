@@ -1,39 +1,51 @@
 "use client";
 
 import { useState } from "react";
+import { brand } from "@dualyne/config";
 import { publicConfig } from "@/lib/config";
 import { useT } from "../LocaleProvider";
+import { socialIcons } from "../Social";
 
-/** Contract address with Copy, and Buy / View chart links. Disabled until launch values are set. */
+/**
+ * Contract address with Copy, Buy / View chart, and the community links. Until launch the CA
+ * reads "Coming soon" (still copyable) and the buttons without a URL are disabled.
+ */
 export function TokenActions() {
   const { dlynTokenAddress: ca, dlynBuyUrl, dlynChartUrl, explorerUrl } = publicConfig;
   const d = useT();
   const t = d.token;
+  const value = ca || t.caSoon;
   const [state, setState] = useState<"copy" | "copied" | "select">("copy");
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(ca);
+      await navigator.clipboard.writeText(value);
       setState("copied");
     } catch {
       setState("select");
     }
     setTimeout(() => setState("copy"), 1600);
   };
+  const community = [
+    { key: "x" as const, url: brand.social.x, label: t.followX },
+    { key: "telegram" as const, url: brand.social.telegram, label: t.joinTelegram },
+  ];
   return (
     <>
       <div className="ca">
-        {ca ? (
-          explorerUrl ? (
-            <a href={`${explorerUrl}/token/${ca}`} target="_blank" rel="noopener" className="ca-addr">
-              {ca}
-            </a>
-          ) : (
-            <span className="ca-addr">{ca}</span>
-          )
+        <span className="ca-lbl">{t.caLabel}</span>
+        {ca && explorerUrl ? (
+          <a href={`${explorerUrl}/token/${ca}`} target="_blank" rel="noopener" className="ca-addr">
+            {ca}
+          </a>
         ) : (
-          <span>{t.caPending}</span>
+          <span className="ca-addr">{value}</span>
         )}
-        <button className="btn dark sm" type="button" disabled={!ca} onClick={copy}>
+        <button
+          className="btn dark sm"
+          type="button"
+          onClick={copy}
+          aria-label={`${d.copy[state]}: ${t.caLabel}`}
+        >
           {d.copy[state]}
         </button>
       </div>
@@ -55,6 +67,22 @@ export function TokenActions() {
           <button className="btn dark" type="button" disabled>
             {t.chart}
           </button>
+        )}
+      </div>
+      <div className="tk-community" role="group" aria-label={t.community}>
+        {community.map((c) =>
+          c.url ? (
+            <a key={c.key} className="btn dark sm" href={c.url} target="_blank" rel="noopener">
+              {socialIcons[c.key]}
+              {c.label}
+            </a>
+          ) : (
+            <button key={c.key} className="btn dark sm" type="button" disabled>
+              {socialIcons[c.key]}
+              {c.label}
+              <span className="soon-tag">{t.soon}</span>
+            </button>
+          ),
         )}
       </div>
     </>
