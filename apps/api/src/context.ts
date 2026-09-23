@@ -9,6 +9,10 @@ import type { ApiKeyAuth } from "./auth/apiKey";
 import type { OpenRouter } from "./openrouter/client";
 import type { TierPolicies } from "./tiers";
 import type { SlidingWindowLimiter } from "./limiter";
+import type { ChainReader } from "./chain/types";
+import type { Sessions } from "./auth/sessions";
+import type { TierService } from "./tierService";
+import type { SybilCheck } from "./sybil";
 
 export interface AppContext {
   env: Env;
@@ -23,6 +27,11 @@ export interface AppContext {
   compareLimiter: SlidingWindowLimiter;
   alert: Alerter;
   ipHash: (ip: string) => string;
+  /** null when RPC_URL is not configured. */
+  chain: ChainReader | null;
+  sessions: Sessions;
+  tierService: TierService;
+  sybil: SybilCheck;
   /** Work that continues after a response has ended (usage logging). Awaited on shutdown. */
   track: (p: Promise<unknown>) => void;
   inflight: Set<Promise<unknown>>;

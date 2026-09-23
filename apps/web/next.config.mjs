@@ -18,15 +18,25 @@ const isDev = process.env.NODE_ENV !== "production";
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
 const apiOrigin = apiUrl ? new URL(apiUrl).origin : "";
 
+// WalletConnect needs its relay and verify endpoints, only when it is enabled.
+const wc = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
+  ? {
+      connect:
+        " https://rpc.walletconnect.org https://rpc.walletconnect.com wss://relay.walletconnect.org wss://relay.walletconnect.com https://relay.walletconnect.org https://relay.walletconnect.com https://pulse.walletconnect.org https://api.web3modal.org https://explorer-api.walletconnect.com",
+      frame: " https://verify.walletconnect.org https://verify.walletconnect.com",
+      img: " https://*.walletconnect.com https://*.walletconnect.org https://api.web3modal.org",
+    }
+  : { connect: "", frame: "", img: "" };
+
 const csp = [
   "default-src 'self'",
   // Next.js inlines small bootstrap scripts; Turnstile loads from Cloudflare.
   `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data:",
+  `img-src 'self' data: blob:${wc.img}`,
   "font-src 'self'",
-  `connect-src 'self' ${apiOrigin} https://challenges.cloudflare.com${isDev ? " ws:" : ""}`.trim(),
-  "frame-src https://challenges.cloudflare.com",
+  `connect-src 'self' ${apiOrigin} https://challenges.cloudflare.com${wc.connect}${isDev ? " ws:" : ""}`.trim(),
+  `frame-src https://challenges.cloudflare.com${wc.frame}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

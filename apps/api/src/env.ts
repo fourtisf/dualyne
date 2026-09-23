@@ -44,6 +44,31 @@ const schema = z
       .optional()
       .or(z.literal("").transform(() => undefined)),
     JOBS_ENABLED: bool.default("true"),
+
+    // Wallet sign-in (SIWE) and on-chain reads
+    SESSION_SECRET: z.string().default(""),
+    SIWE_CHAIN_ID: z.coerce.number().int().positive().default(1),
+    /** JSON-RPC endpoint for SIWE_CHAIN_ID. Without it, on-chain features are off. */
+    RPC_URL: z
+      .string()
+      .url()
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+    /** auto = on when RPC_URL is set. */
+    SYBIL_CHECK: z.enum(["auto", "on", "off"]).default("auto"),
+    SYBIL_MIN_ETH_WEI: z
+      .string()
+      .regex(/^\d+$/)
+      .default("1000000000000000")
+      .transform((v) => BigInt(v)),
+    SYBIL_MIN_WALLET_AGE_DAYS: z.coerce.number().int().min(0).default(30),
+    /** Etherscan-compatible API (v2: https://api.etherscan.io/v2/api) used for wallet age. */
+    EXPLORER_API_URL: z
+      .string()
+      .url()
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+    EXPLORER_API_KEY: z.string().default(""),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV !== "production") return;
@@ -51,6 +76,7 @@ const schema = z
       ["OPENROUTER_API_KEY", 10],
       ["TURNSTILE_SECRET_KEY", 10],
       ["IP_HASH_SECRET", 32],
+      ["SESSION_SECRET", 32],
     ];
     for (const [key, min] of required) {
       const v = env[key];
@@ -69,6 +95,11 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
     throw new Error(`Invalid environment configuration:\n${lines}`);
   }
   return parsed.data;
+}
+
+/** Hosts (host[:port]) of the allowed web origins, used as the SIWE `domain`. */
+export function webHosts(env: Env): string[] {
+  return webOrigins(env).map((o) => new URL(o).host);
 }
 
 export function webOrigins(env: Env): string[] {

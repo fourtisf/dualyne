@@ -49,17 +49,6 @@ export default async function DocsPage() {
             1. Connect a wallet and create a key in the <Link href="/dashboard">dashboard</Link>. 2. Set it as an
             environment variable. 3. Point your SDK at {brand.name}.
           </p>
-          <div className="call">
-            Early access: self-serve keys open with wallet sign-in.
-            {brand.contactEmail ? (
-              <>
-                {" "}
-                Until then, request a key at <a href={`mailto:${brand.contactEmail}`}>{brand.contactEmail}</a>.
-              </>
-            ) : (
-              " Until then, keys are issued on request."
-            )}
-          </div>
           <pre>
             <code>{`export ${envName}="${brand.keyPrefix}..."
 

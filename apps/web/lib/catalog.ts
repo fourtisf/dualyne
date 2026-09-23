@@ -8,7 +8,8 @@ import { STATIC_CATALOG, type CatalogModel } from "@refract/shared";
  */
 export async function getCatalog(): Promise<CatalogModel[]> {
   const base = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL;
-  if (!base) return STATIC_CATALOG;
+  // During `next build` the API is usually not running; the page revalidates at runtime.
+  if (!base || process.env.NEXT_PHASE === "phase-production-build") return STATIC_CATALOG;
   try {
     const res = await fetch(`${base.replace(/\/$/, "")}/internal/catalog`, {
       next: { revalidate: 60 },

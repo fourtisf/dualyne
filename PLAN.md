@@ -585,12 +585,23 @@ Rehearsed in the sandbox with Docker:
 
 Still untested: `server-setup.sh` on a real Ubuntu host (the sandbox has no systemd and no apt access), certbot, and Cloudflare.
 
+## 11c. Phase 3 status (wallet accounts and keys)
+
+- [x] Sign-In With Ethereum: `GET /auth/nonce`, `POST /auth/verify`, `GET /auth/session`, `POST /auth/logout`. Nonces are single use and last 5 minutes. The server checks the domain, URI, chain and message age, and the signature (smart-contract wallets too, when `RPC_URL` is set).
+- [x] Sessions: a random `rf_session` cookie (HttpOnly, SameSite=Lax, Secure in production) valid for 30 days. Only its HMAC is stored, and a daily job purges expired sessions.
+- [x] `GET /me`, `GET /me/usage?days=7` (per day and per key), `GET /me/keys`, `POST /me/keys` (the full key is shown once), `DELETE /me/keys/:id`
+- [x] Key limits per tier (Explorer 1, Holder 5, Builder unlimited), with a per-wallet lock against parallel creation
+- [x] CSRF: cookie writes require the website's `Origin`; credentialed CORS is only allowed for our origins
+- [x] Sybil check for Explorer keys: minimum native balance **or** wallet age via an Etherscan-compatible API. Cached for a day when eligible; a cached refusal is re-checked when the user asks for a key.
+- [x] Website: real sign-in with a browser wallet (WalletConnect when a project id is set), a key dialog (create, show once, copy, revoke with confirmation), and a dashboard on real data (requests today, tier, keys, a 7-day chart, usage per key)
+- [x] Tests: 21 new API tests (SIWE rules, sessions, keys, limits, sybil, CSRF, CORS, scheduler) and a browser run of the full key lifecycle
+
 ## 12. Before public launch
 
 - **Model ids:** on the server, run `pnpm --filter @refract/api models:resolve` and confirm or update each OpenRouter id. The seed ids (Claude Haiku/Sonnet/Opus 4.5, GPT-5, Gemini 2.5 Pro, Llama 3.3 70B, DeepSeek V3.1, Mistral Small 3.2) could not be verified from the sandbox.
 - **Legal:** have a lawyer review `/terms` and `/privacy`, including governing law and the legal entity name (`brand.legalName`), and the token disclaimer.
 - **Brand:** set the final name, domain, social links and `contactEmail` in `packages/config/src/brand.ts`.
-- **Wallets:** WalletConnect (for phones without a wallet browser) ships with wallet sign-in in Phase 3. It needs a WalletConnect project id.
+- **Wallets:** WalletConnect is built in but only switches on with `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (free at cloud.reown.com). It could not be tested from the sandbox, so test it once on the real domain.
 - **Terms of resale:** read OpenRouter's and each provider's terms on reselling access (from HANDOFF).
 - **Load test:** load-test `/internal/compare` and confirm the budget cap trips (from HANDOFF).
 - **Not done, needs your decision:** an Indonesian (or other) language version, and sharing compare results by link. Sharing means storing answers, which changes the privacy promise.

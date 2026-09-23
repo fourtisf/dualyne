@@ -17,6 +17,7 @@
     "models:resolve": "tsx --env-file-if-exists=../../.env scripts/resolve-models.ts"
   },
   "dependencies": {
+    "@fastify/cookie": "11.1.2",
     "@fastify/cors": "11.3.0",
     "@fastify/rate-limit": "10.3.0",
     "@prisma/client": "6.19.3",
@@ -26,6 +27,7 @@
     "fastify-plugin": "5.1.0",
     "ioredis": "5.11.1",
     "prisma": "6.19.3",
+    "viem": "2.56.8",
     "zod": "3.25.76"
   },
   "devDependencies": {

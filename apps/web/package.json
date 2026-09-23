@@ -13,11 +13,13 @@
   "dependencies": {
     "@refract/config": "workspace:*",
     "@refract/shared": "workspace:*",
+    "@walletconnect/ethereum-provider": "2.25.0",
     "geist": "1.7.2",
     "next": "14.2.35",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "server-only": "0.0.1"
+    "server-only": "0.0.1",
+    "viem": "2.56.8"
   },
   "devDependencies": {
     "@types/node": "22.20.4",

@@ -37,8 +37,10 @@ export default function PrivacyPage() {
             status. We don&apos;t store request or response bodies.
           </p>
           <p>
-            <strong>Wallet.</strong> When you connect a wallet, we read its public address. Your wallet never
-            shares private keys with us, and connecting doesn&apos;t send any transaction.
+            <strong>Wallet.</strong> When you sign in, you sign a message with your wallet. We store your
+            public address, your API keys (as hashes) and a session record. Your wallet never shares private
+            keys with us, and signing in doesn&apos;t send any transaction. To check eligibility for the free
+            tier we read your wallet&apos;s public balance and age from the blockchain.
           </p>
           <p>
             <strong>Your browser.</strong> Your connected address, your Compare votes and a count of your
@@ -72,15 +74,16 @@ export default function PrivacyPage() {
 
           <h2>How long we keep it</h2>
           <p>
-            Rate-limit counters expire within 48 hours. Usage records (models, token counts, cost, timing) are
-            kept for as long as we need them to operate limits, billing and the public ledger. Database
-            backups are deleted after 7 days.
+            Rate-limit counters expire within 48 hours. Sessions end after 30 days or when you disconnect.
+            Usage records (models, token counts, cost, timing) are kept for as long as we need them to operate
+            limits, billing and the public ledger. Database backups are deleted after 7 days.
           </p>
 
           <h2>Cookies</h2>
           <p>
-            The site doesn&apos;t use tracking or advertising cookies. When wallet sign-in launches, we will
-            use one essential cookie to keep you signed in, and we&apos;ll update this policy first.
+            We use one essential cookie, <code>rf_session</code>, to keep you signed in for up to 30 days. It
+            is HttpOnly, is only sent to our API and contains a random value, not your address. We don&apos;t
+            use tracking or advertising cookies.
           </p>
 
           <h2>What you should not send</h2>

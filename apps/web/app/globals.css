@@ -485,3 +485,6 @@ html{overflow-x:hidden}
 body{overflow-x:clip}
 .lane:has(.lcopy) .lb{padding-bottom:56px}
 footer.big .fbot{flex-basis:100%}
+/* v7: wallet sign-in */
+.tier-name{color:var(--text); font-weight:500}
+.opt[disabled]{opacity:.6; cursor:progress}

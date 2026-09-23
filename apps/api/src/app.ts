@@ -1,3 +1,4 @@
+import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import { PrismaClient } from "@prisma/client";
@@ -5,6 +6,13 @@ import Fastify, { type FastifyError, type FastifyInstance } from "fastify";
 import { Redis } from "ioredis";
 import { ZodError } from "zod";
 import { ApiKeyAuth, bearerToken } from "./auth/apiKey";
+import { Sessions } from "./auth/sessions";
+import type { ChainReader } from "./chain/types";
+import { ViemChain } from "./chain/viem";
+import { SybilCheck } from "./sybil";
+import { TierService } from "./tierService";
+import { authRoutes } from "./routes/auth";
+import { meRoutes } from "./routes/me";
 import { Budget } from "./budget";
 import type { AppContext } from "./context";
 import { webOrigins, type Env } from "./env";
@@ -28,7 +36,12 @@ export interface BuildOptions {
   prisma?: PrismaClient;
   redis?: Redis;
   clock?: Clock;
+  /** Override the chain reader (tests). Defaults to viem when RPC_URL is set. */
+  chain?: ChainReader | null;
 }
+
+/** Paths called from the website with the session cookie: CORS limited to our own origins. */
+const CREDENTIALED_PREFIXES = ["/internal/compare", "/auth/", "/me"];
 
 export const EXPOSED_HEADERS = ["x-request-id", "x-refract-remaining", "x-compare-remaining", "retry-after"];
 
@@ -65,6 +78,18 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
   const redis =
     opts.redis ?? new Redis(env.REDIS_URL, { maxRetriesPerRequest: 2, enableAutoPipelining: true });
   const clock = opts.clock ?? systemClock;
+  const chain =
+    opts.chain !== undefined
+      ? opts.chain
+      : env.RPC_URL
+        ? new ViemChain({
+            rpcUrl: env.RPC_URL,
+            chainId: env.SIWE_CHAIN_ID,
+            explorerApiUrl: env.EXPLORER_API_URL,
+            explorerApiKey: env.EXPLORER_API_KEY,
+          })
+        : null;
+  const tierService = new TierService(prisma, redis);
 
   const ctx: AppContext = {
     env,
@@ -73,7 +98,7 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
     clock,
     quota: new Quota(redis, clock),
     budget: new Budget(redis, prisma, usdToMicro(env.DAILY_BUDGET_USD), clock),
-    auth: new ApiKeyAuth(prisma, redis),
+    auth: new ApiKeyAuth(prisma, redis, tierService),
     openrouter: new OpenRouter({
       baseUrl: env.OPENROUTER_BASE_URL,
       apiKey: env.OPENROUTER_API_KEY,
@@ -84,6 +109,19 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
     compareLimiter: new SlidingWindowLimiter(redis, "cmp", env.COMPARE_LIMIT_PER_HOUR, 3_600_000, clock),
     alert: createAlerter(app.log, env.ALERT_WEBHOOK_URL),
     ipHash: (ip) => hashIp(env.IP_HASH_SECRET, ip),
+    chain,
+    sessions: new Sessions(prisma, env.SESSION_SECRET, clock),
+    tierService,
+    sybil: new SybilCheck(
+      redis,
+      chain,
+      {
+        enabled: env.SYBIL_CHECK === "on" || (env.SYBIL_CHECK === "auto" && chain !== null),
+        minWei: env.SYBIL_MIN_ETH_WEI,
+        minAgeDays: env.SYBIL_MIN_WALLET_AGE_DAYS,
+      },
+      clock,
+    ),
     inflight: new Set(),
     track: (p) => {
       const tracked = p.catch(() => undefined).finally(() => ctx.inflight.delete(tracked));
@@ -104,13 +142,15 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
   });
 
   const allowedOrigins = webOrigins(env);
+  await app.register(cookie);
   await app.register(cors, {
     delegator: (req, cb) => {
       const path = (req.url ?? "").split("?")[0] ?? "";
-      if (path.startsWith("/internal/compare")) {
+      if (CREDENTIALED_PREFIXES.some((p) => path.startsWith(p))) {
         cb(null, {
           origin: allowedOrigins,
-          methods: ["POST"],
+          credentials: true,
+          methods: ["GET", "POST", "DELETE"],
           allowedHeaders: ["content-type"],
           exposedHeaders: EXPOSED_HEADERS,
           maxAge: 600,
@@ -191,6 +231,8 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
   await app.register(modelsRoutes, { routeConfig: keyLimit });
   await app.register(chatRoutes, { routeConfig: keyLimit });
   await app.register(compareRoutes);
+  await app.register(authRoutes);
+  await app.register(meRoutes);
 
   return app;
 }

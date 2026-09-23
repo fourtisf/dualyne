@@ -1,25 +1,28 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import type { KeyInfo, MeResponse } from "@refract/shared";
+import { ApiRequestError, apiFetch } from "@/lib/api";
 import { publicConfig } from "@/lib/config";
 import { store, today } from "@/lib/storage";
-
-interface EthereumProvider {
-  request(args: { method: string; params?: unknown[] }): Promise<unknown>;
-}
-declare global {
-  interface Window {
-    ethereum?: EthereumProvider;
-  }
-}
+import { signInWithWallet, walletConnectProvider, WalletFlowError, type Eip1193 } from "@/lib/wallet";
 
 const HOUR_MS = 3_600_000;
 
+export type ConnectKind = "injected" | "walletconnect";
+
 interface WalletContextValue {
-  /** Connected address, or null. Read-only until wallet sign-in (SIWE) ships. */
+  /** Signed-in account, or null. `undefined` while the session is being checked. */
+  me: MeResponse | null | undefined;
   addr: string | null;
-  connect(): Promise<string | null>;
-  disconnect(): void;
+  keys: KeyInfo[];
+  /** Sign in with a wallet. Resolves to an error message, or null on success. */
+  connect(kind: ConnectKind): Promise<string | null>;
+  disconnect(): Promise<void>;
+  refresh(): Promise<void>;
+  /** Create a key; the returned object carries the full key exactly once. */
+  createKey(name?: string): Promise<KeyInfo>;
+  revokeKey(id: string): Promise<void>;
   modalOpen: boolean;
   openModal(): void;
   closeModal(): void;
@@ -27,7 +30,7 @@ interface WalletContextValue {
   compareUsed: number;
   compareLimit: number;
   setCompareRemaining(remaining: number): void;
-  /** Record one comparison run for this browser's 7-day history. */
+  /** Record one comparison run for this browser's local history. */
   recordRun(): void;
   /** Bumps whenever local history or votes change, so views re-read storage. */
   version: number;
@@ -43,39 +46,86 @@ export function useWallet(): WalletContextValue {
 }
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const [addr, setAddr] = useState<string | null>(null);
+  const [me, setMe] = useState<MeResponse | null | undefined>(undefined);
+  const [keys, setKeys] = useState<KeyInfo[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [compare, setCompare] = useState<{ remaining: number; at: number } | null>(null);
   const [version, setVersion] = useState(0);
+  const [wc, setWc] = useState<(Eip1193 & { disconnect(): Promise<void> }) | null>(null);
   const limit = publicConfig.compareLimitPerHour;
 
+  const loadKeys = useCallback(async () => {
+    const res = await apiFetch<{ data: KeyInfo[] }>("/me/keys");
+    setKeys(res.data);
+  }, []);
+
+  const refresh = useCallback(async () => {
+    try {
+      const { me: m } = await apiFetch<{ me: MeResponse | null }>("/auth/session");
+      setMe(m);
+      if (m) await loadKeys();
+      else setKeys([]);
+    } catch {
+      setMe((prev) => prev ?? null);
+    }
+  }, [loadKeys]);
+
   useEffect(() => {
-    const w = store.get<{ addr?: string | null; demo?: boolean }>("refract.wallet", {});
-    if (w.addr && !w.demo && /^0x[0-9a-fA-F]{40}$/.test(w.addr)) setAddr(w.addr);
+    void refresh();
     const c = store.get<{ remaining: number; at: number } | null>("refract.compare", null);
     if (c && Date.now() - c.at < HOUR_MS) setCompare(c);
-  }, []);
+  }, [refresh]);
 
-  const connect = useCallback(async (): Promise<string | null> => {
-    if (!window.ethereum) {
-      return "No browser wallet found. On a computer, install MetaMask or Rabby. On a phone, open this page in your wallet app's built-in browser.";
-    }
-    try {
-      const accounts = (await window.ethereum.request({ method: "eth_requestAccounts" })) as string[];
-      const a = accounts?.[0];
-      if (!a) return "Your wallet didn't share an address. Try again.";
-      store.set("refract.wallet", { addr: a });
-      setAddr(a);
-      return null;
-    } catch {
-      return "Connection was cancelled in your wallet. Connect again when you're ready.";
-    }
-  }, []);
+  const connect = useCallback(
+    async (kind: ConnectKind): Promise<string | null> => {
+      try {
+        let provider: Eip1193;
+        if (kind === "walletconnect") {
+          const p = await walletConnectProvider(publicConfig.siweChainId);
+          setWc(p);
+          provider = p;
+        } else {
+          if (!window.ethereum) {
+            return "No browser wallet found. On a computer, install MetaMask or Rabby. On a phone, open this page in your wallet app's built-in browser, or use WalletConnect.";
+          }
+          provider = window.ethereum;
+        }
+        const m = await signInWithWallet(provider);
+        setMe(m);
+        await loadKeys();
+        return null;
+      } catch (e) {
+        if (e instanceof WalletFlowError || e instanceof ApiRequestError) return e.message;
+        return "Sign-in didn't complete. Try again.";
+      }
+    },
+    [loadKeys],
+  );
 
-  const disconnect = useCallback(() => {
-    store.set("refract.wallet", { addr: null });
-    setAddr(null);
-  }, []);
+  const disconnect = useCallback(async () => {
+    await apiFetch("/auth/logout", { method: "POST" }).catch(() => undefined);
+    await wc?.disconnect().catch(() => undefined);
+    setWc(null);
+    setMe(null);
+    setKeys([]);
+  }, [wc]);
+
+  const createKey = useCallback(
+    async (name?: string) => {
+      const created = await apiFetch<KeyInfo>("/me/keys", { method: "POST", body: name ? { name } : {} });
+      await refresh();
+      return created;
+    },
+    [refresh],
+  );
+
+  const revokeKey = useCallback(
+    async (id: string) => {
+      await apiFetch(`/me/keys/${encodeURIComponent(id)}`, { method: "DELETE" });
+      await refresh();
+    },
+    [refresh],
+  );
 
   const setCompareRemaining = useCallback((remaining: number) => {
     const c = { remaining, at: Date.now() };
@@ -92,9 +142,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<WalletContextValue>(
     () => ({
-      addr,
+      me,
+      addr: me?.address ?? null,
+      keys,
       connect,
       disconnect,
+      refresh,
+      createKey,
+      revokeKey,
       modalOpen,
       openModal: () => setModalOpen(true),
       closeModal: () => setModalOpen(false),
@@ -105,7 +160,21 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       version,
       bump: () => setVersion((v) => v + 1),
     }),
-    [addr, connect, disconnect, modalOpen, compare, limit, setCompareRemaining, recordRun, version],
+    [
+      me,
+      keys,
+      connect,
+      disconnect,
+      refresh,
+      createKey,
+      revokeKey,
+      modalOpen,
+      compare,
+      limit,
+      setCompareRemaining,
+      recordRun,
+      version,
+    ],
   );
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;

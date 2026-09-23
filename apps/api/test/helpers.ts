@@ -7,6 +7,7 @@ import { buildApp } from "../src/app";
 import { generateApiKey } from "../src/auth/apiKey";
 import { loadEnv } from "../src/env";
 import { seedModels } from "../prisma/seed";
+import type { ChainReader } from "../src/chain/types";
 
 // ---------- fake OpenRouter + Turnstile ----------
 
@@ -137,7 +138,10 @@ export interface TestContext {
   close(): Promise<void>;
 }
 
-export async function createTestContext(envOverrides: Record<string, string> = {}): Promise<TestContext> {
+export async function createTestContext(
+  envOverrides: Record<string, string> = {},
+  opts: { chain?: ChainReader | null } = {},
+): Promise<TestContext> {
   const upstream = await startFakeUpstream();
   const prisma = new PrismaClient();
   const redis = new Redis(process.env.REDIS_URL!);
@@ -154,10 +158,11 @@ export async function createTestContext(envOverrides: Record<string, string> = {
     WEB_ORIGINS: "http://localhost:3000",
     IP_HASH_SECRET: "test-ip-secret-test-ip-secret-test-ip",
     JOBS_ENABLED: "false",
+    SESSION_SECRET: "test-session-secret-test-session-secret",
     ...envOverrides,
   });
   await resetState(prisma, redis);
-  const app = await buildApp({ env, prisma, redis, clock: () => now.value });
+  const app = await buildApp({ env, prisma, redis, clock: () => now.value, chain: opts.chain ?? null });
   await app.ready();
   return {
     app,
@@ -183,6 +188,7 @@ export async function createTestContext(envOverrides: Record<string, string> = {
 
 export async function resetState(prisma: PrismaClient, redis: Redis): Promise<void> {
   await redis.flushdb();
+  await prisma.session.deleteMany();
   await prisma.usageLog.deleteMany();
   await prisma.apiKey.deleteMany();
   await prisma.wallet.deleteMany();
@@ -235,4 +241,82 @@ export function parseSse(body: string): { event: string; data: string }[] {
       }
       return { event, data: data.join("\n") };
     });
+}
+
+// ---------- fake chain + wallet sign-in ----------
+
+import { privateKeyToAccount, generatePrivateKey, type PrivateKeyAccount } from "viem/accounts";
+import { createSiweMessage } from "viem/siwe";
+import type { Address, Hex } from "viem";
+import { verifyMessage } from "viem";
+
+export class FakeChain implements ChainReader {
+  balances = new Map<string, bigint>();
+  tokenBalances = new Map<string, bigint>();
+  firstTx = new Map<string, number>();
+  failing = false;
+  calls = 0;
+  async nativeBalance(a: Address) {
+    this.calls++;
+    if (this.failing) throw new Error("rpc down");
+    return this.balances.get(a.toLowerCase()) ?? 0n;
+  }
+  async tokenBalance(t: Address, a: Address) {
+    this.calls++;
+    if (this.failing) throw new Error("rpc down");
+    return this.tokenBalances.get(`${t.toLowerCase()}:${a.toLowerCase()}`) ?? 0n;
+  }
+  async tokenDecimals() {
+    return 18;
+  }
+  async firstTxTimestamp(a: Address) {
+    return this.firstTx.get(a.toLowerCase()) ?? null;
+  }
+  verifyMessage(args: { address: Address; message: string; signature: Hex }) {
+    return verifyMessage(args);
+  }
+}
+
+export const WEB_ORIGIN = "http://localhost:3000";
+
+export function newAccount(): PrivateKeyAccount {
+  return privateKeyToAccount(generatePrivateKey());
+}
+
+export async function siweMessage(
+  t: TestContext,
+  account: PrivateKeyAccount,
+  over: Partial<Parameters<typeof createSiweMessage>[0]> = {},
+): Promise<string> {
+  const { nonce } = (await t.app.inject({ method: "GET", url: "/auth/nonce" })).json() as { nonce: string };
+  return createSiweMessage({
+    domain: "localhost:3000",
+    address: account.address,
+    statement: "Sign in to Refract.",
+    uri: WEB_ORIGIN,
+    version: "1",
+    chainId: 1,
+    nonce,
+    issuedAt: t.now.value,
+    ...over,
+  });
+}
+
+/** Sign in and return the session cookie header value. */
+export async function signIn(
+  t: TestContext,
+  account = newAccount(),
+): Promise<{ cookie: string; account: PrivateKeyAccount }> {
+  const message = await siweMessage(t, account);
+  const signature = await account.signMessage({ message });
+  const res = await t.app.inject({
+    method: "POST",
+    url: "/auth/verify",
+    headers: { origin: WEB_ORIGIN },
+    payload: { message, signature },
+  });
+  if (res.statusCode !== 200) throw new Error(`sign-in failed: ${res.statusCode} ${res.body}`);
+  const setCookie = String(res.headers["set-cookie"]);
+  const cookie = setCookie.split(";")[0]!;
+  return { cookie, account };
 }

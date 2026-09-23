@@ -12,6 +12,7 @@ import { TIERS } from "@refract/shared";
 import { Redis } from "ioredis";
 import { parseArgs } from "node:util";
 import { ApiKeyAuth, generateApiKey } from "../src/auth/apiKey";
+import { TierService } from "../src/tierService";
 
 const { values } = parseArgs({
   options: {
@@ -26,7 +27,7 @@ const { values } = parseArgs({
 async function main() {
   const prisma = new PrismaClient();
   const redis = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379");
-  const auth = new ApiKeyAuth(prisma, redis);
+  const auth = new ApiKeyAuth(prisma, redis, new TierService(prisma, redis));
   try {
     if (values.revoke) {
       const ok = await auth.revoke(values.revoke);

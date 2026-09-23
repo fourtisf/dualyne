@@ -1,4 +1,5 @@
 import type { PrismaClient, Tier } from "@prisma/client";
+import type { TierService } from "../tierService";
 import { brand } from "@refract/config";
 import type { Redis } from "ioredis";
 import { randomBytes } from "node:crypto";
@@ -32,6 +33,7 @@ export class ApiKeyAuth {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly redis: Redis,
+    private readonly tiers: TierService,
   ) {}
 
   /** Resolve the Authorization header to a key principal, or throw 401. */
@@ -56,7 +58,7 @@ export class ApiKeyAuth {
       keyId: row.id,
       walletId: row.walletId,
       walletAddress: row.wallet.address,
-      tier: row.wallet.tierOverride ?? "explorer",
+      tier: (await this.tiers.resolve(row.wallet)).tier,
     };
     await this.redis.set(cacheKey(hash), JSON.stringify(principal), "EX", CACHE_TTL_SECONDS);
     return principal;
