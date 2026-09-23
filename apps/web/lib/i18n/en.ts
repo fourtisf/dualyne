@@ -124,6 +124,7 @@ export const en = {
         `You've used your ${limit} free comparisons for this hour.${wait ? ` Try again in ${wait}.` : ""}`,
       budget: "Free comparisons are paused for today. They come back at 00:00 UTC.",
       busy: "Lots of people are comparing right now. Try again in a few seconds.",
+      notLive: "Comparisons open soon. Come back in a little while.",
       turnstile: "We couldn't verify this browser. Reload the page and try again.",
       modelNotFree: "That model isn't available for free comparisons.",
       network: "Couldn't reach the server. Check your connection, then run again.",

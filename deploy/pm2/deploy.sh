@@ -17,6 +17,7 @@ pm2() { PATH="$SYSTEM_PATH" command pm2 "$@"; }
 
 say() { printf '\n\033[1;36m==> %s\033[0m\n' "$*"; }
 die() { printf '\033[1;31mxx %s\033[0m\n' "$*" >&2; exit 1; }
+warn() { printf '\033[1;33m!! %s\033[0m\n' "$*"; }
 
 cd "$APP_DIR"
 [[ -x .runtime/node/bin/node ]] || die "Run deploy/pm2/setup.sh first."
@@ -29,9 +30,15 @@ set -a
 . "$ENV_FILE"
 set +a
 unset NODE_ENV # install needs dev dependencies (build tools); PM2 sets production at run time
-for key in OPENROUTER_API_KEY NEXT_PUBLIC_TURNSTILE_SITE_KEY TURNSTILE_SECRET_KEY; do
-  [[ -n "${!key:-}" ]] || die "$key is empty in $ENV_FILE. Fill it in, then run this again."
-done
+if [[ -z "${OPENROUTER_API_KEY:-}" ]]; then
+  warn "OPENROUTER_API_KEY is empty: the site goes live in preview. Comparisons and the API say
+   \"opening soon\" until you add the key (and the two Turnstile keys) and run this again."
+else
+  for key in NEXT_PUBLIC_TURNSTILE_SITE_KEY TURNSTILE_SECRET_KEY; do
+    [[ -n "${!key:-}" ]] || die "$key is empty in $ENV_FILE. With OPENROUTER_API_KEY set, both Turnstile
+   keys are needed: they keep bots from spending your OpenRouter credit. Fill it in, then run this again."
+  done
+fi
 # Website copies of API settings, so each value is written once in .env.
 export NEXT_PUBLIC_SITE_DOMAIN="${NEXT_PUBLIC_SITE_DOMAIN:-$SITE_DOMAIN}"
 export NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-https://api.$SITE_DOMAIN}"

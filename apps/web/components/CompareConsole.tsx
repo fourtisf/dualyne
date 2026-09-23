@@ -67,6 +67,8 @@ function errText(t: Dict, code: string, message: string, retry: number | null, l
       return e.budget;
     case "budget_busy":
       return e.busy;
+    case "models_not_live":
+      return e.notLive;
     case "turnstile_failed":
     case "turnstile":
       return e.turnstile;

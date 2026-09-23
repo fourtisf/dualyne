@@ -9,7 +9,7 @@ import { secondsUntilUtcMidnight } from "../lib/time";
 import { readEvents, StreamInspector } from "../openrouter/sse";
 import { verifyTurnstile } from "../turnstile";
 import { logUsage } from "../usage/log";
-import { alertBudgetOnce, BUSY_RETRY_SECONDS } from "./v1.chat";
+import { alertBudgetOnce, assertModelsLive, BUSY_RETRY_SECONDS } from "./v1.chat";
 import { pickTwo } from "./votes";
 
 const PING_INTERVAL_MS = 15_000;
@@ -28,6 +28,7 @@ export const compareRoutes: FastifyPluginAsync = async (app) => {
     "/internal/compare",
     { config: { rateLimit: { max: 30, timeWindow: 60_000 } }, bodyLimit: 64 * 1024 },
     async (req, reply) => {
+      assertModelsLive(ctx, "Comparisons open soon. Come back in a little while.");
       const body = compareRequestSchema.parse(req.body);
 
       const blind = body.blind === true || ctx.env.COMPARE_BLIND_MODE === "always";
@@ -129,7 +130,7 @@ export const compareRoutes: FastifyPluginAsync = async (app) => {
       reply.header("x-compare-remaining", slot.remaining);
 
       const run = await ctx.prisma.compareRun.create({
-        data: { modelA: modelA.id, modelB: modelB.id, ipHash, blind },
+        data: { modelA: modelA.id, modelB: modelB.id, ipHash, blind, createdAt: ctx.clock() },
       });
 
       reply.hijack();

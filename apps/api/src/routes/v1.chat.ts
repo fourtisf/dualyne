@@ -13,6 +13,11 @@ import { logUsage } from "../usage/log";
 /** Retry-After for a request refused while in-flight requests hold the free budget. */
 export const BUSY_RETRY_SECONDS = 10;
 
+/** Preview mode: without an OpenRouter key the site is live but no model can be called. */
+export function assertModelsLive(ctx: AppContext, message: string): void {
+  if (!ctx.env.OPENROUTER_API_KEY) throw new ApiError(503, "models_not_live", message);
+}
+
 const optionalPositiveInt = z.number().int().positive().max(10_000_000).nullish();
 
 export const chatBodySchema = z
@@ -57,6 +62,7 @@ export const chatRoutes: FastifyPluginAsync<RouteOpts> = async (app, opts) => {
     async (req, reply) => {
       const startedAt = Date.now();
       const principal = await ctx.auth.authenticate(req.headers.authorization);
+      assertModelsLive(ctx, "Model access is not switched on yet. Try again soon.");
       const body = chatBodySchema.parse(req.body);
 
       const model = await ctx.prisma.model.findUnique({ where: { id: body.model } });

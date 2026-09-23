@@ -11,7 +11,7 @@
 #   2. installs Node 22 and pnpm inside this folder (.runtime/), not system-wide
 #   3. creates the "dualyne" database and user (if missing) and a .env with fresh secrets
 #   4. adds Dualyne's own sites to Caddy (dualyne.caddy) or Nginx (dualyne.conf) with HTTPS
-# Then fill in the three keys in .env and run deploy/pm2/deploy.sh.
+# Then run deploy/pm2/deploy.sh (the model keys in .env can be added later).
 set -euo pipefail
 
 DOMAIN="${DOMAIN:-dualyne.com}"
@@ -142,8 +142,8 @@ if [[ ! -f "$ENV_FILE" ]]; then
   cat >"$ENV_FILE" <<EOF
 # Dualyne production settings. Server only, never commit. Created by deploy/pm2/setup.sh.
 
-# ── Fill these in, then run: bash deploy/pm2/deploy.sh ──
-# OpenRouter key (openrouter.ai → Keys). Secret.
+# ── Model access. Empty = the site runs in preview ("opening soon") until you fill these ──
+# OpenRouter key (openrouter.ai → Keys). Secret. With it set, both Turnstile keys are required.
 OPENROUTER_API_KEY=
 # Cloudflare Turnstile (dash.cloudflare.com → Turnstile → Add widget, domain ${DOMAIN}). Free.
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=
@@ -192,7 +192,7 @@ NEXT_PUBLIC_DLYN_CHART_URL=
 NEXT_PUBLIC_EXPLORER_URL=
 EOF
   chmod 600 "$ENV_FILE"
-  echo "Created. Three values still need filling in (see the top of the file)."
+  echo "Created. The model keys at the top can be filled in now or later."
 else
   echo "Exists, kept as is."
 fi
@@ -291,6 +291,7 @@ fi
 say "Setup done"
 cat <<EOF
 Next:
-  1. nano $ENV_FILE      # fill OPENROUTER_API_KEY and the two Turnstile keys
-  2. bash $APP_DIR/deploy/pm2/deploy.sh
+  bash $APP_DIR/deploy/pm2/deploy.sh
+Without OPENROUTER_API_KEY and the two Turnstile keys in $ENV_FILE the site runs in preview
+(comparisons say "opening soon"). Add them later and run deploy.sh again.
 EOF

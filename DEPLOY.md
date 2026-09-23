@@ -439,17 +439,19 @@ Dengan Caddy, Caddyfile dicek dulu (`caddy validate`) sebelum di-reload. Jika di
 
 Jika port 3100/4100 sudah dipakai, script berhenti dan memberi tahu. Pilih port lain: `WEB_PORT=3200 API_PORT=4200 bash deploy/pm2/setup.sh`.
 
-### 22.5 Isi tiga kunci di `.env`
+### 22.5 Kunci model di `.env` (boleh menyusul)
 
-```bash
-nano /var/www/dualyne/.env
-```
+Tanpa kunci ini website tetap online dalam mode _preview_: semua halaman tampil, tetapi tombol Compare dan API menjawab "segera dibuka". Kunci bisa diisi kapan saja, lalu jalankan `deploy.sh` lagi.
 
 - `OPENROUTER_API_KEY`: dari openrouter.ai → Keys (langkah 7).
-- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` dan `TURNSTILE_SECRET_KEY`: dari dash.cloudflare.com → Turnstile → Add widget, domain `domainanda.com` (gratis; DNS **tidak** perlu dipindah ke Cloudflare).
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` dan `TURNSTILE_SECRET_KEY`: dari dash.cloudflare.com → Turnstile → Add widget, domain `domainanda.com` (gratis; DNS **tidak** perlu dipindah ke Cloudflare). Wajib begitu `OPENROUTER_API_KEY` diisi, supaya bot tidak menghabiskan saldo OpenRouter.
 - Opsional: `NEXT_PUBLIC_X_URL` dan `NEXT_PUBLIC_TELEGRAM_URL`.
 
-Simpan dengan Ctrl+O, Enter, lalu Ctrl+X.
+Mengisi tanpa editor (terminal menanyakan kunci satu per satu, dan kunci tidak masuk history):
+
+```bash
+cd /var/www/dualyne && read -rp "OpenRouter API key: " K1 && read -rp "Turnstile SITE key: " K2 && read -rp "Turnstile SECRET key: " K3 && sed -i -e "s|^OPENROUTER_API_KEY=.*|OPENROUTER_API_KEY=$K1|" -e "s|^NEXT_PUBLIC_TURNSTILE_SITE_KEY=.*|NEXT_PUBLIC_TURNSTILE_SITE_KEY=$K2|" -e "s|^TURNSTILE_SECRET_KEY=.*|TURNSTILE_SECRET_KEY=$K3|" .env && bash deploy/pm2/deploy.sh
+```
 
 ### 22.6 Deploy
 

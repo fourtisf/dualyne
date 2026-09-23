@@ -114,11 +114,12 @@ const schema = z
   .superRefine((env, ctx) => {
     if (env.NODE_ENV !== "production") return;
     const required: [keyof typeof env, number][] = [
-      ["OPENROUTER_API_KEY", 10],
-      ["TURNSTILE_SECRET_KEY", 10],
       ["IP_HASH_SECRET", 32],
       ["SESSION_SECRET", 32],
     ];
+    // Without an OpenRouter key the site runs in preview: model calls answer "models_not_live".
+    // With one, free comparisons spend real money, so the bot check becomes mandatory.
+    if (env.OPENROUTER_API_KEY) required.push(["OPENROUTER_API_KEY", 10], ["TURNSTILE_SECRET_KEY", 10]);
     for (const [key, min] of required) {
       const v = env[key];
       if (typeof v !== "string" || v.length < min) {

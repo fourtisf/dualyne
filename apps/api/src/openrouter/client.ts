@@ -19,7 +19,8 @@ export class OpenRouter {
 
   private headers(): Record<string, string> {
     return {
-      authorization: `Bearer ${this.opts.apiKey}`,
+      // The public model list works without a key (preview mode keeps prices up to date).
+      ...(this.opts.apiKey ? { authorization: `Bearer ${this.opts.apiKey}` } : {}),
       "content-type": "application/json",
       "http-referer": this.opts.appUrl,
       "x-title": this.opts.appTitle,
