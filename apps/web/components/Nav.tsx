@@ -35,7 +35,7 @@ export function Nav() {
       <header className="nav">
         <div className="wrap">
           <Link className="brand" href={h("/")} aria-label={t.home}>
-            <Logo defs />
+            <Logo />
             {brand.name}
           </Link>
           <ul>

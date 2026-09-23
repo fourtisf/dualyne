@@ -654,7 +654,7 @@ Still untested: `server-setup.sh` on a real Ubuntu host (the sandbox has no syst
 
 - **Model ids:** on the server, run `pnpm --filter @refract/api models:resolve` and confirm or update each OpenRouter id. The seed ids (Claude Haiku/Sonnet/Opus 4.5, GPT-5, Gemini 2.5 Pro, Llama 3.3 70B, DeepSeek V3.1, Mistral Small 3.2) could not be verified from the sandbox.
 - **Legal:** have a lawyer review `/terms` and `/privacy`, including governing law and the legal entity name (`brand.legalName`), and the token disclaimer.
-- **Brand:** set the final name, domain, social links and `contactEmail` in `packages/config/src/brand.ts`.
+- **Brand:** set the final name, domain, social links and `contactEmail` in `packages/config/src/brand.ts`. The logo is chosen: direction G, "Prompt Lines" (a prompt caret plus two answer lines, with a lowercase Geist Mono wordmark). It is used in `components/Logo.tsx`, `app/icon.svg`, the token coin and the social cards (`lib/og.tsx`).
 - **Wallets:** WalletConnect is built in but only switches on with `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (free at cloud.reown.com). It could not be tested from the sandbox, so test it once on the real domain.
 - **Terms of resale:** read OpenRouter's and each provider's terms on reselling access (from HANDOFF).
 - **Translation review:** have a native speaker read `apps/web/lib/i18n/id.ts` once before launch, especially the token disclaimer.

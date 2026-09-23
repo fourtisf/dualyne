@@ -1,18 +1,20 @@
-/** The prism logo. `defs` is rendered once (in the nav); the footer copy reuses the #lg gradient. */
-export function Logo({ defs = false }: { defs?: boolean }) {
+/**
+ * The "prompt lines" mark: a prompt caret and two answer lines (one prompt, two answers).
+ * The caret follows the text colour; the lines use the brand cyan and pink.
+ */
+export function Logo() {
   return (
-    <svg className="logo" viewBox="0 0 24 24" aria-hidden="true">
-      {defs && (
-        <defs>
-          <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#67E8F9" />
-            <stop offset=".5" stopColor="#8B5CF6" />
-            <stop offset="1" stopColor="#F472B6" />
-          </linearGradient>
-        </defs>
-      )}
-      <path d="M12 2.5 21.5 20h-19Z" fill="none" stroke="url(#lg)" strokeWidth="2" strokeLinejoin="round" />
-      <path d="M12 9.5 16 17H8Z" fill="url(#lg)" opacity=".85" />
+    <svg className="logo" viewBox="0 0 100 100" aria-hidden="true">
+      <path
+        d="M18 26 L42 50 L18 74"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="10"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <rect x="52" y="56" width="34" height="9" rx="4.5" fill="#67E8F9" />
+      <rect x="52" y="71" width="24" height="9" rx="4.5" fill="#F472B6" />
     </svg>
   );
 }

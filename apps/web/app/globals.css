@@ -28,7 +28,7 @@ a{color:inherit}
 /* nav */
 .nav{position:fixed; left:0; right:0; top:0; z-index:50; padding-top:env(safe-area-inset-top,0px); background:rgba(5,5,7,.6); backdrop-filter:blur(16px) saturate(1.5); -webkit-backdrop-filter:blur(16px) saturate(1.5); border-bottom:1px solid var(--line)}
 .nav .wrap{height:62px; display:flex; align-items:center; gap:34px}
-.brand{display:flex; align-items:center; gap:10px; text-decoration:none; font:600 16px/1 var(--sans); letter-spacing:-.02em}
+.brand{display:flex; align-items:center; gap:10px; text-decoration:none; font:500 16.5px/1 var(--mono); letter-spacing:-.01em; text-transform:lowercase}
 .logo{width:22px; height:22px}
 .nav ul{display:flex; gap:26px; list-style:none; margin:0; padding:0}
 .nav ul a{text-decoration:none; color:var(--muted); font-size:14px; transition:color .15s}
@@ -323,7 +323,7 @@ dialog::backdrop{background:rgba(0,0,0,.6); backdrop-filter:blur(6px)}
 .tk-card{border:1px solid var(--line); border-radius:20px; background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.008)); padding:28px}
 .tk-sym{display:flex; align-items:center; gap:14px}
 .tk-coin{width:52px; height:52px; border-radius:50%; background:conic-gradient(from 200deg,#67E8F9,#8B5CF6,#F472B6,#FBBF24,#67E8F9); position:relative; box-shadow:0 0 40px -6px rgba(139,92,246,.6)}
-.tk-coin::after{content:""; position:absolute; inset:3px; border-radius:50%; background:#0B0B10 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 5 18.5 17h-13Z' fill='none' stroke='white' stroke-width='1.6' stroke-linejoin='round'/></svg>") center/24px no-repeat}
+.tk-coin::after{content:""; position:absolute; inset:3px; border-radius:50%; background:#0B0B10 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M18 26 L42 50 L18 74' fill='none' stroke='white' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'/><rect x='52' y='56' width='34' height='9' rx='4.5' fill='white'/><rect x='52' y='71' width='24' height='9' rx='4.5' fill='white'/></svg>") center/26px no-repeat}
 .tk-sym h3{font:600 26px/1 var(--sans); letter-spacing:-.04em; margin:0}
 .tk-sym span{color:var(--muted); font-size:13.5px}
 .facts{display:grid; grid-template-columns:1fr 1fr; margin:26px 0 0; border-top:1px solid var(--line)}

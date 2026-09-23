@@ -6,6 +6,6 @@ export const alt = `${brand.name}: ${getDict("id").meta.tagline}`;
 export const size = ogSize;
 export const contentType = "image/png";
 
-export default function OpengraphImage() {
+export default async function OpengraphImage() {
   return ogImage("id");
 }
