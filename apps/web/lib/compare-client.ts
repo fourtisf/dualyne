@@ -28,7 +28,7 @@ export interface CompareResult {
  */
 export async function runCompare(
   apiUrl: string,
-  body: { prompt: string; a: string; b: string; turnstileToken?: string },
+  body: { prompt: string; a?: string; b?: string; blind?: boolean; turnstileToken?: string },
   handlers: CompareHandlers,
   signal: AbortSignal,
 ): Promise<CompareResult> {

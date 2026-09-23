@@ -30,6 +30,6 @@ export const catalogRoutes: FastifyPluginAsync = async (app) => {
       live: m.missingSince === null,
     }));
     reply.header("cache-control", "public, max-age=60");
-    return { data };
+    return { data, settings: { blindMode: ctx.env.COMPARE_BLIND_MODE } };
   });
 };

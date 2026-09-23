@@ -6,7 +6,7 @@ import { Check } from "./Check";
 
 const d = (v: string) => ({ "--d": v }) as CSSProperties;
 
-export function Hero({ models }: { models: CatalogModel[] }) {
+export function Hero({ models, blindMode }: { models: CatalogModel[]; blindMode: "optional" | "always" }) {
   return (
     <section className="hero">
       <div className="wrap">
@@ -48,7 +48,7 @@ export function Hero({ models }: { models: CatalogModel[] }) {
             </span>
           </div>
         </div>
-        <CompareConsole models={models} />
+        <CompareConsole models={models} blindMode={blindMode} />
       </div>
     </section>
   );

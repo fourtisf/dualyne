@@ -11,6 +11,10 @@ export interface ChainReader {
   blockTimestamp(block: bigint): Promise<number>;
   /** ERC-20 Transfer events of `token` into `to` between two blocks (inclusive). */
   erc20TransfersTo(token: Address, to: Address, fromBlock: bigint, toBlock: bigint): Promise<Erc20Transfer[]>;
+  /** A transaction for deposit checks, or null when the hash is unknown. */
+  getDepositTx(hash: Hex): Promise<DepositTx | null>;
+  /** USD per ETH from a Chainlink feed. Throws if the answer is missing or older than 3 hours. */
+  ethUsdPrice(feed: Address): Promise<number>;
   /** Signature check that also supports smart-contract wallets (ERC-1271 / ERC-6492). */
   verifyMessage(args: { address: Address; message: string; signature: Hex }): Promise<boolean>;
 }
@@ -21,4 +25,16 @@ export interface Erc20Transfer {
   blockNumber: bigint;
   from: Address;
   value: bigint;
+}
+
+export interface DepositTx {
+  /** pending = not yet mined */
+  status: "pending" | "success" | "reverted";
+  confirmations: number;
+  from: Address;
+  to: Address | null;
+  /** Native value sent. */
+  value: bigint;
+  /** ERC-20 Transfer events emitted by the transaction. */
+  transfers: { token: Address; from: Address; to: Address; value: bigint }[];
 }

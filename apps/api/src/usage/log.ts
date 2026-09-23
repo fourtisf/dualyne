@@ -12,6 +12,8 @@ export interface UsageRow {
   inputTokens: number;
   outputTokens: number;
   costMicroUsd: number;
+  /** Charged to Builder credits (cost × markup). */
+  chargedMicroUsd?: number;
   latencyMs: number;
   ttftMs?: number | null;
   status: number;
@@ -25,7 +27,11 @@ export interface UsageRow {
 export async function logUsage(prisma: PrismaClient, log: FastifyBaseLogger, row: UsageRow): Promise<void> {
   try {
     await prisma.usageLog.create({
-      data: { ...row, costMicroUsd: BigInt(Math.max(0, Math.round(row.costMicroUsd))) },
+      data: {
+        ...row,
+        costMicroUsd: BigInt(Math.max(0, Math.round(row.costMicroUsd))),
+        chargedMicroUsd: BigInt(Math.max(0, Math.round(row.chargedMicroUsd ?? 0))),
+      },
     });
   } catch (err) {
     log.error({ err, modelId: row.modelId }, "failed to write usage log");

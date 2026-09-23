@@ -91,6 +91,25 @@ const schema = z
     /** First block to scan for treasury inflows. Default: the last ~10,000 blocks. */
     TREASURY_START_BLOCK: z.coerce.number().int().min(0).optional(),
     CHAIN_CONFIRMATIONS: z.coerce.number().int().min(0).default(3),
+
+    // Community leaderboard and Builder credits (Phase 5)
+    /** optional = people pick models (blind is a choice); always = every run is blind (anti-manipulation). */
+    COMPARE_BLIND_MODE: z.enum(["optional", "always"]).default("optional"),
+    /** Votes are accepted this long after a comparison finished. */
+    VOTE_WINDOW_HOURS: z.coerce.number().positive().default(24),
+    /** Address that receives Builder top-ups. Without it, credits are off. */
+    DEPOSIT_ADDRESS: z
+      .string()
+      .regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x address")
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+    /** Chainlink ETH/USD feed on SIWE_CHAIN_ID; without it only USDG top-ups are accepted. */
+    ETH_USD_FEED_ADDRESS: z
+      .string()
+      .regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x address")
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+    BUILDER_MARKUP: z.coerce.number().min(1).max(10).default(1.15),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV !== "production") return;

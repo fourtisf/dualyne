@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import type { CatalogModel, Lane } from "@refract/shared";
+import type { CatalogModel, Lane, VoteResponse } from "@refract/shared";
+import { ApiRequestError, apiFetch } from "@/lib/api";
 import { CompareError, runCompare } from "@/lib/compare-client";
 import { publicConfig } from "@/lib/config";
 import { formatRunCost, formatWait } from "@/lib/format";
@@ -97,7 +98,13 @@ function errText(code: string, message: string, retry: number | null, limit: num
   }
 }
 
-export function CompareConsole({ models }: { models: CatalogModel[] }) {
+export function CompareConsole({
+  models,
+  blindMode = "optional",
+}: {
+  models: CatalogModel[];
+  blindMode?: "optional" | "always";
+}) {
   const wallet = useWallet();
   const free = useMemo(() => models.filter((m) => m.minTier === "explorer" && m.live), [models]);
   const keyed = useMemo(() => models.filter((m) => !(m.minTier === "explorer" && m.live)), [models]);
@@ -122,14 +129,22 @@ export function CompareConsole({ models }: { models: CatalogModel[] }) {
   const [announce, setAnnounce] = useState("");
   const [votes, setVotes] = useState(0);
   const [copied, setCopied] = useState<Lane | null>(null);
+  const [blindPref, setBlindPref] = useState(false);
+  const blind = blindMode === "always" || blindPref;
+  /** Set while the shown answers come from a blind run; `revealed` holds the models after voting. */
+  const [blindRun, setBlindRun] = useState<{ revealed: { a: string; b: string } | null } | null>(null);
+  const [voteNote, setVoteNote] = useState("");
 
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const tsSlot = useRef<HTMLDivElement>(null);
   const turnstile = useRef<TurnstileRunner | null>(null);
   const ctrl = useRef<AbortController | null>(null);
-  const runRef = useRef<{ pair: [string, string]; compareId: string | null; matchIdx: number | null } | null>(
-    null,
-  );
+  const runRef = useRef<{
+    pair: [string, string] | null;
+    compareId: string | null;
+    matchIdx: number | null;
+    blind: boolean;
+  } | null>(null);
 
   useEffect(() => {
     if (/Mac|iPhone|iPad/.test(navigator.platform)) setKmod("⌘");
@@ -154,7 +169,9 @@ export function CompareConsole({ models }: { models: CatalogModel[] }) {
 
     const ac = new AbortController();
     ctrl.current = ac;
-    runRef.current = { pair: [modelA, modelB], compareId: null, matchIdx: null };
+    runRef.current = { pair: blind ? null : [modelA, modelB], compareId: null, matchIdx: null, blind };
+    setBlindRun(blind ? { revealed: null } : null);
+    setVoteNote("");
     setBusy(true);
     setExample(false);
     setVerdictShown(false);
@@ -203,7 +220,9 @@ export function CompareConsole({ models }: { models: CatalogModel[] }) {
 
       const result = await runCompare(
         publicConfig.apiUrl,
-        { prompt: text, a: modelA, b: modelB, turnstileToken: token },
+        blind
+          ? { prompt: text, blind: true, turnstileToken: token }
+          : { prompt: text, a: modelA, b: modelB, turnstileToken: token },
         {
           onMeta: (m) => {
             if (runRef.current) runRef.current.compareId = m.compareId;
@@ -269,13 +288,12 @@ export function CompareConsole({ models }: { models: CatalogModel[] }) {
     }
   };
 
-  const castVote = (w: Match["w"]) => {
+  const saveLocalVote = (pair: [string, string], w: Match["w"], compareId: string | null) => {
     const r = runRef.current;
     if (!r) return;
-    setVote(w);
     const ms = store.get<Match[]>("refract.matches", []);
     if (r.matchIdx == null) {
-      ms.push({ a: r.pair[0], b: r.pair[1], w, ...(r.compareId ? { compareId: r.compareId } : {}) });
+      ms.push({ a: pair[0], b: pair[1], w, ...(compareId ? { compareId } : {}) });
       r.matchIdx = ms.length - 1;
     } else if (ms[r.matchIdx]) {
       ms[r.matchIdx]!.w = w;
@@ -283,6 +301,32 @@ export function CompareConsole({ models }: { models: CatalogModel[] }) {
     store.set("refract.matches", ms);
     setVotes(ms.length);
     wallet.bump();
+  };
+
+  const castVote = async (w: Match["w"]) => {
+    const r = runRef.current;
+    if (!r) return;
+    setVote(w);
+    if (r.pair) saveLocalVote(r.pair, w, r.compareId);
+    if (!r.compareId) return;
+    try {
+      const res = await apiFetch<VoteResponse>("/votes", {
+        method: "POST",
+        body: { compareId: r.compareId, winner: w },
+      });
+      if (r.blind) {
+        r.pair = [res.a, res.b];
+        setBlindRun({ revealed: { a: res.a, b: res.b } });
+        saveLocalVote(r.pair, w, r.compareId);
+      }
+      setVoteNote(
+        res.counted
+          ? "Vote counted on the community leaderboard"
+          : "Same model on both sides, so this vote isn't ranked",
+      );
+    } catch (e) {
+      setVoteNote(e instanceof ApiRequestError ? e.message : "Couldn't save your vote. Try again.");
+    }
   };
 
   const copyLane = async (L: Lane) => {
@@ -305,7 +349,7 @@ export function CompareConsole({ models }: { models: CatalogModel[] }) {
 
   const remainingLeft = wallet.compareLimit - wallet.compareUsed;
   const record = [
-    votes ? `${votes} vote${votes > 1 ? "s" : ""} counted on the leaderboard` : "",
+    voteNote || (votes ? `${votes} vote${votes > 1 ? "s" : ""} in your ranking` : ""),
     wallet.compareUsed > 0 && remainingLeft <= 3
       ? `${remainingLeft} free comparison${remainingLeft === 1 ? "" : "s"} left this hour`
       : "",
@@ -348,9 +392,23 @@ export function CompareConsole({ models }: { models: CatalogModel[] }) {
       <div className="lane" data-lane={L}>
         <div className="lh">
           <span className="sw" />
-          {L === "a"
-            ? select("modelA", modelA, setModelA, "Left model")
-            : select("modelB", modelB, setModelB, "Right model")}
+          {blindRun ? (
+            <span className="blind-name">
+              {blindRun.revealed ? (
+                <>
+                  {byId(blindRun.revealed[L])?.menuName ?? blindRun.revealed[L]} <small>revealed</small>
+                </>
+              ) : (
+                <>
+                  Model {L.toUpperCase()} <small>hidden until you vote</small>
+                </>
+              )}
+            </span>
+          ) : L === "a" ? (
+            select("modelA", modelA, setModelA, "Left model")
+          ) : (
+            select("modelB", modelB, setModelB, "Right model")
+          )}
           <div className="stats" id={L === "a" ? "statsA" : "statsB"}>
             {s.stats.map((x) => (
               <span key={x}>{x}</span>
@@ -426,6 +484,29 @@ export function CompareConsole({ models }: { models: CatalogModel[] }) {
               </button>
             ))}
             <span className="sp" />
+            {blindMode === "always" ? (
+              <span
+                className="chip blind-toggle"
+                aria-disabled="true"
+                title="Every comparison is blind right now"
+              >
+                Blind
+              </span>
+            ) : (
+              <button
+                className="chip blind-toggle"
+                type="button"
+                aria-pressed={blind}
+                disabled={busy}
+                title="Two random free models, names hidden until you vote"
+                onClick={() => {
+                  setBlindPref((b) => !b);
+                  if (!busy) setBlindRun(null);
+                }}
+              >
+                Blind
+              </button>
+            )}
             <span className="hint">
               <kbd id="kmod">{kmod}</kbd>
               <kbd>↵</kbd>

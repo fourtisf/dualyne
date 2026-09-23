@@ -11,9 +11,12 @@ import type { ChainReader } from "./chain/types";
 import { ViemChain } from "./chain/viem";
 import { SybilCheck } from "./sybil";
 import { TierService } from "./tierService";
+import { Credits } from "./credits";
 import { authRoutes } from "./routes/auth";
 import { meRoutes } from "./routes/me";
 import { treasuryRoutes } from "./routes/treasury";
+import { creditRoutes } from "./routes/credits";
+import { voteRoutes } from "./routes/votes";
 import { Budget } from "./budget";
 import type { AppContext } from "./context";
 import { webOrigins, type Env } from "./env";
@@ -42,7 +45,7 @@ export interface BuildOptions {
 }
 
 /** Paths called from the website with the session cookie: CORS limited to our own origins. */
-const CREDENTIALED_PREFIXES = ["/internal/compare", "/auth/", "/me"];
+const CREDENTIALED_PREFIXES = ["/internal/compare", "/auth/", "/me", "/votes"];
 
 export const EXPOSED_HEADERS = ["x-request-id", "x-refract-remaining", "x-compare-remaining", "retry-after"];
 
@@ -90,9 +93,13 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
             explorerApiKey: env.EXPLORER_API_KEY,
           })
         : null;
+  const creditsEnabled = Boolean(
+    chain && env.DEPOSIT_ADDRESS && (env.USDG_TOKEN_ADDRESS || env.ETH_USD_FEED_ADDRESS),
+  );
   const tierService = new TierService(prisma, redis, chain, {
     rfxToken: env.RFX_TOKEN_ADDRESS as `0x${string}` | undefined,
     holderMin: env.HOLDER_MIN_RFX,
+    credits: creditsEnabled,
   });
 
   const ctx: AppContext = {
@@ -116,6 +123,7 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
     chain,
     sessions: new Sessions(prisma, env.SESSION_SECRET, clock),
     tierService,
+    credits: new Credits(prisma, env.BUILDER_MARKUP, creditsEnabled),
     sybil: new SybilCheck(
       redis,
       chain,
@@ -238,6 +246,8 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
   await app.register(authRoutes);
   await app.register(meRoutes);
   await app.register(treasuryRoutes);
+  await app.register(creditRoutes);
+  await app.register(voteRoutes);
 
   return app;
 }

@@ -5,3 +5,4 @@ pnpm-lock.yaml
 **/prisma/migrations/
 apps/web/app/globals.css
 CLAUDE_CODE_PROMPT.md
+apps/api/test/fixtures/

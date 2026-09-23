@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { brand } from "@refract/config";
-import type { MeResponse, UsageResponse } from "@refract/shared";
+import type { CreditsResponse, MeResponse, UsageResponse } from "@refract/shared";
 import { apiFetch } from "@/lib/api";
+import { publicConfig } from "@/lib/config";
 import { formatRunCost, shortAddr } from "@/lib/format";
+import { TopUpDialog } from "./TopUpDialog";
 import { useWallet } from "./WalletProvider";
 
 const HOLDER_MIN = "100,000";
@@ -25,17 +27,27 @@ function tierNote(me: MeResponse): string {
 export function DashboardView() {
   const w = useWallet();
   const [usage, setUsage] = useState<UsageResponse | null>(null);
+  const [credits, setCredits] = useState<CreditsResponse | null>(null);
+  const [topUp, setTopUp] = useState(false);
   const me = w.me;
 
   useEffect(() => {
     if (!me) {
       setUsage(null);
+      setCredits(null);
       return;
     }
     apiFetch<UsageResponse>("/me/usage?days=7")
       .then(setUsage)
       .catch(() => setUsage(null));
+    if (me.credits?.enabled) {
+      apiFetch<CreditsResponse>("/me/credits")
+        .then(setCredits)
+        .catch(() => setCredits(null));
+    }
   }, [me]);
+
+  const creditsOn = credits && credits.enabled ? credits : null;
 
   if (me === undefined) {
     return (
@@ -84,7 +96,13 @@ export function DashboardView() {
         <button className="btn dark" type="button" id="dKeys" onClick={w.openModal}>
           Manage keys
         </button>
-        <button className="btn" type="button" disabled title="Available when the Builder tier launches">
+        <button
+          className="btn"
+          type="button"
+          disabled={!creditsOn}
+          title={creditsOn ? undefined : "Available when the Builder tier launches"}
+          onClick={() => setTopUp(true)}
+        >
           Top up credits
         </button>
       </div>
@@ -169,7 +187,65 @@ export function DashboardView() {
             </div>
           )}
         </div>
+        {creditsOn && (
+          <div className="card span3">
+            <div className="l" style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>Prepaid credits</span>
+              <span>Model cost + {Math.round((creditsOn.markup - 1) * 100)}%</span>
+            </div>
+            <div className="v">${creditsOn.balanceUsd.toFixed(2)}</div>
+            <div className="s">
+              {creditsOn.balanceUsd > 0
+                ? "Builder: no daily cap. Requests are paid from this balance."
+                : "Top up in USDG or ETH to become a Builder: no daily cap, every model, unlimited keys."}
+            </div>
+            {creditsOn.deposits.length > 0 && (
+              <div className="tbl" style={{ marginTop: 14 }}>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Paid</th>
+                      <th className="num">Credited</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {creditsOn.deposits.map((d) => (
+                      <tr key={d.txHash}>
+                        <td>{new Date(d.createdAt).toLocaleDateString()}</td>
+                        <td>
+                          {publicConfig.explorerUrl ? (
+                            <a
+                              href={`${publicConfig.explorerUrl}/tx/${d.txHash}`}
+                              target="_blank"
+                              rel="noopener"
+                            >
+                              {d.amount} {d.asset}
+                            </a>
+                          ) : (
+                            `${d.amount} ${d.asset}`
+                          )}
+                        </td>
+                        <td className="num in">+${d.usd.toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+      {creditsOn && (
+        <TopUpDialog
+          open={topUp}
+          credits={creditsOn}
+          onClose={() => setTopUp(false)}
+          onCredited={() => {
+            void w.refresh();
+          }}
+        />
+      )}
     </>
   );
 }

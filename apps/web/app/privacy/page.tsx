@@ -43,6 +43,15 @@ export default function PrivacyPage() {
             tier we read your wallet&apos;s public balance and age from the blockchain.
           </p>
           <p>
+            <strong>Votes.</strong> When you pick the better answer, we store your vote, the two models and
+            the same keyed hash of your IP address used for the hourly limit (and your wallet address if you
+            are signed in). Votes build the public leaderboard, which shows only totals per model.
+          </p>
+          <p>
+            <strong>Top-ups.</strong> For Builder credits we record the transaction hash, the amount and the
+            wallet that paid. This information is public on the blockchain anyway.
+          </p>
+          <p>
             <strong>Your browser.</strong> Your connected address, your Compare votes and a count of your
             recent comparisons are saved in your browser&apos;s local storage so the site can show them to
             you. They stay on your device. You can delete them at any time by clearing this site&apos;s data

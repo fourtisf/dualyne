@@ -35,6 +35,8 @@ interface WalletContextValue {
   /** Bumps whenever local history or votes change, so views re-read storage. */
   version: number;
   bump(): void;
+  /** The wallet connection used to sign in (for sending top-up transactions), if still available. */
+  provider(): Eip1193 | null;
 }
 
 const WalletContext = createContext<WalletContextValue | null>(null);
@@ -159,6 +161,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       recordRun,
       version,
       bump: () => setVersion((v) => v + 1),
+      provider: () => wc ?? (typeof window !== "undefined" ? (window.ethereum ?? null) : null),
     }),
     [
       me,
@@ -174,6 +177,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       setCompareRemaining,
       recordRun,
       version,
+      wc,
     ],
   );
 

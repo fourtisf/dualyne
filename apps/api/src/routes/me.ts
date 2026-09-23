@@ -20,6 +20,7 @@ export async function buildMe(ctx: AppContext, wallet: Wallet) {
   ]);
   const eligibility = tier === "explorer" && ctx.sybil.enabled ? await ctx.sybil.check(wallet.address) : null;
   const bal = ctx.tierService.tokenEnabled ? await ctx.tierService.tokenBalance(wallet.address) : null;
+  const credit = ctx.credits.enabled ? await ctx.credits.balance(wallet.id) : 0n;
   return {
     address: wallet.address,
     tier,
@@ -32,6 +33,7 @@ export async function buildMe(ctx: AppContext, wallet: Wallet) {
     },
     keys: { count: keyCount, max: policy.maxKeys },
     eligibility,
+    credits: { enabled: ctx.credits.enabled, balanceUsd: microToUsd(credit) },
     token: bal
       ? {
           balance: tokenAmount(bal.units, bal.decimals),

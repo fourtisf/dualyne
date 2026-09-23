@@ -1,5 +1,5 @@
 import type { PrismaClient, Tier } from "@prisma/client";
-import type { TierService } from "../tierService";
+import type { TierService, TierSource } from "../tierService";
 import { brand } from "@refract/config";
 import type { Redis } from "ioredis";
 import { randomBytes } from "node:crypto";
@@ -15,6 +15,7 @@ export interface KeyPrincipal {
   walletId: string;
   walletAddress: string;
   tier: Tier;
+  tierSource: TierSource;
 }
 
 /** New key: prefix + 32 random hex chars. Only its hash is ever stored. */
@@ -54,11 +55,13 @@ export class ApiKeyAuth {
       await this.redis.set(cacheKey(hash), "none", "EX", CACHE_TTL_SECONDS);
       throw invalid();
     }
+    const { tier, source } = await this.tiers.resolve(row.wallet);
     const principal: KeyPrincipal = {
       keyId: row.id,
       walletId: row.walletId,
       walletAddress: row.wallet.address,
-      tier: (await this.tiers.resolve(row.wallet)).tier,
+      tier,
+      tierSource: source,
     };
     await this.redis.set(cacheKey(hash), JSON.stringify(principal), "EX", CACHE_TTL_SECONDS);
     return principal;

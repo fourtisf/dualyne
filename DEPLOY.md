@@ -349,8 +349,22 @@ Setelah kontrak token dan dompet treasury siap, isi nilai berikut di `.env` (lan
 | `NEXT_PUBLIC_RFX_CHART_URL` | Link tombol **View chart** (misalnya DexScreener)                              |
 | `NEXT_PUBLIC_EXPLORER_URL`  | Explorer jaringan, misalnya `https://basescan.org`                             |
 
+Untuk **tier Builder** (kredit prabayar), isi juga:
+
+| Variabel               | Isi                                                                             |
+| ---------------------- | ------------------------------------------------------------------------------- |
+| `DEPOSIT_ADDRESS`      | Alamat yang menerima top-up (boleh sama dengan dompet treasury)                 |
+| `ETH_USD_FEED_ADDRESS` | Alamat price feed Chainlink ETH/USD di jaringan itu (kosongkan jika hanya USDG) |
+| `BUILDER_MARKUP`       | Markup di atas biaya model (default `1.15` = +15%)                              |
+| `CHAIN_CONFIRMATIONS`  | Jumlah konfirmasi sebelum top-up dan pemasukan dihitung (default `3`)           |
+
 Setelah deploy:
 
 - Wallet yang memegang token minimal `HOLDER_MIN_RFX` otomatis menjadi **Holder**. Saldo dicek ulang tiap 5 menit.
 - Bagian **Treasury** di website otomatis berganti dari "Sample data" ke angka asli setelah sinkronisasi pertama, paling lama 1 jam.
 - Konversi fee ke stablecoin dan top-up saldo OpenRouter tetap dilakukan manual. Website hanya mencatat apa yang terlihat di blockchain.
+- Top-up Builder dicek otomatis lewat hash transaksi dan dikreditkan satu kali saja. Tombol **Top up credits** di dashboard aktif setelah `DEPOSIT_ADDRESS` diisi.
+
+## 21. Jika ada kecurangan voting
+
+Jika leaderboard terlihat dimanipulasi, ubah `COMPARE_BLIND_MODE=always` di `.env` lalu jalankan `deploy.sh`. Semua perbandingan menjadi _blind_ (nama model disembunyikan sampai pengguna memilih), dan hanya vote blind yang dihitung di leaderboard mulai update malam berikutnya.

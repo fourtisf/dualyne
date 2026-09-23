@@ -10,6 +10,7 @@ import { readEvents, StreamInspector } from "../openrouter/sse";
 import { verifyTurnstile } from "../turnstile";
 import { logUsage } from "../usage/log";
 import { alertBudgetOnce } from "./v1.chat";
+import { pickTwo } from "./votes";
 
 const PING_INTERVAL_MS = 15_000;
 const TURNSTILE_ACTION = "compare";
@@ -29,20 +30,34 @@ export const compareRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const body = compareRequestSchema.parse(req.body);
 
-      const models = await ctx.prisma.model.findMany({
-        where: { id: { in: [body.a, body.b] }, enabled: true },
-      });
-      const byId = new Map(models.map((m) => [m.id, m]));
-      const modelA = byId.get(body.a);
-      const modelB = byId.get(body.b);
-      if (!modelA || !modelB) throw new ApiError(404, "model_not_found", "That model is not in the catalog.");
-      for (const m of [modelA, modelB]) {
-        if (m.minTier !== "explorer") {
-          throw new ApiError(
-            403,
-            "model_not_allowed",
-            `${m.name} is not available in free comparisons. Use it through the API with a Holder key.`,
-          );
+      const blind = body.blind === true || ctx.env.COMPARE_BLIND_MODE === "always";
+      let modelA: Model | undefined;
+      let modelB: Model | undefined;
+      if (blind) {
+        // The server picks two different free models and hides them until the vote.
+        const free = await ctx.prisma.model.findMany({
+          where: { enabled: true, minTier: "explorer", missingSince: null },
+        });
+        if (free.length < 2)
+          throw new ApiError(503, "unavailable", "Blind comparisons are not available right now.");
+        [modelA, modelB] = pickTwo(free);
+      } else {
+        const models = await ctx.prisma.model.findMany({
+          where: { id: { in: [body.a!, body.b!] }, enabled: true },
+        });
+        const byId = new Map(models.map((m) => [m.id, m]));
+        modelA = byId.get(body.a!);
+        modelB = byId.get(body.b!);
+        if (!modelA || !modelB)
+          throw new ApiError(404, "model_not_found", "That model is not in the catalog.");
+        for (const m of [modelA, modelB]) {
+          if (m.minTier !== "explorer") {
+            throw new ApiError(
+              403,
+              "model_not_allowed",
+              `${m.name} is not available in free comparisons. Use it through the API with a Holder key.`,
+            );
+          }
         }
       }
 
@@ -105,7 +120,7 @@ export const compareRoutes: FastifyPluginAsync = async (app) => {
       reply.header("x-compare-remaining", slot.remaining);
 
       const run = await ctx.prisma.compareRun.create({
-        data: { modelA: modelA.id, modelB: modelB.id, ipHash },
+        data: { modelA: modelA.id, modelB: modelB.id, ipHash, blind },
       });
 
       reply.hijack();
@@ -122,7 +137,12 @@ export const compareRoutes: FastifyPluginAsync = async (app) => {
       });
       const ping = setInterval(() => void writeRaw(raw, ": ping\n\n"), PING_INTERVAL_MS);
 
-      await send("meta", { compareId: run.id, a: modelA.id, b: modelB.id });
+      await send("meta", {
+        compareId: run.id,
+        a: blind ? null : modelA.id,
+        b: blind ? null : modelB.id,
+        blind,
+      });
 
       const lane = async (L: Lane, model: Model, reservation: Reservation) => {
         const startedAt = Date.now();

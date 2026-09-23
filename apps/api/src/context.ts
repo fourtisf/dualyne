@@ -13,6 +13,7 @@ import type { ChainReader } from "./chain/types";
 import type { Sessions } from "./auth/sessions";
 import type { TierService } from "./tierService";
 import type { SybilCheck } from "./sybil";
+import type { Credits } from "./credits";
 
 export interface AppContext {
   env: Env;
@@ -32,6 +33,7 @@ export interface AppContext {
   sessions: Sessions;
   tierService: TierService;
   sybil: SybilCheck;
+  credits: Credits;
   /** Work that continues after a response has ended (usage logging). Awaited on shutdown. */
   track: (p: Promise<unknown>) => void;
   inflight: Set<Promise<unknown>>;

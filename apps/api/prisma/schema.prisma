@@ -44,14 +44,16 @@ model Model {
 }
 
 model Wallet {
-  id            String     @id @default(cuid())
-  address       String     @unique // lowercase 0x…
+  id           String         @id @default(cuid())
+  address      String         @unique // lowercase 0x…
   /// Tier set by an admin (test keys before on-chain tiers exist).
-  tierOverride  Tier?
-  createdAt     DateTime   @default(now())
-  keys          ApiKey[]
-  usage         UsageLog[]
-  sessions      Session[]
+  tierOverride Tier?
+  createdAt    DateTime       @default(now())
+  keys         ApiKey[]
+  usage        UsageLog[]
+  sessions     Session[]
+  credits      CreditAccount?
+  deposits     Deposit[]
 }
 
 /// Signed-in browser session (Sign-In With Ethereum). The id is an HMAC of the cookie value.
@@ -84,32 +86,32 @@ model ApiKey {
 
 /// One row per upstream model call. Prompt and answer text are never stored.
 model UsageLog {
-  id            BigInt   @id @default(autoincrement())
-  createdAt     DateTime @default(now())
-  source        String // "api" | "compare"
-  apiKeyId      String?
-  apiKey        ApiKey?  @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
-  walletId      String?
-  wallet        Wallet?  @relation(fields: [walletId], references: [id], onDelete: SetNull)
-  walletAddress String?
-  modelId       String
-  model         Model    @relation(fields: [modelId], references: [id])
-  openrouterId  String
-  generationId  String?
-  inputTokens   Int      @default(0)
-  outputTokens  Int      @default(0)
+  id              BigInt   @id @default(autoincrement())
+  createdAt       DateTime @default(now())
+  source          String // "api" | "compare"
+  apiKeyId        String?
+  apiKey          ApiKey?  @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  walletId        String?
+  wallet          Wallet?  @relation(fields: [walletId], references: [id], onDelete: SetNull)
+  walletAddress   String?
+  modelId         String
+  model           Model    @relation(fields: [modelId], references: [id])
+  openrouterId    String
+  generationId    String?
+  inputTokens     Int      @default(0)
+  outputTokens    Int      @default(0)
   /// 1 = $0.000001
-  costMicroUsd  BigInt   @default(0)
+  costMicroUsd    BigInt   @default(0)
   /// What a Builder wallet was charged from prepaid credits (cost × markup). 0 = paid by the treasury.
-  chargedMicroUsd BigInt @default(0)
-  latencyMs     Int
-  ttftMs        Int?
-  status        Int
-  errorCode     String?
-  stream        Boolean
+  chargedMicroUsd BigInt   @default(0)
+  latencyMs       Int
+  ttftMs          Int?
+  status          Int
+  errorCode       String?
+  stream          Boolean
   /// HMAC of the client IP (compare requests). The raw IP is never stored.
-  ipHash        String?
-  compareId     String?
+  ipHash          String?
+  compareId       String?
 
   @@index([createdAt])
   @@index([walletId, createdAt])
@@ -126,8 +128,61 @@ model CompareRun {
   ipHash     String
   completedA Boolean  @default(false)
   completedB Boolean  @default(false)
+  /// Blind run: the server picked the models and hides them until the vote.
+  blind      Boolean  @default(false)
+  vote       Vote?
 
   @@index([createdAt])
+}
+
+/// One community vote per completed Compare run (Phase 5).
+model Vote {
+  id        String     @id @default(cuid())
+  compareId String     @unique
+  compare   CompareRun @relation(fields: [compareId], references: [id], onDelete: Cascade)
+  modelA    String
+  modelB    String
+  winner    String // "a" | "b" | "tie"
+  blind     Boolean
+  walletId  String?
+  ipHash    String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([createdAt])
+}
+
+/// Elo ratings, recomputed nightly from all votes (K=24, start 1000).
+model EloRating {
+  modelId   String   @id
+  rating    Float
+  wins      Int
+  losses    Int
+  ties      Int
+  games     Int
+  updatedAt DateTime @updatedAt
+}
+
+/// Prepaid Builder credit per wallet, in micro-USD.
+model CreditAccount {
+  walletId        String   @id
+  wallet          Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  balanceMicroUsd BigInt   @default(0)
+  updatedAt       DateTime @updatedAt
+}
+
+/// On-chain top-ups, verified by transaction hash. Each transaction credits once.
+model Deposit {
+  id        String   @id @default(cuid())
+  walletId  String
+  wallet    Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  txHash    String   @unique
+  asset     String // "USDG" | "ETH"
+  amount    String // token amount as a decimal string
+  usdMicro  BigInt
+  createdAt DateTime @default(now())
+
+  @@index([walletId, createdAt])
 }
 
 /// History of the daily OpenRouter catalog check.

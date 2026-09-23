@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { TIER_DEFAULTS, type CatalogModel } from "@refract/shared";
+import { TIER_DEFAULTS, type CatalogModel, type LeaderboardResponse } from "@refract/shared";
+import { publicConfig } from "@/lib/config";
 import { formatContext, formatPerMTok } from "@/lib/format";
 import { store } from "@/lib/storage";
 import { useWallet } from "../WalletProvider";
@@ -40,30 +41,100 @@ function ratings(ms: Match[]) {
   };
 }
 
+function RankTable({
+  rows,
+  name,
+}: {
+  rows: { id: string; r: number; w: number; n: number }[];
+  name: (id: string) => string;
+}) {
+  return (
+    <div className="tbl">
+      <table>
+        <thead>
+          <tr>
+            <th />
+            <th>Model</th>
+            <th className="num">Rating</th>
+            <th>Win rate</th>
+            <th className="num">Votes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((x, i) => {
+            const wr = x.n ? Math.round((x.w / x.n) * 100) : 0;
+            return (
+              <tr key={x.id} className={i === 0 ? "first" : ""}>
+                <td className="rank">{i + 1}</td>
+                <td style={{ color: "var(--text)", fontWeight: 500 }}>{name(x.id)}</td>
+                <td className="num elo">{x.r}</td>
+                <td>
+                  <div className="wr">
+                    <div className="bar2">
+                      <i style={{ width: `${wr}%` }} />
+                    </div>
+                    <span>{wr}%</span>
+                  </div>
+                </td>
+                <td className="num">{x.n}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function Leaderboard({ models }: { models: CatalogModel[] }) {
   const { version } = useWallet();
-  const [data, setData] = useState<ReturnType<typeof ratings>>({ rows: [], total: 0 });
-  useEffect(() => setData(ratings(store.get<Match[]>("refract.matches", []))), [version]);
+  const [mine, setMine] = useState<ReturnType<typeof ratings>>({ rows: [], total: 0 });
+  const [community, setCommunity] = useState<LeaderboardResponse | null>(null);
+  const [scope, setScope] = useState<"everyone" | "mine" | null>(null);
+  useEffect(() => setMine(ratings(store.get<Match[]>("refract.matches", []))), [version]);
+  useEffect(() => {
+    fetch(`${publicConfig.apiUrl}/leaderboard`)
+      .then((r) => (r.ok ? (r.json() as Promise<LeaderboardResponse>) : null))
+      .then((d) => setCommunity(d))
+      .catch(() => setCommunity(null));
+  }, []);
   const name = (id: string) => models.find((m) => m.id === id)?.menuName ?? id;
-  const { rows, total } = data;
+  const hasCommunity = Boolean(community && community.rows.length);
+  const active = scope ?? (hasCommunity ? "everyone" : "mine");
+
+  const meta =
+    active === "everyone" && community
+      ? `Based on ${community.totalVotes.toLocaleString("en-US")} community vote${community.totalVotes === 1 ? "" : "s"}${community.blindOnly ? ", blind runs only" : ""}. Updated nightly.`
+      : mine.total
+        ? `Based on your ${mine.total} vote${mine.total > 1 ? "s" : ""}.${hasCommunity ? "" : " Community rankings appear after the first nightly update."}`
+        : hasCommunity
+          ? "Vote on a comparison to build your own ranking."
+          : "Community rankings appear after the first nightly update.";
+
+  const rows =
+    active === "everyone" && community
+      ? community.rows.map((r) => ({ id: r.modelId, r: r.rating, w: r.wins, n: r.games }))
+      : mine.rows;
 
   return (
     <div className="lb-wrap">
       <div className="lb-top">
-        <div className="seg" role="group" aria-label="Leaderboard scope">
-          <button type="button" aria-pressed="true">
+        <div className={hasCommunity ? "seg show" : "seg"} role="group" aria-label="Leaderboard scope">
+          <button type="button" aria-pressed={active === "mine"} onClick={() => setScope("mine")}>
             Your votes
           </button>
-          <button type="button" disabled title="Goes live with the production backend">
+          <button
+            type="button"
+            aria-pressed={active === "everyone"}
+            disabled={!hasCommunity}
+            title={hasCommunity ? undefined : "Rankings appear after the first votes"}
+            onClick={() => setScope("everyone")}
+          >
             Everyone
           </button>
         </div>
         <span className="sp" />
-        <span id="lbMeta">
-          {total
-            ? `Based on your ${total} vote${total > 1 ? "s" : ""}. Community rankings open at launch.`
-            : "Community rankings open at launch."}
-        </span>
+        <span id="lbMeta">{meta}</span>
       </div>
       <div id="lbBody">
         {!rows.length ? (
@@ -75,40 +146,7 @@ function Leaderboard({ models }: { models: CatalogModel[] }) {
             </a>
           </div>
         ) : (
-          <div className="tbl">
-            <table>
-              <thead>
-                <tr>
-                  <th />
-                  <th>Model</th>
-                  <th className="num">Rating</th>
-                  <th>Win rate</th>
-                  <th className="num">Votes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((x, i) => {
-                  const wr = Math.round((x.w / x.n) * 100);
-                  return (
-                    <tr key={x.id} className={i === 0 ? "first" : ""}>
-                      <td className="rank">{i + 1}</td>
-                      <td style={{ color: "var(--text)", fontWeight: 500 }}>{name(x.id)}</td>
-                      <td className="num elo">{x.r}</td>
-                      <td>
-                        <div className="wr">
-                          <div className="bar2">
-                            <i style={{ width: `${wr}%` }} />
-                          </div>
-                          <span>{wr}%</span>
-                        </div>
-                      </td>
-                      <td className="num">{x.n}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <RankTable rows={rows} name={name} />
         )}
       </div>
     </div>

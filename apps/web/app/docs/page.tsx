@@ -18,7 +18,7 @@ const ex = TIER_DEFAULTS.explorer;
 const ho = TIER_DEFAULTS.holder;
 
 export default async function DocsPage() {
-  const models = await getCatalog();
+  const { models } = await getCatalog();
   return (
     <main className="view" id="view-docs">
       <div className="wrap doc">
@@ -241,6 +241,11 @@ print(reply.choices[0].message.content)`}</code>
             is lowered to the cap. Each key can send up to 120 requests a minute.
           </p>
           <p>
+            Builder wallets top up with USDG or ETH from the dashboard. Each request reserves its worst-case cost
+            (model price + 15%) and is then charged the real amount; the difference goes straight back to your
+            balance. The dashboard lists every top-up and what each key spent.
+          </p>
+          <p>
             Free tiers share a daily budget paid for by the treasury. On the rare day it runs out, free requests return{" "}
             <code>429</code> until 00:00 UTC; Builder requests keep working.
           </p>
@@ -269,6 +274,13 @@ print(reply.choices[0].message.content)`}</code>
                   </td>
                   <td>Key missing, wrong or revoked</td>
                   <td>Check the key or create a new one</td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>402</code>
+                  </td>
+                  <td>Builder credit too low for this request</td>
+                  <td>Top up in the dashboard, or lower <code>max_tokens</code></td>
                 </tr>
                 <tr>
                   <td>

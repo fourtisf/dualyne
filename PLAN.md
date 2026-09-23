@@ -613,6 +613,20 @@ Still untested: `server-setup.sh` on a real Ubuntu host (the sandbox has no syst
 - [x] Tests: tier threshold, the 5-minute cache, chain-outage fallback, `/me` token info, inflow scan (cursor, dedupe, snapshot) and summary maths. Checked in the browser with seeded data.
 - Converting fees to the stablecoin and topping up OpenRouter stay manual (DEPLOY.md §20). Automating swaps and payments needs custody decisions that aren't in the spec.
 
+## 11e. Phase 5 status (community leaderboard and payments)
+
+- [x] `POST /votes {compareId, winner}`: one vote per completed comparison, and the voter can change their pick. It's tied to the Turnstile-verified browser (same IP hash as the run) and to the wallet when signed in. It's refused if the run didn't finish, and closes after `VOTE_WINDOW_HOURS`.
+- [x] A nightly Elo recompute (K=24, start at 1000, same-model votes ignored), plus `GET /leaderboard` with a cold-start build and an empty-board cache of only 60 seconds. The site's **Everyone** toggle is enabled.
+- [x] Blind comparisons: the server picks two different free models and reveals them only in the vote response. `COMPARE_BLIND_MODE=always` forces blind runs and ranks only blind votes (anti-manipulation switch).
+- [x] Builder prepaid credit:
+  - a top-up is verified by transaction hash: USDG `Transfer` events, or ETH at the Chainlink price;
+  - it needs `CHAIN_CONFIRMATIONS` confirmations and must come from the signed-in wallet;
+  - each transaction credits once.
+- [x] Builder charging: a positive balance makes the wallet Builder. Each request reserves cost × `BUILDER_MARKUP` atomically and settles to the real cost; failures refund; 402 when the credit can't cover the request. Charges are logged, and treasury spend excludes them.
+- [x] Website: the Blind toggle and revealed names, server-side votes, the community leaderboard, a dashboard credits card, and a top-up dialog (pay from the wallet with a network switch and USDG/ETH, or paste a transaction hash; it waits for confirmations).
+- [x] Tests: 23 new API tests, including **6 against a real EVM (Ganache)** with a test ERC-20, stablecoin and price feed. These found and fixed a stale block-number cache in viem that under-counted confirmations. The browser run on that local chain covered: sign-in, Holder by RFX, a USDG top-up to Builder, a blind comparison with a vote, and the community leaderboard.
+- Not built (optional in HANDOFF): x402 pay-per-request for agents.
+
 ## 12. Before public launch
 
 - **Model ids:** on the server, run `pnpm --filter @refract/api models:resolve` and confirm or update each OpenRouter id. The seed ids (Claude Haiku/Sonnet/Opus 4.5, GPT-5, Gemini 2.5 Pro, Llama 3.3 70B, DeepSeek V3.1, Mistral Small 3.2) could not be verified from the sandbox.

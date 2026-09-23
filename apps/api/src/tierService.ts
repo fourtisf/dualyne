@@ -15,6 +15,8 @@ export interface TierOptions {
   rfxToken?: Address;
   /** Whole tokens needed for Holder. */
   holderMin: number;
+  /** When Builder credits are enabled, a positive balance makes the wallet Builder. */
+  credits?: boolean;
 }
 
 const BALANCE_TTL = 5 * 60; // HANDOFF: cache the on-chain balance for 5 minutes
@@ -78,6 +80,10 @@ export class TierService {
 
   async resolve(wallet: Pick<Wallet, "id" | "address" | "tierOverride">): Promise<TierInfo> {
     if (wallet.tierOverride) return { tier: wallet.tierOverride, source: "override" };
+    if (this.opts.credits) {
+      const acc = await this.prisma.creditAccount.findUnique({ where: { walletId: wallet.id } });
+      if (acc && acc.balanceMicroUsd > 0n) return { tier: "builder", source: "credits" };
+    }
     if (await this.isHolder(wallet.address)) return { tier: "holder", source: "token" };
     return { tier: "explorer", source: "default" };
   }

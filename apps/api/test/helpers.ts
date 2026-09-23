@@ -7,7 +7,7 @@ import { buildApp } from "../src/app";
 import { generateApiKey } from "../src/auth/apiKey";
 import { loadEnv } from "../src/env";
 import { seedModels } from "../prisma/seed";
-import type { ChainReader, Erc20Transfer } from "../src/chain/types";
+import type { ChainReader, DepositTx, Erc20Transfer } from "../src/chain/types";
 
 // ---------- fake OpenRouter + Turnstile ----------
 
@@ -189,6 +189,10 @@ export async function createTestContext(
 export async function resetState(prisma: PrismaClient, redis: Redis): Promise<void> {
   await redis.flushdb();
   await prisma.session.deleteMany();
+  await prisma.eloRating.deleteMany();
+  await prisma.vote.deleteMany();
+  await prisma.deposit.deleteMany();
+  await prisma.creditAccount.deleteMany();
   await prisma.treasuryTransfer.deleteMany();
   await prisma.treasurySnapshot.deleteMany();
   await prisma.chainCursor.deleteMany();
@@ -294,6 +298,14 @@ export class FakeChain implements ChainReader {
         t.blockNumber >= from &&
         t.blockNumber <= toBlock,
     );
+  }
+  txs = new Map<string, DepositTx>();
+  ethPrice = 2500;
+  async getDepositTx(hash: Hex) {
+    return this.txs.get(hash.toLowerCase()) ?? null;
+  }
+  async ethUsdPrice() {
+    return this.ethPrice;
   }
   verifyMessage(args: { address: Address; message: string; signature: Hex }) {
     return verifyMessage(args);

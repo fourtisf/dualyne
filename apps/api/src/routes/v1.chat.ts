@@ -113,10 +113,34 @@ export const chatRoutes: FastifyPluginAsync<RouteOpts> = async (app, opts) => {
         );
       }
 
+      // Builder wallets pay from prepaid credit: reserve the worst-case charge (cost × markup).
+      const charged = principal.tierSource === "credits";
+      const creditReserve = charged
+        ? ctx.credits.charge(tokensCostMicro(inputEstimate, outputCeiling, promptPrice, completionPrice))
+        : 0;
+      if (charged && !(await ctx.credits.reserve(principal.walletId, creditReserve))) {
+        await ctx.budget.settle(reservation, 0);
+        await ctx.auth.bustWallet(principal.walletId);
+        throw new ApiError(
+          402,
+          "insufficient_credits",
+          `Not enough credit for this request (up to $${(creditReserve / 1e6).toFixed(4)}). Top up, or lower max_tokens.`,
+        );
+      }
+      const settleCredits = async (actualCostMicro: number) => {
+        if (!charged) return 0;
+        const actual = ctx.credits.charge(actualCostMicro);
+        await ctx.credits.settle(principal.walletId, creditReserve, actual);
+        if ((await ctx.credits.balance(principal.walletId)) <= 0n)
+          await ctx.auth.bustWallet(principal.walletId);
+        return actual;
+      };
+
       // Daily quota per wallet.
       const quota = await ctx.quota.consume(principal.walletAddress, policy.dailyRequests);
       if (!quota.ok) {
         await ctx.budget.settle(reservation, 0);
+        await settleCredits(0);
         throw new ApiError(
           429,
           "quota_exceeded",
@@ -152,6 +176,7 @@ export const chatRoutes: FastifyPluginAsync<RouteOpts> = async (app, opts) => {
         reply.raw.off("close", onClose);
         await ctx.quota.refund(quota.key);
         await ctx.budget.settle(reservation, 0);
+        await settleCredits(0);
         const cancelled = ac.signal.aborted && reply.raw.destroyed;
         req.log.warn({ err, model: model.id }, "upstream request failed");
         await logUsage(ctx.prisma, req.log, {
@@ -172,6 +197,7 @@ export const chatRoutes: FastifyPluginAsync<RouteOpts> = async (app, opts) => {
         const text = await res.text().catch(() => "");
         await ctx.quota.refund(quota.key);
         await ctx.budget.settle(reservation, 0);
+        await settleCredits(0);
         if (quota.remaining !== null) reply.header("x-refract-remaining", quota.remaining + 1);
         const upstreamMessage = parseUpstreamError(text);
         req.log.warn({ status: res.status, model: model.id, upstreamMessage }, "upstream returned an error");
@@ -213,8 +239,10 @@ export const chatRoutes: FastifyPluginAsync<RouteOpts> = async (app, opts) => {
             ? usdToMicro(usage.costUsd)
             : tokensCostMicro(inputTokens, outputTokens, promptPrice, completionPrice);
         await ctx.budget.settle(reservation, costMicro);
+        const chargedMicro = await settleCredits(costMicro);
         await logUsage(ctx.prisma, req.log, {
           ...base,
+          chargedMicroUsd: chargedMicro,
           generationId,
           inputTokens,
           outputTokens,

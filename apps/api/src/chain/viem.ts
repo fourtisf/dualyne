@@ -1,15 +1,25 @@
 import {
   createPublicClient,
+  decodeEventLog,
   erc20Abi,
+  getAddress,
   http,
+  parseAbi,
   parseAbiItem,
+  TransactionNotFoundError,
+  TransactionReceiptNotFoundError,
   type Address,
   type Hex,
   type PublicClient,
 } from "viem";
-import type { ChainReader, Erc20Transfer } from "./types";
+import type { ChainReader, DepositTx, Erc20Transfer } from "./types";
 
 const TRANSFER = parseAbiItem("event Transfer(address indexed from, address indexed to, uint256 value)");
+const FEED_ABI = parseAbi([
+  "function decimals() view returns (uint8)",
+  "function latestRoundData() view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)",
+]);
+const MAX_PRICE_AGE_S = 3 * 3600;
 
 export interface ViemChainOptions {
   rpcUrl: string;
@@ -72,7 +82,8 @@ export class ViemChain implements ChainReader {
   }
 
   blockNumber(): Promise<bigint> {
-    return this.client.getBlockNumber();
+    // viem caches the block number for a few seconds by default; confirmations need it fresh.
+    return this.client.getBlockNumber({ cacheTime: 0 });
   }
 
   async blockTimestamp(block: bigint): Promise<number> {
@@ -102,6 +113,67 @@ export class ViemChain implements ChainReader {
         from: l.args.from as Address,
         value: l.args.value as bigint,
       }));
+  }
+
+  async getDepositTx(hash: Hex): Promise<DepositTx | null> {
+    let tx;
+    try {
+      tx = await this.client.getTransaction({ hash });
+    } catch (e) {
+      if (e instanceof TransactionNotFoundError) return null;
+      throw e;
+    }
+    let receipt;
+    try {
+      receipt = await this.client.getTransactionReceipt({ hash });
+    } catch (e) {
+      if (e instanceof TransactionReceiptNotFoundError) {
+        return {
+          status: "pending",
+          confirmations: 0,
+          from: tx.from,
+          to: tx.to ?? null,
+          value: tx.value,
+          transfers: [],
+        };
+      }
+      throw e;
+    }
+    const head = await this.blockNumber();
+    const transfers: DepositTx["transfers"] = [];
+    for (const log of receipt.logs) {
+      try {
+        const ev = decodeEventLog({ abi: [TRANSFER], data: log.data, topics: log.topics });
+        transfers.push({
+          token: getAddress(log.address),
+          from: getAddress(ev.args.from),
+          to: getAddress(ev.args.to),
+          value: ev.args.value,
+        });
+      } catch {
+        /* not a Transfer event */
+      }
+    }
+    return {
+      status: receipt.status === "success" ? "success" : "reverted",
+      confirmations: Number(head - receipt.blockNumber + 1n),
+      from: getAddress(tx.from),
+      to: tx.to ? getAddress(tx.to) : null,
+      value: tx.value,
+      transfers,
+    };
+  }
+
+  async ethUsdPrice(feed: Address): Promise<number> {
+    const [decimals, round] = await Promise.all([
+      this.client.readContract({ address: feed, abi: FEED_ABI, functionName: "decimals" }),
+      this.client.readContract({ address: feed, abi: FEED_ABI, functionName: "latestRoundData" }),
+    ]);
+    const [, answer, , updatedAt] = round;
+    if (answer <= 0n || Date.now() / 1000 - Number(updatedAt) > MAX_PRICE_AGE_S) {
+      throw new Error("ETH/USD price feed is stale");
+    }
+    return Number(answer) / 10 ** decimals;
   }
 
   verifyMessage(args: { address: Address; message: string; signature: Hex }): Promise<boolean> {

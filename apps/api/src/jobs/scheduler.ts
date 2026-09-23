@@ -1,6 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import { treasuryConfig } from "../routes/treasury";
 import { syncTreasury } from "../treasury";
+import { recomputeElo } from "../elo";
+import { blindOnly, LEADERBOARD_CACHE_KEY } from "../routes/votes";
 import { verifyModels } from "./verifyModels";
 
 const TICK_MS = 5 * 60 * 1000; // look every 5 minutes for jobs that are due
@@ -35,6 +37,15 @@ export function defaultJobs(app: FastifyInstance): Job[] {
         const r = await syncTreasury(ctx.prisma, cfg, ctx.clock);
         await ctx.redis.del("cache:treasury");
         app.log.info({ job: "treasury-sync", ...r, scannedTo: String(r.scannedTo) }, "treasury synced");
+      },
+    },
+    {
+      name: "elo-recompute",
+      everyMs: DAY,
+      run: async () => {
+        const r = await recomputeElo(ctx.prisma, { blindOnly: blindOnly(ctx) });
+        await ctx.redis.del(LEADERBOARD_CACHE_KEY);
+        app.log.info({ job: "elo-recompute", ...r }, "leaderboard recomputed");
       },
     },
     {

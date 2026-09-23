@@ -37,3 +37,24 @@ export interface UsageResponse {
 export interface ApiErrorBody {
   error: { message: string; type: string; code: string };
 }
+
+/** GET /me/credits */
+export type CreditsResponse =
+  | { enabled: false }
+  | {
+      enabled: true;
+      balanceUsd: number;
+      markup: number;
+      chainId: number;
+      depositAddress: string;
+      usdgAddress: string | null;
+      usdgDecimals: number | null;
+      ethEnabled: boolean;
+      confirmations: number;
+      deposits: { txHash: string; asset: string; amount: string; usd: number; createdAt: string }[];
+    };
+
+/** POST /me/credits/deposits */
+export type DepositResponse =
+  | { status: "pending"; confirmations: number; required: number }
+  | { status: "credited"; usd: number; balanceUsd: number; asset?: string; amount?: string };

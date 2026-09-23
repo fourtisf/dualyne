@@ -14,10 +14,10 @@ import { TokenSection } from "@/components/home/TokenSection";
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [models, treasury] = await Promise.all([getCatalog(), getTreasury()]);
+  const [{ models, settings }, treasury] = await Promise.all([getCatalog(), getTreasury()]);
   return (
     <main id="top">
-      <Hero models={models} />
+      <Hero models={models} blindMode={settings.blindMode} />
       <Logos />
       <Features />
       <ModelsSection models={models} />
