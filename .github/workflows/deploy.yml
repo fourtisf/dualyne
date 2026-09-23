@@ -1,0 +1,51 @@
+name: Deploy
+
+# Runs after CI passes on main, then deploys that exact commit to the server over SSH.
+# Needs repository secrets: DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY (and optionally DEPLOY_PORT).
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: production
+    steps:
+      - name: Check that deploy secrets exist
+        id: check
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          if [ -z "$HOST" ]; then
+            echo "::warning::DEPLOY_HOST is not set, so nothing was deployed. See DEPLOY.md, step 9."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Deploy over SSH
+        if: steps.check.outputs.skip != 'true'
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          envs: SHA
+          command_timeout: 35m
+          script: |
+            set -e
+            cd /opt/refract
+            git fetch --quiet origin main
+            git checkout --quiet --force --detach "$SHA"
+            ./deploy/scripts/deploy.sh "$SHA"

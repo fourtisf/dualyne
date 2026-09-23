@@ -7,7 +7,7 @@ AI model comparison website and OpenAI-compatible API gateway. Access is tied to
 - `packages/config`: **brand config** (name, token symbol, domain, social links, contact) in one file
 - `packages/shared`: model catalog, tier limits and schemas shared by web and API
 
-See `PLAN.md` for the architecture, phase plan and status, and `docs/HANDOFF.md` for the product spec.
+See `PLAN.md` for the architecture, phase plan and status, `docs/HANDOFF.md` for the product spec, and **`DEPLOY.md`** (in Indonesian) for putting it on a server.
 
 ## Run it locally
 

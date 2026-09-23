@@ -565,6 +565,26 @@ Improvements added from the product review ("website ini kurang apa"):
 
 Known limits of this sandbox: `openrouter.ai` and `challenges.cloudflare.com` are blocked here. The end-to-end run used a local stand-in for OpenRouter, and Turnstile was checked through the API tests with a fake verifier. Both must be checked for real on the server in Phase 2.
 
+## 11b. Phase 2 status (deploy)
+
+- [x] Multi-stage Dockerfiles for web and API, running as the non-root `node` user, with healthchecks
+- [x] `docker-compose.prod.yml`: postgres, redis (password, AOF), a one-shot `migrate` step (migrations + catalog seed), api, web and a nightly `backup`. Postgres and Redis publish no ports; web and api listen on 127.0.0.1 only.
+- [x] Nginx template: HTTP→HTTPS, www→apex, Cloudflare real IP, SSE-safe API proxy (buffering off, 300 s timeouts). Passes `nginx -t`.
+- [x] `server-setup.sh`: Docker, Nginx, certbot with the Cloudflare DNS challenge and auto-renewal, ufw (web ports only from Cloudflare, refreshed weekly), deploy user, repo deploy key
+- [x] `deploy.sh`: build tagged by commit, migrate, health-check, automatic rollback, manual `--rollback`, and keeps the last 5 images
+- [x] Nightly `pg_dump` with 7-day retention, plus `restore.sh`
+- [x] GitHub Actions: CI also builds both images; Deploy runs after CI succeeds on `main` (SSH)
+- [x] `.env.production.example` and `DEPLOY.md` (Indonesian, step by step)
+
+Rehearsed in the sandbox with Docker:
+
+- Images build and the whole stack comes up healthy.
+- The site renders live catalog prices from the API container.
+- A broken release rolls back automatically, and `--rollback` works.
+- Backup → delete → restore round-trips.
+
+Still untested: `server-setup.sh` on a real Ubuntu host (the sandbox has no systemd and no apt access), certbot, and Cloudflare.
+
 ## 12. Before public launch
 
 - **Model ids:** on the server, run `pnpm --filter @refract/api models:resolve` and confirm or update each OpenRouter id. The seed ids (Claude Haiku/Sonnet/Opus 4.5, GPT-5, Gemini 2.5 Pro, Llama 3.3 70B, DeepSeek V3.1, Mistral Small 3.2) could not be verified from the sandbox.

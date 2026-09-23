@@ -25,6 +25,7 @@
     "fastify": "5.12.5",
     "fastify-plugin": "5.1.0",
     "ioredis": "5.11.1",
+    "prisma": "6.19.3",
     "zod": "3.25.76"
   },
   "devDependencies": {
@@ -32,7 +33,6 @@
     "@typescript-eslint/eslint-plugin": "8.70.1",
     "@typescript-eslint/parser": "8.70.1",
     "eslint": "8.57.1",
-    "prisma": "6.19.3",
     "tsup": "8.5.1",
     "tsx": "4.23.15",
     "typescript": "5.9.3",

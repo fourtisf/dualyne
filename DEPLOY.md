@@ -1,0 +1,333 @@
+# Panduan Deploy Refract
+
+Panduan ini membawa Anda dari **server kosong** sampai **website live di `https://domainanda.com`**, lengkap dengan deploy otomatis setiap kali ada perubahan di branch `main`. Tidak perlu bisa coding: cukup ikuti langkahnya satu per satu dan salin perintahnya persis.
+
+Perkiraan waktu: 1–2 jam, sebagian besar menunggu DNS dan build pertama.
+
+> Di panduan ini, `domainanda.com` adalah contoh. Ganti dengan domain Anda sendiri di setiap perintah.
+
+---
+
+## 0. Yang perlu disiapkan
+
+| Kebutuhan       | Keterangan                                                                                                           |
+| --------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Domain          | Dari registrar mana saja (Namecheap, Niagahoster, Cloudflare, dll.)                                                  |
+| Akun Cloudflare | Gratis, di [cloudflare.com](https://cloudflare.com)                                                                  |
+| VPS             | Ubuntu **22.04 atau 24.04**, minimal **2 vCPU, 4 GB RAM**, 40 GB disk. Contoh: DigitalOcean, Vultr, Hetzner, Contabo |
+| Akun OpenRouter | [openrouter.ai](https://openrouter.ai), isi saldo awal (disarankan $300–1.000)                                       |
+| Akses GitHub    | Repository `refract` dengan akses admin                                                                              |
+
+---
+
+## 1. Pindahkan domain ke Cloudflare
+
+1. Masuk ke Cloudflare, klik **Add a site**, lalu masukkan domain Anda dan pilih paket **Free**.
+2. Cloudflare memberi **2 nameserver** (misalnya `ana.ns.cloudflare.com`). Buka panel registrar domain Anda dan ganti nameserver domain dengan dua alamat itu.
+3. Tunggu sampai status domain di Cloudflare menjadi **Active**. Biasanya beberapa menit, paling lama 24 jam.
+
+## 2. Buat VPS
+
+Buat server Ubuntu 22.04/24.04 di penyedia pilihan Anda. Catat:
+
+- **Alamat IP** server (contoh `203.0.113.10`)
+- **Password root** atau SSH key yang Anda pilih saat membuat server
+
+## 3. Buat DNS record di Cloudflare
+
+Buka **Cloudflare → domain Anda → DNS → Records**, lalu tambahkan:
+
+| Type | Name  | Content (IPv4 address) | Proxy status              |
+| ---- | ----- | ---------------------- | ------------------------- |
+| A    | `@`   | IP server Anda         | **Proxied** (awan oranye) |
+| A    | `www` | IP server Anda         | **Proxied**               |
+| A    | `api` | IP server Anda         | **Proxied**               |
+
+Jika server Anda juga punya IPv6, tambahkan tiga record **AAAA** dengan nama yang sama dan alamat IPv6 server.
+
+## 4. Pengaturan Cloudflare (wajib)
+
+Di dashboard domain Anda:
+
+1. **SSL/TLS → Overview**: pilih **Full (strict)**.
+2. **SSL/TLS → Edge Certificates**: nyalakan **Always Use HTTPS**.
+3. **Speed → Optimization → Content Optimization**: pastikan **Rocket Loader** dalam keadaan **Off**. Rocket Loader merusak website Next.js.
+4. **Caching → Cache Rules → Create rule**:
+   - Nama: `API no cache`
+   - Kondisi: _Hostname_ `equals` `api.domainanda.com`
+   - Aksi: **Bypass cache**
+   - Klik **Deploy**.
+
+## 5. Buat token Cloudflare untuk sertifikat HTTPS
+
+Server memakai token ini untuk membuat dan memperpanjang sertifikat HTTPS secara otomatis.
+
+1. Klik ikon profil (kanan atas) → **My Profile → API Tokens → Create Token**.
+2. Pilih template **Edit zone DNS** → **Use template**.
+3. Di bagian _Zone Resources_, pilih **Include → Specific zone → domainanda.com**.
+4. Klik **Continue to summary → Create Token**, lalu salin tokennya dan simpan di tempat aman. Token hanya ditampilkan sekali.
+
+## 6. Buat Cloudflare Turnstile (anti-bot untuk Compare)
+
+1. Buka dashboard Cloudflare → **Turnstile → Add widget**.
+2. Isi nama `Refract`, lalu tambahkan hostname `domainanda.com` dan `www.domainanda.com`.
+3. _Widget mode_: **Managed**.
+4. Salin **Site Key** dan **Secret Key**.
+
+## 7. Buat API key OpenRouter
+
+1. Buka [openrouter.ai/keys](https://openrouter.ai/keys) → **Create Key**.
+2. Opsional tapi disarankan: beri **credit limit**, misalnya $150/hari, sebagai pengaman tambahan.
+3. Salin key-nya (diawali `sk-or-`).
+
+---
+
+## 8. Siapkan server (sekali saja)
+
+### 8a. Masuk ke server
+
+Di komputer Anda, buka Terminal (Mac/Linux) atau PowerShell (Windows):
+
+```bash
+ssh root@203.0.113.10
+```
+
+### 8b. Ambil script setup
+
+**Jika repository GitHub Anda publik:**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/OWNER/refract/main/deploy/scripts/server-setup.sh -o setup.sh
+```
+
+**Jika repository privat:**
+
+1. Buka file `deploy/scripts/server-setup.sh` di GitHub, klik tombol **Copy raw file**.
+2. Di server, ketik `nano setup.sh`.
+3. Tempel isinya (klik kanan atau `Ctrl+Shift+V`), lalu simpan dengan `Ctrl+O`, `Enter`, `Ctrl+X`.
+
+### 8c. Jalankan setup
+
+Ganti keempat nilainya, lalu jalankan:
+
+```bash
+DOMAIN=domainanda.com \
+EMAIL=email@anda.com \
+CF_API_TOKEN=token-dari-langkah-5 \
+REPO=git@github.com:OWNER/refract.git \
+bash setup.sh
+```
+
+**Pada run pertama untuk repo privat**, script akan berhenti dan menampilkan sebuah _public key_ (baris yang diawali `ssh-ed25519 ...`). Lakukan ini:
+
+1. Di GitHub, buka **repository → Settings → Deploy keys → Add deploy key**.
+2. Isi Title `server`, tempel key tersebut, dan **jangan** centang _Allow write access_. Lalu **Add key**.
+3. Jalankan lagi perintah `bash setup.sh` yang sama.
+
+Script ini akan:
+
+- memasang Docker, Nginx, certbot dan firewall;
+- membuat user `deploy`;
+- mengunduh kode ke `/opt/refract`;
+- membuat sertifikat HTTPS dan mengatur Nginx;
+- menutup port web kecuali untuk Cloudflare.
+
+Script aman dijalankan ulang.
+
+## 9. Isi file rahasia `.env`
+
+```bash
+sudo -u deploy nano /opt/refract/.env
+```
+
+Isi setiap nilai yang masih `change-me` atau kosong. Untuk membuat kata sandi acak, buka jendela SSH kedua dan jalankan:
+
+```bash
+openssl rand -hex 32
+```
+
+Yang **wajib** diisi:
+
+| Variabel                         | Isi                                                                          |
+| -------------------------------- | ---------------------------------------------------------------------------- |
+| `POSTGRES_PASSWORD`              | Kata sandi acak                                                              |
+| `DATABASE_URL`                   | Ganti `change-me` dengan kata sandi yang **sama** dengan `POSTGRES_PASSWORD` |
+| `REDIS_PASSWORD`                 | Kata sandi acak lain                                                         |
+| `REDIS_URL`                      | Ganti `change-me` dengan kata sandi yang **sama** dengan `REDIS_PASSWORD`    |
+| `OPENROUTER_API_KEY`             | Key dari langkah 7                                                           |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Site Key dari langkah 6                                                      |
+| `TURNSTILE_SECRET_KEY`           | Secret Key dari langkah 6                                                    |
+| `IP_HASH_SECRET`                 | Hasil `openssl rand -hex 32`                                                 |
+| `SESSION_SECRET`                 | Hasil `openssl rand -hex 32` lagi (harus berbeda)                            |
+| `DAILY_BUDGET_USD`               | Batas belanja harian untuk tier gratis, mulai dari `100`                     |
+
+Nilai lain (wallet, token, treasury) boleh dikosongkan dulu dan diisi saat token launch.
+
+Simpan dengan `Ctrl+O`, `Enter`, `Ctrl+X`.
+
+> **File `.env` berisi rahasia.** Jangan kirim ke siapa pun dan jangan upload ke GitHub.
+
+## 10. Deploy pertama
+
+```bash
+sudo -u deploy /opt/refract/deploy/scripts/deploy.sh
+```
+
+Build pertama memakan waktu 5–15 menit. Jika berhasil, baris terakhirnya berbunyi:
+
+```
+[deploy] Healthy. <kode commit> is live.
+```
+
+Buka `https://domainanda.com`. Website Anda sudah live.
+
+## 11. Cek model OpenRouter (wajib sekali setelah deploy pertama)
+
+Nama model di OpenRouter sering berubah. Cek pemetaannya:
+
+```bash
+cd /opt/refract
+docker compose -f docker-compose.prod.yml exec api node dist/resolve-models.js
+```
+
+- Setiap model harus menampilkan **OK**.
+- Jika ada yang **MISSING**, atau Anda ingin versi terbaru, pilih salah satu nama dari baris _recent in family_, lalu jalankan:
+
+```bash
+docker compose -f docker-compose.prod.yml exec api node dist/resolve-models.js --set gpt=openai/gpt-5.1 --verify
+```
+
+## 12. Tes semuanya
+
+1. **Website**: buka `https://domainanda.com`, klik **Run comparison**, dan pastikan kedua jawaban muncul bertahap.
+
+2. **API dengan test key**: buat key untuk wallet Anda sendiri:
+
+   ```bash
+   docker compose -f docker-compose.prod.yml exec api node dist/create-key.js --wallet 0xALAMATWALLETANDA --tier holder
+   ```
+
+   Lalu coba panggil API, dari server atau dari komputer mana saja:
+
+   ```bash
+   curl https://api.domainanda.com/v1/chat/completions \
+     -H "Authorization: Bearer rf_live_..." \
+     -H "Content-Type: application/json" \
+     -d '{"model":"gpt","messages":[{"role":"user","content":"Halo"}],"stream":true}'
+   ```
+
+---
+
+## 13. Deploy otomatis dari GitHub
+
+Setelah langkah ini, setiap _push_ atau _merge_ ke branch `main` akan otomatis dites lalu di-deploy.
+
+**Di server**, buat kunci khusus untuk GitHub Actions:
+
+```bash
+sudo -u deploy ssh-keygen -t ed25519 -N "" -C github-actions -f /home/deploy/.ssh/github_actions
+sudo -u deploy sh -c 'cat ~/.ssh/github_actions.pub >> ~/.ssh/authorized_keys'
+sudo cat /home/deploy/.ssh/github_actions
+```
+
+Salin **seluruh** output perintah terakhir, termasuk baris `-----BEGIN ...` dan `-----END ...`.
+
+**Di GitHub**, buka **repository → Settings → Secrets and variables → Actions → New repository secret**, lalu buat tiga secret:
+
+| Name             | Value                          |
+| ---------------- | ------------------------------ |
+| `DEPLOY_HOST`    | IP server Anda                 |
+| `DEPLOY_USER`    | `deploy`                       |
+| `DEPLOY_SSH_KEY` | Isi kunci yang tadi Anda salin |
+
+Selesai. Anda bisa melihat prosesnya di tab **Actions** di GitHub: workflow **CI** menjalankan tes, lalu **Deploy** mengirim ke server.
+
+## 14. Rollback (kembali ke versi sebelumnya)
+
+- **Otomatis:** jika versi baru gagal _health check_, script langsung kembali ke versi sebelumnya. Anda tidak perlu melakukan apa-apa.
+- **Manual, ke versi tepat sebelumnya:**
+
+  ```bash
+  sudo -u deploy /opt/refract/deploy/scripts/deploy.sh --rollback
+  ```
+
+- **Manual, ke commit tertentu** (kodenya bisa dilihat di tab Commits di GitHub):
+
+  ```bash
+  sudo -u deploy /opt/refract/deploy/scripts/deploy.sh --rollback 37d0b98...
+  ```
+
+- **Lewat GitHub:** buka Pull Request yang bermasalah → **Revert**. Setelah di-merge, deploy otomatis mengembalikan versi lama.
+
+> Catatan: rollback mengembalikan **kode**, bukan isi database. Perubahan struktur database selalu dibuat agar tetap cocok dengan versi sebelumnya.
+
+## 15. Backup database
+
+- Backup dibuat otomatis setiap hari pukul **03:00 UTC** di folder `/var/backups/refract/`. Hanya **7 hari terakhir** yang disimpan.
+- Untuk backup sekarang juga:
+
+  ```bash
+  cd /opt/refract && docker compose -f docker-compose.prod.yml exec backup sh /backup.sh --now
+  ```
+
+- Untuk mengunduh backup ke komputer Anda (dijalankan di komputer Anda, bukan di server):
+
+  ```bash
+  scp root@203.0.113.10:/var/backups/refract/refract-2026-09-23.dump .
+  ```
+
+  Sebaiknya lakukan rutin, supaya ada salinan di luar server.
+
+- **Restore** (mengganti isi database dengan backup; script akan meminta konfirmasi):
+
+  ```bash
+  cd /opt/refract && ./deploy/backup/restore.sh /var/backups/refract/refract-2026-09-23.dump
+  ```
+
+## 16. Perintah harian yang berguna
+
+Jalankan dari folder `/opt/refract`:
+
+| Tujuan               | Perintah                                                                                                  |
+| -------------------- | --------------------------------------------------------------------------------------------------------- |
+| Status semua layanan | `docker compose -f docker-compose.prod.yml ps`                                                            |
+| Lihat log API (live) | `docker compose -f docker-compose.prod.yml logs -f --tail=100 api`                                        |
+| Lihat log website    | `docker compose -f docker-compose.prod.yml logs -f --tail=100 web`                                        |
+| Restart API          | `docker compose -f docker-compose.prod.yml restart api`                                                   |
+| Buat API key         | `docker compose -f docker-compose.prod.yml exec api node dist/create-key.js --wallet 0x... --tier holder` |
+| Cabut API key        | `docker compose -f docker-compose.prod.yml exec api node dist/create-key.js --revoke <keyId>`             |
+| Cek kesehatan        | `curl -s http://127.0.0.1:4000/health`                                                                    |
+
+Jika Anda mengubah `.env`, jalankan `deploy.sh` lagi supaya perubahan dipakai.
+
+## 17. Mengatasi masalah umum
+
+| Gejala                                                        | Penyebab dan solusi                                                                                                                        |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Cloudflare **Error 521/522**                                  | Server atau Nginx mati. Jalankan `systemctl status nginx` dan `docker compose -f docker-compose.prod.yml ps`, lalu `deploy.sh` jika perlu. |
+| Cloudflare **Error 526**                                      | Mode SSL bukan _Full (strict)_, atau sertifikat belum dibuat. Ulangi langkah 4 dan 8c.                                                     |
+| Compare menampilkan _"We couldn't verify this browser"_       | Hostname di Turnstile tidak cocok dengan domain, atau Site/Secret Key tertukar (langkah 6 dan 9).                                          |
+| Compare menampilkan _"Free comparisons are paused for today"_ | `DAILY_BUDGET_USD` sudah tercapai hari ini. Naikkan nilainya di `.env` lalu deploy ulang.                                                  |
+| API membalas **502** terus-menerus                            | Saldo OpenRouter habis atau nama model berubah. Cek saldo di OpenRouter, lalu jalankan langkah 11.                                         |
+| Deploy GitHub gagal di langkah SSH                            | Periksa ketiga secret di langkah 13 dan pastikan kunci publik ada di `authorized_keys`.                                                    |
+
+## 18. Yang TIDAK BOLEH dilakukan
+
+Perintah-perintah berikut **menghapus database secara permanen**. Jangan pernah menjalankannya:
+
+- `docker compose -f docker-compose.prod.yml down -v`
+- `docker volume rm ...`
+- `docker system prune -a --volumes`
+
+Selain itu:
+
+- **Jangan mengedit file di `/opt/refract` langsung di server** (kecuali `.env`). Setiap deploy mengembalikan kode ke versi GitHub.
+- **Jangan membagikan `.env`**, dan jangan menaruh key OpenRouter di website atau di GitHub.
+
+## 19. Opsional: notifikasi masalah
+
+Isi `ALERT_WEBHOOK_URL` di `.env` dengan URL webhook **Slack** atau **Discord** (di Discord: _Server Settings → Integrations → Webhooks_). Anda akan menerima pesan ketika:
+
+- batas budget harian tercapai;
+- saldo OpenRouter habis;
+- ada model yang hilang dari katalog OpenRouter.

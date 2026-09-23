@@ -1,0 +1,79 @@
+# Refract: Nginx site config. deploy/scripts/server-setup.sh renders this file with
+# envsubst (only ${DOMAIN} is replaced) into /etc/nginx/sites-available/refract.conf.
+
+# Real client IPs from Cloudflare (list refreshed weekly by update-cloudflare-ips.sh).
+include /etc/nginx/cloudflare-realip.conf;
+
+map $http_upgrade $connection_upgrade {
+  default upgrade;
+  ""      "";
+}
+
+server {
+  listen 80;
+  listen [::]:80;
+  server_name ${DOMAIN} www.${DOMAIN} api.${DOMAIN};
+  return 301 https://$host$request_uri;
+}
+
+# www → apex
+server {
+  listen 443 ssl http2;
+  listen [::]:443 ssl http2;
+  server_name www.${DOMAIN};
+  ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+  include /etc/nginx/refract-ssl.conf;
+  return 301 https://${DOMAIN}$request_uri;
+}
+
+# Website
+server {
+  listen 443 ssl http2;
+  listen [::]:443 ssl http2;
+  server_name ${DOMAIN};
+  ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+  include /etc/nginx/refract-ssl.conf;
+
+  client_max_body_size 1m;
+
+  location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+  }
+}
+
+# API: streaming responses must not be buffered.
+server {
+  listen 443 ssl http2;
+  listen [::]:443 ssl http2;
+  server_name api.${DOMAIN};
+  ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+  include /etc/nginx/refract-ssl.conf;
+
+  client_max_body_size 8m;
+
+  location / {
+    proxy_pass http://127.0.0.1:4000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    # Overwrite (never append) so clients cannot spoof their IP. $remote_addr is the real
+    # visitor IP thanks to the Cloudflare real_ip config above.
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header Connection "";
+    proxy_buffering off;
+    proxy_cache off;
+    proxy_request_buffering off;
+    proxy_read_timeout 300s;
+    proxy_send_timeout 300s;
+    add_header X-Accel-Buffering no always;
+  }
+}
