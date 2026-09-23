@@ -7,11 +7,22 @@ import { publicConfig } from "@/lib/config";
 import { store, today } from "@/lib/storage";
 import { useT } from "./LocaleProvider";
 import { apiErrorText } from "@/lib/i18n";
-import { signInWithWallet, walletConnectProvider, WalletFlowError, type Eip1193 } from "@/lib/wallet";
+import {
+  discoverWallets,
+  signInWithWallet,
+  walletConnectProvider,
+  WalletFlowError,
+  type DiscoveredWallet,
+  type Eip1193,
+} from "@/lib/wallet";
 
 const HOUR_MS = 3_600_000;
 
-export type ConnectKind = "injected" | "walletconnect";
+/** WalletConnect, or a browser wallet (a specific one found through EIP-6963, else window.ethereum). */
+export type ConnectTarget = { kind: "walletconnect" } | { kind: "injected"; wallet?: DiscoveredWallet };
+
+/** Remembers which browser wallet signed in, so top-ups use the same one after a reload. */
+const WALLET_KEY = "dualyne.wallet";
 
 interface WalletContextValue {
   /** Signed-in account, or null. `undefined` while the session is being checked. */
@@ -19,7 +30,9 @@ interface WalletContextValue {
   addr: string | null;
   keys: KeyInfo[];
   /** Sign in with a wallet. Resolves to an error message, or null on success. */
-  connect(kind: ConnectKind): Promise<string | null>;
+  connect(target: ConnectTarget): Promise<string | null>;
+  /** Browser wallets installed here (EIP-6963), in the order they announced themselves. */
+  wallets: DiscoveredWallet[];
   disconnect(): Promise<void>;
   refresh(): Promise<void>;
   /** Create a key; the returned object carries the full key exactly once. */
@@ -57,6 +70,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [compare, setCompare] = useState<{ remaining: number; at: number } | null>(null);
   const [version, setVersion] = useState(0);
   const [wc, setWc] = useState<(Eip1193 & { disconnect(): Promise<void> }) | null>(null);
+  const [wallets, setWallets] = useState<DiscoveredWallet[]>([]);
+  const [injected, setInjected] = useState<Eip1193 | null>(null);
   const limit = publicConfig.compareLimitPerHour;
 
   const loadKeys = useCallback(async () => {
@@ -75,6 +90,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, [loadKeys]);
 
+  useEffect(() => discoverWallets(setWallets), []);
+
   useEffect(() => {
     void refresh();
     const c = store.get<{ remaining: number; at: number } | null>("dualyne.compare", null);
@@ -82,20 +99,23 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const connect = useCallback(
-    async (kind: ConnectKind): Promise<string | null> => {
+    async (target: ConnectTarget): Promise<string | null> => {
       try {
         let provider: Eip1193;
-        if (kind === "walletconnect") {
+        if (target.kind === "walletconnect") {
           const p = await walletConnectProvider(publicConfig.siweChainId);
           setWc(p);
           provider = p;
         } else {
-          if (!window.ethereum) {
-            return t.wallet.errors.noWallet;
-          }
-          provider = window.ethereum;
+          const p = target.wallet?.provider ?? window.ethereum;
+          if (!p) return t.wallet.errors.noWallet;
+          provider = p;
         }
         const m = await signInWithWallet(provider);
+        if (target.kind === "injected") {
+          setInjected(provider);
+          store.set(WALLET_KEY, target.wallet?.info.rdns ?? "");
+        }
         setMe(m);
         await loadKeys();
         return null;
@@ -112,6 +132,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     await apiFetch("/auth/logout", { method: "POST" }).catch(() => undefined);
     await wc?.disconnect().catch(() => undefined);
     setWc(null);
+    setInjected(null);
+    store.set(WALLET_KEY, "");
     setMe(null);
     setKeys([]);
   }, [wc]);
@@ -152,6 +174,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       addr: me?.address ?? null,
       keys,
       connect,
+      wallets,
       disconnect,
       refresh,
       createKey,
@@ -165,7 +188,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       recordRun,
       version,
       bump: () => setVersion((v) => v + 1),
-      provider: () => wc ?? (typeof window !== "undefined" ? (window.ethereum ?? null) : null),
+      provider: () => {
+        if (wc) return wc;
+        if (injected) return injected;
+        const rdns = store.get<string>(WALLET_KEY, "");
+        const remembered = rdns ? wallets.find((x) => x.info.rdns === rdns) : undefined;
+        return remembered?.provider ?? (typeof window !== "undefined" ? (window.ethereum ?? null) : null);
+      },
     }),
     [
       me,
@@ -182,6 +211,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       recordRun,
       version,
       wc,
+      wallets,
+      injected,
     ],
   );
 

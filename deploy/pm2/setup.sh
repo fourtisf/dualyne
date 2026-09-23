@@ -149,6 +149,9 @@ OPENROUTER_API_KEY=
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=
 TURNSTILE_SECRET_KEY=
 
+# ── WalletConnect (optional): free project id from cloud.reown.com. Adds "scan with your phone". ──
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=
+
 # ── Community links (https://…). Empty = shown as "coming soon". ──
 NEXT_PUBLIC_X_URL=
 NEXT_PUBLIC_TELEGRAM_URL=

@@ -577,3 +577,13 @@ td a.mname:hover{text-decoration:underline; text-underline-offset:3px; text-deco
 .tb-social a:hover{color:var(--text); background:rgba(255,255,255,.05)}
 .tb-social .soon{color:var(--faint); cursor:default}
 @media (max-width:560px){.tb-social .lbl,.tb-tick{display:none}.topbar .wrap{gap:10px}}
+
+/* Wallet picker: detected wallets (EIP-6963) and wallets to install / open in app */
+.opt .ic.img{background:none; border:0; object-fit:cover}
+.opts-none{margin:10px 0 0; color:var(--muted); font-size:13px}
+.opts-h{margin:18px 0 8px; font-size:12px; font-weight:500; color:var(--muted)}
+.opts.more{grid-template-columns:1fr 1fr}
+.opts.more .opt{padding:10px; gap:10px; font-size:13.5px; text-decoration:none}
+.opts.more .opt .ic{width:28px; height:28px; border-radius:8px}
+.opts.more .opt small{font-size:12px}
+@media (max-width:420px){.opts.more{grid-template-columns:1fr}}
