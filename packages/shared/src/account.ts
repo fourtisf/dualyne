@@ -64,3 +64,25 @@ export type CreditsResponse =
 export type DepositResponse =
   | { status: "pending"; confirmations: number; required: number }
   | { status: "credited"; usd: number; balanceUsd: number; asset?: string; amount?: string };
+
+/** GET /status: public service health, built from real traffic in the last hour. */
+export type ServiceState = "operational" | "degraded" | "down";
+export interface StatusResponse {
+  status: ServiceState;
+  checkedAt: string;
+  services: { api: "ok"; database: "ok" | "down"; cache: "ok" | "down" };
+  /** Free comparisons on the website: paused once the day's treasury budget is spent. */
+  freeCompare: { state: "available" | "paused"; resumesAt: string | null };
+  models: {
+    id: string;
+    name: string;
+    state: ServiceState | "unavailable";
+    /** Upstream calls in the last hour (API and Compare). */
+    requests: number;
+    /** Share of those calls that failed upstream (0–1), null with no traffic. */
+    errorRate: number | null;
+    /** Median time to first token in ms, null with no streamed traffic. */
+    ttftMs: number | null;
+  }[];
+  jobs: { modelsVerifiedAt: string | null; treasurySyncedAt: string | null };
+}

@@ -92,6 +92,9 @@ export function Footer({ locale }: { locale: Locale }) {
               <li>
                 <a href={h("/#faq")}>{n.faq}</a>
               </li>
+              <li>
+                <a href={h("/status")}>{getDict(locale).statusPage.footer}</a>
+              </li>
               {brand.contactEmail && (
                 <li>
                   <a href={`mailto:${brand.contactEmail}`}>{t.contact}</a>

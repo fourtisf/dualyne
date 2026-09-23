@@ -35,6 +35,7 @@ import { modelsRoutes } from "./routes/v1.models";
 import { compareRoutes } from "./routes/internal.compare";
 import { catalogRoutes } from "./routes/internal.catalog";
 import { healthRoutes } from "./routes/health";
+import { statusRoutes } from "./routes/status";
 
 export interface BuildOptions {
   env: Env;
@@ -240,6 +241,7 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
   };
 
   await app.register(healthRoutes);
+  await app.register(statusRoutes);
   await app.register(catalogRoutes);
   await app.register(modelsRoutes, { routeConfig: keyLimit });
   await app.register(chatRoutes, { routeConfig: keyLimit });

@@ -479,6 +479,48 @@ export const en = {
     codeNoteB: "with any OpenAI SDK. Streaming, tools and JSON mode pass straight through.",
     others: "Other models",
   },
+  statusPage: {
+    title: "Status",
+    metaDesc: `Live health of the ${brand.name} API and every model, from real traffic in the last hour.`,
+    headline: {
+      operational: "All systems operational",
+      degraded: "Some models are having problems",
+      down: "Service disruption",
+    } as Record<string, string>,
+    unreachable: "We couldn't reach the API to check its status. It may be down, or restarting.",
+    checked: (time: string) =>
+      `Checked at ${time} UTC, from real traffic in the last hour. Updates every 30 seconds.`,
+    services: "Services",
+    svc: {
+      api: "Website and API",
+      database: "Accounts and usage",
+      cache: "Limits and sessions",
+      compare: "Free comparisons",
+    },
+    ok: "Operational",
+    down: "Down",
+    available: "Available",
+    paused: (time: string) => `Paused until ${time} UTC`,
+    pausedNote: "Today's treasury budget is used up. API keys on paid credit keep working.",
+    models: "Models",
+    th: {
+      model: "Model",
+      state: "Status",
+      calls: "Calls, last hour",
+      errors: "Errors",
+      ttft: "Median first token",
+    },
+    state: {
+      operational: "Operational",
+      degraded: "Degraded",
+      down: "Down",
+      unavailable: "Unavailable",
+    } as Record<string, string>,
+    jobsVerified: (when: string) => `Model list last checked against OpenRouter: ${when}.`,
+    jobsSynced: (when: string) => `Treasury last synced from the chain: ${when}.`,
+    never: "not yet",
+    footer: "Status",
+  },
   /** Text for API error codes. Empty in English: the API's own English messages are shown. */
   apiErrors: {} as Record<string, string>,
   notFound: {

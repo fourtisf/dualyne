@@ -535,6 +535,21 @@ a.ca-addr:hover{text-decoration:underline}
 .mp-others i{width:22px; height:22px; border-radius:6px; background:var(--c); flex:none}
 .mp-others span{display:flex; flex-direction:column; font-weight:500}
 .mp-others small{color:var(--muted); font-weight:400; font-size:12.5px}
-.models td a.mname{color:inherit; text-decoration:none}
-.models td a.mname:hover{text-decoration:underline; text-underline-offset:3px; text-decoration-color:var(--line3)}
+td a.mname{color:inherit; text-decoration:none}
+td a.mname:hover{text-decoration:underline; text-underline-offset:3px; text-decoration-color:var(--line3)}
 @media (max-width:640px){.mp-ctas{margin-top:-28px}.mp-ctas .btn{width:100%}.mp-note{margin-left:0}}
+
+/* Status page */
+.st.warn{color:var(--amber); background:rgba(251,191,36,.08); border:1px solid rgba(251,191,36,.22)}
+.sp-h{display:flex; align-items:center; gap:14px; font:600 clamp(30px,4vw,44px)/1.1 var(--sans); letter-spacing:-.04em; margin:0 0 12px}
+.sp-dot{width:14px; height:14px; border-radius:50%; flex:none; background:var(--ok); box-shadow:0 0 0 5px rgba(74,222,128,.14)}
+.sp-degraded .sp-dot{background:var(--amber); box-shadow:0 0 0 5px rgba(251,191,36,.14)}
+.sp-down .sp-dot{background:var(--err); box-shadow:0 0 0 5px rgba(251,146,60,.14)}
+.sp-sub{font:600 20px/1.2 var(--sans); letter-spacing:-.02em; margin:0 0 14px}
+.sp-svc{grid-template-columns:repeat(4,1fr); margin-bottom:48px}
+.sp-svc .card{display:flex; flex-direction:column; align-items:flex-start; gap:12px}
+.sp-tbl{border:1px solid var(--line); border-radius:16px}
+.sp-tbl table{min-width:620px}
+.sp-jobs{margin:18px 0 96px}
+@media (max-width:900px){.sp-svc{grid-template-columns:1fr 1fr}}
+@media (max-width:520px){.sp-svc{grid-template-columns:1fr}}
