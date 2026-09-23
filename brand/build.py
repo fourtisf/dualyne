@@ -163,14 +163,73 @@ write("svg/refract-x-banner.svg", BANNER)
 # ---------- PNG (Chromium) ----------
 
 jobs = []  # (svg, png, width, height, transparent)
-for suffix in variants:
-    jobs.append((f"svg/refract-mark{suffix}.svg", f"png/refract-mark{suffix}-1024.png", 1024, 1024, True))
+
+# Every PNG has a background colour. Transparent copies of the logo and mark are kept in
+# png/transparent/ for designers who place them on their own backgrounds.
+GRADIENT = (
+    '<defs><linearGradient id="bgg" x1="0" y1="0" x2="1" y2="1">'
+    '<stop offset="0" stop-color="#7C3AED"/><stop offset="1" stop-color="#DB2777"/></linearGradient></defs>'
+)
+BACKGROUNDS = {  # variant suffix -> background fill (the white logo sits on the brand gradient)
+    "": BG,
+    "-on-light": "#FAF9F5",
+    "-white": "url(#bgg)",
+    "-black": "#FFFFFF",
+}
+TMP = os.path.join(HERE, ".tmp")
+os.makedirs(TMP, exist_ok=True)
+
+
+def on_background(name, w, h, fill, body):
+    path = os.path.join(TMP, f"{name}.svg")
+    with open(path, "w") as f:
+        f.write(svg_doc(f"0 0 {w} {h}", f'{GRADIENT}<rect width="{w}" height="{h}" fill="{fill}"/>{body}'))
+    return path
+
+
+for suffix, (ink, a, b) in variants.items():
+    fill = BACKGROUNDS[suffix]
+    # Logo: 2400×1200, the logo 1400 wide in the middle.
+    s_ = 1400 / LOGO_W
+    logo = (
+        f'<g transform="translate(500 {(1200 - LOGO_H * s_) / 2:.2f}) scale({s_:.4f}) '
+        f'translate({-(left - PAD):.2f} {-(top - PAD):.2f})">'
+        + mark(ink, a, b, K)
+        + f'<path d="{word_d}" fill="{ink}"/></g>'
+    )
+    src = on_background(f"logo{suffix}", 2400, 1200, fill, logo)
+    jobs.append((src, f"png/refract-logo{suffix}-2400x1200.png", 2400, 1200, False))
+    # Mark: 1024 square, the mark 60% wide.
+    k = 7.5
+    src = on_background(f"mark{suffix}", 1024, 1024, fill, mark(ink, a, b, k, 512 - 49.5 * k, 512 - 50.5 * k))
+    jobs.append((src, f"png/refract-mark{suffix}-1024.png", 1024, 1024, False))
+    # Transparent copies.
     h = round(2000 * LOGO_H / LOGO_W)
-    jobs.append((f"svg/refract-logo{suffix}.svg", f"png/refract-logo{suffix}-2000.png", 2000, h, True))
+    jobs.append((f"svg/refract-logo{suffix}.svg", f"png/transparent/refract-logo{suffix}-2000.png", 2000, h, True))
+    jobs.append((f"svg/refract-mark{suffix}.svg", f"png/transparent/refract-mark{suffix}-1024.png", 1024, 1024, True))
+
+# App icon PNGs are full squares with no transparency (app stores require it; the phone
+# rounds the corners itself). The SVG keeps its rounded corners for the web.
+k = 10.24 * 0.78
+app_square = on_background("app", 1024, 1024, BG, mark(INK_DARK_BG, CYAN, PINK, k, 512 - 49.5 * k, 512 - 50.5 * k))
 for size in (1024, 512, 192, 180, 32):
-    jobs.append(("svg/refract-app-icon.svg", f"png/refract-app-icon-{size}.png", size, size, True))
+    jobs.append((app_square, f"png/refract-app-icon-{size}.png", size, size, False))
+
+# Token PNGs: the brand gradient edge to edge with the white mark, so a platform's round
+# crop shows the coin and the square file has no empty corners.
+COIN_GRADIENT = (
+    '<defs><linearGradient id="bgg" x1="0" y1="0" x2="1" y2="1">'
+    '<stop offset="0" stop-color="#22D3EE"/><stop offset=".55" stop-color="#7C3AED"/>'
+    '<stop offset="1" stop-color="#DB2777"/></linearGradient></defs>'
+)
+k = 3.3
+coin_square = os.path.join(TMP, "coin.svg")
+with open(coin_square, "w") as f:
+    f.write(svg_doc("0 0 512 512", COIN_GRADIENT + '<rect width="512" height="512" fill="url(#bgg)"/>'
+                    + mark("#FFFFFF", "#FFFFFF", "#FFFFFF", k, 256 - 49.5 * k, 256 - 50.5 * k)))
 for size in (1024, 512, 256, 200):
-    jobs.append(("svg/rfx-token.svg", f"png/rfx-token-{size}.png", size, size, True))
+    jobs.append((coin_square, f"png/rfx-token-{size}.png", size, size, False))
+
 jobs.append(("svg/refract-avatar.svg", "png/refract-avatar-800.png", 800, 800, False))
 jobs.append(("svg/refract-x-banner.svg", "png/refract-x-banner-1500x500.png", 1500, 500, False))
 
@@ -274,4 +333,7 @@ Image.open(os.path.join(HERE, "png", "refract-app-icon-512.png")).save(
     os.path.join(HERE, "favicon.ico"), sizes=[(16, 16), (32, 32), (48, 48)]
 )
 os.remove(os.path.join(HERE, "sheet.html"))
+import shutil  # noqa: E402
+
+shutil.rmtree(TMP)
 print(f"built {len(jobs)} PNGs, {len(os.listdir(os.path.join(HERE, 'svg')))} SVGs, favicon.ico", file=sys.stderr)

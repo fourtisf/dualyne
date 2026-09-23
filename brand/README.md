@@ -8,17 +8,23 @@ Ringkasan visual ada di `brand-sheet.png`.
 
 | Kebutuhan                                         | File                                                                         |
 | ------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Logo di latar gelap (utama)                       | `svg/refract-logo.svg`, `png/refract-logo-2000.png`                          |
-| Logo di latar putih/terang                        | `svg/refract-logo-on-light.svg`, `png/refract-logo-on-light-2000.png`        |
-| Logo satu warna (putih / hitam)                   | `refract-logo-white`, `refract-logo-black`                                   |
-| Simbol saja (tanpa tulisan)                       | `svg/refract-mark*.svg`, `png/refract-mark*-1024.png`                        |
-| Ikon aplikasi                                     | `svg/refract-app-icon.svg`, `png/refract-app-icon-{1024,512,192,180,32}.png` |
+| Logo di latar gelap (utama)                       | `png/refract-logo-2400x1200.png`, `svg/refract-logo.svg`                     |
+| Logo di latar terang                              | `png/refract-logo-on-light-2400x1200.png`, `svg/refract-logo-on-light.svg`   |
+| Logo putih di gradien ungu–pink                   | `png/refract-logo-white-2400x1200.png`                                       |
+| Logo hitam di latar putih                         | `png/refract-logo-black-2400x1200.png`                                       |
+| Simbol saja (tanpa tulisan)                       | `png/refract-mark*-1024.png`, `svg/refract-mark*.svg`                        |
+| Ikon aplikasi                                     | `png/refract-app-icon-{1024,512,192,180,32}.png`, `svg/refract-app-icon.svg` |
 | Favicon website                                   | `favicon.ico` (16/32/48), dipakai juga di `apps/web/app`                     |
-| Koin $RFX (DEX, CoinGecko, CoinMarketCap, wallet) | `svg/rfx-token.svg`, `png/rfx-token-{1024,512,256,200}.png`                  |
+| Koin $RFX (DEX, CoinGecko, CoinMarketCap, wallet) | `png/rfx-token-{1024,512,256,200}.png`, `svg/rfx-token.svg`                  |
 | Foto profil X / Telegram / Discord                | `png/refract-avatar-800.png`                                                 |
 | Header X (Twitter)                                | `png/refract-x-banner-1500x500.png`                                          |
 
-PNG logo dan simbol berlatar transparan. Avatar dan banner berlatar gelap penuh.
+Semua PNG di `png/` punya warna latar, tidak ada bagian transparan:
+
+- Ikon aplikasi berbentuk kotak penuh; HP dan app store membulatkan sudutnya sendiri.
+- PNG koin berisi gradien penuh; platform yang memotongnya jadi bulat akan menampilkan koin.
+- Versi transparan logo dan simbol ada di `png/transparent/`, untuk desainer yang ingin menaruhnya di latar sendiri.
+- File SVG tetap transparan, karena itu format vektor untuk diolah desainer.
 
 ## Warna
 
