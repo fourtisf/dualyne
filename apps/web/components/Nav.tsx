@@ -7,6 +7,7 @@ import { brand } from "@dualyne/config";
 import { shortAddr } from "@/lib/format";
 import { href, switchPath } from "@/lib/i18n";
 import { Logo } from "./Logo";
+import { TopBar } from "./TopBar";
 import { useLocale, useT } from "./LocaleProvider";
 import { useWallet } from "./WalletProvider";
 
@@ -33,6 +34,7 @@ export function Nav() {
   return (
     <>
       <header className="nav">
+        <TopBar />
         <div className="wrap">
           <Link className="brand" href={h("/")} aria-label={t.home}>
             <Logo />

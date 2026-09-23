@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { brand } from "@dualyne/config";
 import { publicConfig } from "@/lib/config";
+import { useCopy } from "@/lib/useCopy";
 import { useT } from "../LocaleProvider";
 import { socialIcons } from "../Social";
 
@@ -15,16 +15,7 @@ export function TokenActions() {
   const d = useT();
   const t = d.token;
   const value = ca || t.caSoon;
-  const [state, setState] = useState<"copy" | "copied" | "select">("copy");
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(value);
-      setState("copied");
-    } catch {
-      setState("select");
-    }
-    setTimeout(() => setState("copy"), 1600);
-  };
+  const { state, copy } = useCopy();
   const community = [
     { key: "x" as const, url: brand.social.x, label: t.followX },
     { key: "telegram" as const, url: brand.social.telegram, label: t.joinTelegram },
@@ -43,7 +34,7 @@ export function TokenActions() {
         <button
           className="btn dark sm"
           type="button"
-          onClick={copy}
+          onClick={() => copy(value)}
           aria-label={`${d.copy[state]}: ${t.caLabel}`}
         >
           {d.copy[state]}

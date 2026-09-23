@@ -15,7 +15,7 @@
 /* dark by design, whatever the viewer's theme */
 :root[data-theme="light"],:root[data-theme="dark"]{--bg:#050507; --text:#EDEDEF}
 *,*::before,*::after{box-sizing:inherit}
-html{scroll-behavior:smooth; scroll-padding-top:calc(env(safe-area-inset-top,0px) + 90px); background:var(--bg)}
+html{scroll-behavior:smooth; scroll-padding-top:calc(env(safe-area-inset-top,0px) + 124px); background:var(--bg)}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 body{margin:0; background:var(--bg); color:var(--text); font:400 15.5px/1.6 var(--sans); -webkit-font-smoothing:antialiased; overflow-x:hidden}
 a{color:inherit}
@@ -50,7 +50,7 @@ a{color:inherit}
 kbd{font:500 11px/1 var(--mono); color:var(--muted); padding:4px 6px; border-radius:6px; border:1px solid var(--line2); background:var(--s1)}
 
 /* hero */
-.hero{position:relative; padding:170px 0 0; isolation:isolate}
+.hero{position:relative; padding:196px 0 0; isolation:isolate}
 .hero::before{content:""; position:absolute; inset:0 0 auto; height:980px; z-index:-2; pointer-events:none;
   background:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px) 0 0/100% 64px, linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px) 0 0/64px 100%;
   -webkit-mask:radial-gradient(55% 50% at 50% 12%,#000,transparent 80%); mask:radial-gradient(55% 50% at 50% 12%,#000,transparent 80%)}
@@ -287,7 +287,7 @@ dialog::backdrop{background:rgba(0,0,0,.6); backdrop-filter:blur(6px)}
 .menu-btn span{display:block; width:14px; height:1.5px; background:currentColor; margin:3px auto; transition:transform .2s}
 .mnav{display:none}
 @media (max-width:1080px){.menu-btn{display:inline-block}
-  .mnav{position:fixed; left:12px; right:12px; top:calc(env(safe-area-inset-top,0px) + 70px); z-index:49; border-radius:16px; border:1px solid var(--line2); background:rgba(12,12,16,.94); backdrop-filter:blur(20px); padding:8px; box-shadow:0 30px 60px -20px rgba(0,0,0,.9)}
+  .mnav{position:fixed; left:12px; right:12px; top:calc(env(safe-area-inset-top,0px) + 104px); z-index:49; border-radius:16px; border:1px solid var(--line2); background:rgba(12,12,16,.94); backdrop-filter:blur(20px); padding:8px; box-shadow:0 30px 60px -20px rgba(0,0,0,.9)}
   .mnav.open{display:block}
   .mnav a{display:block; padding:13px 14px; border-radius:10px; text-decoration:none; color:var(--text); font-size:15px}
   .mnav a:hover{background:rgba(255,255,255,.05)}}
@@ -390,7 +390,7 @@ tr.first .rank{color:var(--amber)}
 .lb-empty{padding:56px 22px; text-align:center; color:var(--muted)}
 .lb-empty .btn{margin-top:18px}
 /* views */
-.view{padding-top:120px; min-height:80vh}
+.view{padding-top:150px; min-height:80vh}
 .doc{display:grid; grid-template-columns:220px 1fr; gap:56px; align-items:start}
 .toc{position:sticky; top:100px; display:grid; gap:2px}
 .toc a{text-decoration:none; color:var(--muted); font-size:14px; padding:7px 10px; border-radius:8px}
@@ -562,3 +562,18 @@ td a.mname:hover{text-decoration:underline; text-underline-offset:3px; text-deco
 .tk-community .btn{display:inline-flex; align-items:center; gap:8px}
 .tk-community .btn svg{flex:none}
 .soon-tag{font:500 10.5px/1 var(--mono); text-transform:uppercase; letter-spacing:.06em; padding:3px 6px; border-radius:5px; color:var(--amber); background:rgba(251,191,36,.1); margin-left:2px}
+
+/* Top bar: token CA (copyable) and community links, above the navigation */
+.topbar{border-bottom:1px solid var(--line); background:rgba(255,255,255,.02); font-size:12.5px; color:var(--muted)}
+.topbar .wrap{height:34px; display:flex; align-items:center; gap:16px}
+.tb-ca{display:flex; align-items:center; gap:8px; min-width:0}
+.tb-tick{font:600 12px/1 var(--mono); color:var(--text); background:linear-gradient(90deg,#67E8F9,#F472B6); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; flex:none}
+.tb-ca .ca-lbl{padding:3px 6px; font-size:10.5px}
+.tb-addr{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:500 12px/1 var(--mono); color:var(--text)}
+.tb-copy{display:inline-flex; align-items:center; gap:5px; flex:none; height:22px; padding:0 8px; border-radius:6px; border:1px solid var(--line2); background:rgba(255,255,255,.04); color:var(--text); font:500 11.5px/1 var(--sans); cursor:pointer; transition:border-color .15s, background .15s}
+.tb-copy:hover{border-color:var(--line3); background:rgba(255,255,255,.07)}
+.tb-social{margin-left:auto; display:flex; align-items:center; gap:2px; flex:none}
+.tb-social a,.tb-social .soon{display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 8px; border-radius:6px; color:var(--muted); text-decoration:none; transition:color .15s, background .15s}
+.tb-social a:hover{color:var(--text); background:rgba(255,255,255,.05)}
+.tb-social .soon{color:var(--faint); cursor:default}
+@media (max-width:560px){.tb-social .lbl,.tb-tick{display:none}.topbar .wrap{gap:10px}}
