@@ -1,0 +1,6 @@
+docs/
+pnpm-lock.yaml
+**/.next/
+**/dist/
+**/prisma/migrations/
+apps/web/app/globals.css

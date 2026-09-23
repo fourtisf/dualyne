@@ -1,0 +1,124 @@
+// Refract database schema. Tables are added phase by phase; see PLAN.md §3.
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Tier {
+  explorer
+  holder
+  builder
+}
+
+/// Maps a public Refract model id to the OpenRouter model that serves it.
+model Model {
+  id               String     @id // Refract id, e.g. "claude-swift"
+  name             String // "Claude Swift"
+  menuName         String // "OpenAI GPT" (Compare menus)
+  provider         String // "Anthropic"
+  providerColor    String
+  bestFor          String
+  speed            Int // 1–4 bars
+  minTier          Tier
+  sortOrder        Int
+  enabled          Boolean    @default(true)
+  openrouterId     String // "anthropic/claude-haiku-4.5"
+  openrouterFamily String // "anthropic/claude-haiku" (used to suggest newer ids)
+  upstreamName     String // "Claude Haiku 4.5"
+  /// USD per token, refreshed daily from OpenRouter's catalog.
+  promptPrice      Decimal    @db.Decimal(18, 12)
+  completionPrice  Decimal    @db.Decimal(18, 12)
+  contextLength    Int?
+  lastVerifiedAt   DateTime?
+  /// Set when the mapped OpenRouter id disappeared from OpenRouter's catalog.
+  missingSince     DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  usage            UsageLog[]
+}
+
+model Wallet {
+  id            String     @id @default(cuid())
+  address       String     @unique // lowercase 0x…
+  /// Tier set by an admin (test keys before on-chain tiers exist).
+  tierOverride  Tier?
+  createdAt     DateTime   @default(now())
+  keys          ApiKey[]
+  usage         UsageLog[]
+}
+
+/// Only the SHA-256 hash of a key is stored. Revoking a key deletes its row.
+model ApiKey {
+  id         String     @id @default(cuid())
+  walletId   String
+  wallet     Wallet     @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  hash       String     @unique // hex SHA-256 of the full key
+  last4      String
+  name       String?
+  createdAt  DateTime   @default(now())
+  lastUsedAt DateTime?
+  usage      UsageLog[]
+
+  @@index([walletId])
+}
+
+/// One row per upstream model call. Prompt and answer text are never stored.
+model UsageLog {
+  id            BigInt   @id @default(autoincrement())
+  createdAt     DateTime @default(now())
+  source        String // "api" | "compare"
+  apiKeyId      String?
+  apiKey        ApiKey?  @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  walletId      String?
+  wallet        Wallet?  @relation(fields: [walletId], references: [id], onDelete: SetNull)
+  walletAddress String?
+  modelId       String
+  model         Model    @relation(fields: [modelId], references: [id])
+  openrouterId  String
+  generationId  String?
+  inputTokens   Int      @default(0)
+  outputTokens  Int      @default(0)
+  /// 1 = $0.000001
+  costMicroUsd  BigInt   @default(0)
+  latencyMs     Int
+  ttftMs        Int?
+  status        Int
+  errorCode     String?
+  stream        Boolean
+  /// HMAC of the client IP (compare requests). The raw IP is never stored.
+  ipHash        String?
+  compareId     String?
+
+  @@index([createdAt])
+  @@index([walletId, createdAt])
+  @@index([apiKeyId, createdAt])
+  @@index([compareId])
+}
+
+/// One row per Compare run on the website. Votes (later phase) must reference a completed run.
+model CompareRun {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  modelA     String
+  modelB     String
+  ipHash     String
+  completedA Boolean  @default(false)
+  completedB Boolean  @default(false)
+
+  @@index([createdAt])
+}
+
+/// History of the daily OpenRouter catalog check.
+model ModelCheck {
+  id      String   @id @default(cuid())
+  ranAt   DateTime @default(now())
+  ok      Boolean
+  missing String[]
+  details Json
+}

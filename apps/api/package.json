@@ -1,0 +1,41 @@
+{
+  "name": "@refract/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=../../.env src/server.ts",
+    "build": "prisma generate && tsup",
+    "start": "node dist/server.js",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "prisma generate >/dev/null && tsc -p tsconfig.json",
+    "test": "vitest run",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "key:create": "tsx --env-file-if-exists=../../.env scripts/create-key.ts",
+    "models:resolve": "tsx --env-file-if-exists=../../.env scripts/resolve-models.ts"
+  },
+  "dependencies": {
+    "@fastify/cors": "11.3.0",
+    "@fastify/rate-limit": "10.3.0",
+    "@prisma/client": "6.19.3",
+    "@refract/config": "workspace:*",
+    "@refract/shared": "workspace:*",
+    "fastify": "5.12.5",
+    "fastify-plugin": "5.1.0",
+    "ioredis": "5.11.1",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.4",
+    "@typescript-eslint/eslint-plugin": "8.70.1",
+    "@typescript-eslint/parser": "8.70.1",
+    "eslint": "8.57.1",
+    "prisma": "6.19.3",
+    "tsup": "8.5.1",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}
