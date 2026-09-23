@@ -33,7 +33,11 @@ export async function buildMe(ctx: AppContext, wallet: Wallet) {
     keys: { count: keyCount, max: policy.maxKeys },
     eligibility,
     token: bal
-      ? { balance: tokenAmount(bal.units, bal.decimals), holderMin: ctx.tierService.holderMin, symbol: brand.tokenSymbol }
+      ? {
+          balance: tokenAmount(bal.units, bal.decimals),
+          holderMin: ctx.tierService.holderMin,
+          symbol: brand.tokenSymbol,
+        }
       : null,
   };
 }

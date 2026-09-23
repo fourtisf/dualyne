@@ -1,4 +1,12 @@
-import { createPublicClient, erc20Abi, http, parseAbiItem, type Address, type Hex, type PublicClient } from "viem";
+import {
+  createPublicClient,
+  erc20Abi,
+  http,
+  parseAbiItem,
+  type Address,
+  type Hex,
+  type PublicClient,
+} from "viem";
 import type { ChainReader, Erc20Transfer } from "./types";
 
 const TRANSFER = parseAbiItem("event Transfer(address indexed from, address indexed to, uint256 value)");
@@ -72,8 +80,19 @@ export class ViemChain implements ChainReader {
     return Number(b.timestamp);
   }
 
-  async erc20TransfersTo(token: Address, to: Address, fromBlock: bigint, toBlock: bigint): Promise<Erc20Transfer[]> {
-    const logs = await this.client.getLogs({ address: token, event: TRANSFER, args: { to }, fromBlock, toBlock });
+  async erc20TransfersTo(
+    token: Address,
+    to: Address,
+    fromBlock: bigint,
+    toBlock: bigint,
+  ): Promise<Erc20Transfer[]> {
+    const logs = await this.client.getLogs({
+      address: token,
+      event: TRANSFER,
+      args: { to },
+      fromBlock,
+      toBlock,
+    });
     return logs
       .filter((l) => l.transactionHash && l.blockNumber !== null && l.logIndex !== null)
       .map((l) => ({

@@ -1,5 +1,14 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
-import { chat, createKey, createTestContext, FakeChain, hello, newAccount, signIn, type TestContext } from "./helpers";
+import {
+  chat,
+  createKey,
+  createTestContext,
+  FakeChain,
+  hello,
+  newAccount,
+  signIn,
+  type TestContext,
+} from "./helpers";
 
 const RFX = "0x1111111111111111111111111111111111111111";
 const TREASURY = "0x2222222222222222222222222222222222222222";
@@ -110,7 +119,9 @@ describe("treasury", () => {
     const r1 = await syncTreasury(t.prisma, cfg, () => t.now.value);
     // head 30,000 minus 3 confirmations; first run looks back 10,000 blocks.
     expect(r1).toEqual({ inserted: 1, scannedTo: 29_997n });
-    expect((await t.prisma.chainCursor.findUniqueOrThrow({ where: { name: "treasury-inflows" } })).block).toBe(29_997n);
+    expect(
+      (await t.prisma.chainCursor.findUniqueOrThrow({ where: { name: "treasury-inflows" } })).block,
+    ).toBe(29_997n);
 
     chain.head = 30_010n;
     const r2 = await syncTreasury(t.prisma, cfg, () => t.now.value);
@@ -125,7 +136,14 @@ describe("treasury", () => {
     const day = (d: number) => new Date(Date.UTC(2026, 8, d, 10));
     await t.prisma.treasurySnapshot.create({ data: { takenAt: day(23), balanceMicroUsd: 18_420_000_000n } });
     await t.prisma.treasuryTransfer.create({
-      data: { id: "a:0", txHash: "a", blockNumber: 1n, timestamp: day(23), fromAddress: "x", amountMicroUsd: 832_000_000n },
+      data: {
+        id: "a:0",
+        txHash: "a",
+        blockNumber: 1n,
+        timestamp: day(23),
+        fromAddress: "x",
+        amountMicroUsd: 832_000_000n,
+      },
     });
     // 7 complete days of $450/day free-tier inference → runway 18,420 / 450 = 40.9 days.
     for (let d = 16; d <= 22; d++) {

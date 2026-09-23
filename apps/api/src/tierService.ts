@@ -55,7 +55,11 @@ export class TierService {
         this.chain.tokenDecimals(this.opts.rfxToken),
       ]);
       const value = `${units}:${decimals}`;
-      await this.redis.multi().set(key, value, "EX", BALANCE_TTL).set(`${key}:last`, value, "EX", LAST_KNOWN_TTL).exec();
+      await this.redis
+        .multi()
+        .set(key, value, "EX", BALANCE_TTL)
+        .set(`${key}:last`, value, "EX", LAST_KNOWN_TTL)
+        .exec();
       return { units, decimals };
     } catch {
       // Chain briefly unreachable: fall back to the last balance we saw rather than demoting the wallet.

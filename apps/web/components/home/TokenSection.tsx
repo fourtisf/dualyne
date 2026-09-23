@@ -185,12 +185,7 @@ export function TokenSection({ treasury }: { treasury: TreasuryData | null }) {
                   <line x1="0" y1="128" x2="400" y2="128" />
                 </g>
                 <path d={area} fill="url(#lf)" />
-                <path
-                  d={line}
-                  fill="none"
-                  stroke="#67E8F9"
-                  strokeWidth="1.8"
-                />
+                <path d={line} fill="none" stroke="#67E8F9" strokeWidth="1.8" />
               </svg>
             </div>
             <div className="tbl">

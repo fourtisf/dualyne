@@ -36,7 +36,9 @@ const money = (n: number) => Math.round(n).toLocaleString("en-US");
 
 /** SVG paths for the 30-day balance chart in the prototype's 400×170 viewBox. */
 export function balancePaths(days: TreasuryData["days"]): { line: string; area: string } | null {
-  const pts = days.map((d, i) => ({ i, v: d.balanceUsd })).filter((p): p is { i: number; v: number } => p.v !== null);
+  const pts = days
+    .map((d, i) => ({ i, v: d.balanceUsd }))
+    .filter((p): p is { i: number; v: number } => p.v !== null);
   if (pts.length < 2) return null;
   const vals = pts.map((p) => p.v);
   const min = Math.min(...vals);
@@ -54,5 +56,9 @@ export const fmt = {
   signed: (n: number, plus = "+", minus = "−") =>
     Math.round(Math.abs(n)) === 0 ? "0" : `${n < 0 ? minus : plus}${money(Math.abs(n))}`,
   day: (d: string) =>
-    new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }),
+    new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    }),
 };

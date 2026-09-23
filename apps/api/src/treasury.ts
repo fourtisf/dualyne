@@ -45,7 +45,8 @@ export async function syncTreasury(prisma: PrismaClient, cfg: TreasuryConfig, no
     const to = from + CHUNK - 1n < head ? from + CHUNK - 1n : head;
     const logs = await cfg.chain.erc20TransfersTo(cfg.stable, cfg.treasury, from, to);
     for (const l of logs) {
-      if (!blockTime.has(l.blockNumber)) blockTime.set(l.blockNumber, await cfg.chain.blockTimestamp(l.blockNumber));
+      if (!blockTime.has(l.blockNumber))
+        blockTime.set(l.blockNumber, await cfg.chain.blockTimestamp(l.blockNumber));
     }
     if (logs.length) {
       const r = await prisma.treasuryTransfer.createMany({
