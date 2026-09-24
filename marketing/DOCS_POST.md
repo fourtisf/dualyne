@@ -21,8 +21,8 @@ Image: `banners/png/07-docs.png`. Post only after `API_OPEN=true` is live.
 
 > Already using the OpenAI SDK? Two lines change:
 >
-> base*url = "https://api.dualyne.com/v1"
-> api_key = "dly_live*…"
+> `base_url = "https://api.dualyne.com/v1"`
+> `api_key = "dly_live_…"`
 >
 > Everything else — messages, streaming, tools — stays exactly the same.
 
