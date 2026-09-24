@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { brand } from "@dualyne/config";
+import { publicConfig } from "@/lib/config";
 import { getDict, type Locale } from "@/lib/i18n";
+import { UpgradeButton } from "../ProDialog";
 import { OpenWalletButton } from "../WalletProvider";
 import { Check } from "./Check";
 
@@ -10,6 +12,7 @@ const Tick = ({ hot = false }: { hot?: boolean }) => (
 
 export function Pricing({ locale }: { locale: Locale }) {
   const t = getDict(locale).pricing;
+  const c = publicConfig;
   return (
     <section className="block" id="pricing">
       <div className="wrap">
@@ -21,46 +24,47 @@ export function Pricing({ locale }: { locale: Locale }) {
           <h2>{t.h2}</h2>
           <p>{t.p}</p>
         </div>
-        <div className="tiers">
-          {!brand.tokenEnabled && (
-            <div className="tier hot">
-              <div className="nm">
-                {t.chatName} <span className="pop">{t.startHere}</span>
-              </div>
-              <div className="pr">$0</div>
-              <p className="who">{t.chatWho}</p>
-              <ul>
-                {t.chatItems.map((x) => (
-                  <li key={x}>
-                    <Tick hot />
-                    {x}
-                  </li>
-                ))}
-              </ul>
-              <Link className="btn" href="/chat">
-                {t.chatCta}
-              </Link>
-            </div>
-          )}
+        <div className={brand.tokenEnabled ? "tiers four" : "tiers"}>
           <div className="tier">
-            <div className="nm">Explorer</div>
-            <div className="pr">$0</div>
-            <p className="who">{t.explorerWho}</p>
+            <div className="nm">{t.freeName}</div>
+            <div className="pr">
+              $0<small>{t.forever}</small>
+            </div>
+            <p className="who">{t.freeWho}</p>
             <ul>
-              {t.explorerItems.map((x) => (
+              {t.freeItems(c.freeChatPerDay).map((x) => (
                 <li key={x}>
                   <Tick />
                   {x}
                 </li>
               ))}
             </ul>
-            <OpenWalletButton className="btn dark">{t.explorerCta}</OpenWalletButton>
+            <Link className="btn dark" href="/chat">
+              {t.chatCta}
+            </Link>
+          </div>
+          <div className="tier hot">
+            <div className="nm">
+              {t.proName} <span className="pop">{t.popular}</span>
+            </div>
+            <div className="pr">
+              ${c.proPriceUsd}
+              <small>{t.perDays(c.proDays)}</small>
+            </div>
+            <p className="who">{t.proWho}</p>
+            <ul>
+              {t.proItems(c.proChatPerDay, c.proPremiumPerDay).map((x) => (
+                <li key={x}>
+                  <Tick hot />
+                  {x}
+                </li>
+              ))}
+            </ul>
+            <UpgradeButton className="btn">{t.proCta}</UpgradeButton>
           </div>
           {brand.tokenEnabled && (
-            <div className="tier hot">
-              <div className="nm">
-                Holder <span className="pop">{t.popular}</span>
-              </div>
+            <div className="tier">
+              <div className="nm">Holder</div>
               <div className="pr">
                 $0<small>{t.withTokens}</small>
               </div>
@@ -68,16 +72,16 @@ export function Pricing({ locale }: { locale: Locale }) {
               <ul>
                 {t.holderItems.map((x) => (
                   <li key={x}>
-                    <Tick hot />
+                    <Tick />
                     {x}
                   </li>
                 ))}
               </ul>
-              <OpenWalletButton className="btn">{t.holderCta}</OpenWalletButton>
+              <OpenWalletButton className="btn dark">{t.holderCta}</OpenWalletButton>
             </div>
           )}
           <div className="tier">
-            <div className="nm">Builder</div>
+            <div className="nm">{t.apiName}</div>
             <div className="pr">
               {t.cost}
               <small>+ 15%</small>
@@ -94,7 +98,7 @@ export function Pricing({ locale }: { locale: Locale }) {
             <OpenWalletButton className="btn dark">{t.builderCta}</OpenWalletButton>
           </div>
         </div>
-        <p className="fine">{t.fine}</p>
+        <p className="fine">{t.fine(c.proDays)}</p>
       </div>
     </section>
   );

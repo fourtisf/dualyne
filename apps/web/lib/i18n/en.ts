@@ -82,8 +82,9 @@ export const en = {
     deleteChat: (title: string) => `Delete "${title}"`,
     pick: "Choose an AI",
     free: "Free",
-    premium: (n: number) =>
-      T ? `+${n} premium models for $DLYN holders` : `+${n} premium models through the API`,
+    premium: (n: number) => `Unlock ${n} premium models with Pro`,
+    locked: (name: string) => `${name} is part of Pro. Upgrade to use it.`,
+    proBadge: "PRO",
     empty: "What can I help you with?",
     suggestions: [
       "Explain Bitcoin in three simple sentences",
@@ -104,12 +105,15 @@ export const en = {
     regenerate: "Regenerate",
     code: "code",
     hint: "Enter to send · Shift+Enter for a new line",
-    quota: (left: number, limit: number) => `${left} of ${limit} free messages left this hour`,
+    quota: (left: number, limit: number) => `${left} of ${limit} free messages left today`,
+    quotaPro: (left: number, limit: number, premiumLeft: number) =>
+      `Pro · ${left} of ${limit} messages left today · ${premiumLeft} premium`,
+    upgrade: "Get Pro",
     local: "Chats are saved in this browser only.",
     errors: {
       rateLimited: (wait: string | null) =>
-        `You've used your free messages for this hour.${wait ? ` Try again in ${wait}.` : ""}`,
-      budget: "Free chat is paused for today. It comes back at 00:00 UTC.",
+        `You've used today's messages.${wait ? ` Try again in ${wait}.` : ""}`,
+      budget: "Free chat is paused for today. It comes back at 00:00 UTC, and Pro keeps working.",
       busy: "Lots of people are chatting right now. Try again in a few seconds.",
       notLive: "Chat opens soon. Come back in a little while.",
       turnstile: "We couldn't verify this browser. Reload the page and try again.",
@@ -267,7 +271,7 @@ export const en = {
     speedAria: (n: number) => `Speed ${n} of 4`,
     fine: T
       ? "Prices are what the provider charges per million input / output tokens. Explorer and Holder requests are free, paid for by the treasury; Builder pays cost + 15%."
-      : "Prices are what the provider charges per million input / output tokens. The free models cost you nothing; Builder pays cost + 15%.",
+      : "Prices are what the provider charges per million input / output tokens. The free models cost you nothing, Pro covers the premium ones for a flat price, and the API charges cost + 15%.",
     /** Tier column labels when the token is hidden (no Holder tier to speak of). */
     tierLabel: { explorer: "Free", holder: "Premium", builder: "Premium" } as Record<string, string>,
     /** "Best for" text by model id; English uses the catalog's own text. */
@@ -304,35 +308,45 @@ export const en = {
   copy: { copy: "Copy", copied: "Copied", select: "Select to copy" },
   pricing: {
     kick: "Pricing",
-    h2: "Pricing that grows with you.",
-    p: T
-      ? "Every wallet gets a daily allowance. Holding the token raises it. Past that, pay only for what you use."
-      : "Chat and compare for free, no signup. Build on the free API allowance, then pay only for what you use.",
-    chatName: "Chat",
-    chatWho: "For anyone. No signup, no wallet.",
-    chatItems: ["Claude, Llama, DeepSeek and Mistral", "Side-by-side Compare", "Also on Telegram"],
+    h2: "Start free. Go Pro when you need more.",
+    p: "Chat and compare for free, no signup. Pro unlocks every model for a flat monthly price, paid in crypto.",
+    freeName: "Free",
+    forever: "forever",
+    freeWho: "For trying things out. No signup, no wallet.",
+    freeItems: (perDay: number) => [
+      `${perDay} messages a day`,
+      "Claude Haiku, Llama, DeepSeek and Mistral",
+      "Side-by-side Compare",
+      "Also on Telegram",
+    ],
     chatCta: "Start chatting",
-    startHere: "Start here",
-    explorerWho: "For anyone with a wallet who wants to try the API.",
-    explorerItems: ["20 requests a day", "Fast models", "1 API key"],
-    explorerCta: "Connect wallet",
+    proName: "Pro",
+    perDays: (days: number) => `/ ${days} days`,
+    proWho: "For people who use AI every day.",
+    proItems: (perDay: number, premium: number) => [
+      "GPT-5, Gemini 2.5 Pro, Claude Sonnet and Opus",
+      `${perDay} messages a day, ${premium} on premium models`,
+      "Longer answers, never paused",
+      "Pay with USDC, USDT or ETH",
+    ],
+    proCta: "Upgrade to Pro",
     popular: "Most popular",
     withTokens: "with 100K tokens",
     holderWho: "For wallets holding the token. Paid for by the treasury.",
-    holderItems: ["250 requests a day", "Every model in the catalog", "5 API keys", "Priority routing"],
+    holderItems: ["250 API requests a day", "Every model in the catalog", "5 API keys", "Priority routing"],
     holderCta: "Check my wallet",
+    apiName: "API",
     cost: "Cost",
-    builderWho: "For apps in production. Top up in USDG or ETH.",
+    builderWho: "For developers. One OpenAI-compatible endpoint.",
     builderItems: [
-      "No daily cap",
+      "20 free requests a day to start",
       "Every model in the catalog",
-      "Unlimited API keys",
+      "Then pay per request, no cap",
       "Usage reports per key",
     ],
-    builderCta: "Top up credits",
-    fine: T
-      ? "Limits shown are the launch proposal and may change before the token goes live."
-      : "API limits shown are the launch plan and may change.",
+    builderCta: "Get an API key",
+    fine: (days: number) =>
+      `Pro lasts ${days} days per payment and doesn't renew on its own, so you're never charged by surprise. Premium models have a fair-use limit.`,
   },
   token: {
     kick: "Token",
@@ -382,10 +396,12 @@ export const en = {
     /** [question, answer, optional link text to the Privacy Policy at the end of the answer]. */
     items: [
       [
-        `Is ${brand.name} really free?`,
-        T
-          ? "Yes. Comparing models in the browser is free with no account. Wallets get a daily allowance through the API, paid for by the treasury."
-          : "Yes. Chatting with and comparing the free models, in the browser or on Telegram, needs no account. Wallets also get a free daily allowance through the API.",
+        `Is ${brand.name} free?`,
+        "Yes, to start. Chatting with and comparing the free models, in the browser or on Telegram, needs no account and gives you a number of messages every day. Pro unlocks the premium models and more messages for a flat monthly price.",
+      ],
+      [
+        "How does Pro work?",
+        "Connect a wallet, pay the Pro price in USDC, USDT or ETH, and Pro turns on as soon as the payment is confirmed on-chain, usually within a minute. It lasts 30 days and doesn't renew on its own: you extend it only if you want to. Nothing is ever taken from your wallet without you sending it.",
       ],
       [
         "Why do I need a wallet for API keys?",
@@ -395,7 +411,7 @@ export const en = {
       ],
       [
         "Which models can I use?",
-        "The API routes to models from Anthropic, OpenAI, Google, Meta, Mistral, DeepSeek and more. Every model in the catalog is live, in the Compare tool and through the API.",
+        "Free: Claude Haiku, Llama, DeepSeek and Mistral. Pro and the API add GPT-5, Gemini 2.5 Pro, and Claude Sonnet and Opus.",
       ],
       [
         "What happens to my prompts?",
@@ -404,7 +420,7 @@ export const en = {
       ],
       [
         "What happens when my daily allowance runs out?",
-        "Your requests pause until the next day, or you can top up credits in USDG or ETH and keep going at model cost plus 15%.",
+        "Chat: your messages come back the next day, or go Pro for more. API: requests pause until the next day, or top up credits and keep going at model cost plus 15%.",
       ],
       ...(T
         ? [
@@ -416,7 +432,7 @@ export const en = {
         : []),
       [
         "Why not call OpenRouter or the providers directly?",
-        `You can, and for heavy paid use it's cheaper. ${brand.name} adds what they don't: ${T ? "a free daily allowance paid for by the treasury" : "free chat and a free daily API allowance"}, a side-by-side Compare tool, and keys tied to a wallet instead of an email and a card.`,
+        `You can. ${brand.name} adds what they don't: ${T ? "a free daily allowance paid for by the treasury" : "free chat every day"}, every major model in one chat for one flat price, a side-by-side Compare tool, and keys tied to a wallet instead of an email and a card.`,
       ],
       [
         `Can I use ${brand.name} with my existing code?`,
@@ -574,6 +590,37 @@ export const en = {
       hash: "That doesn't look like a transaction hash (0x followed by 64 characters).",
     },
   },
+  pro: {
+    title: "Dualyne Pro",
+    intro: (price: number, days: number) =>
+      `$${price} for ${days} days. Every model, more messages, longer answers. No subscription: it simply ends unless you extend it.`,
+    perks: (perDay: number, premium: number) => [
+      "GPT, Gemini, Claude Sonnet and Opus, and the rest of the catalog",
+      `${perDay} messages a day, ${premium} of them on premium models`,
+      "Longer answers and no daily pause",
+    ],
+    signIn: "Pro is tied to your wallet, so connect it first. Payment is in crypto on-chain.",
+    connect: "Connect wallet",
+    closed: "Pro payments open soon. Follow us on X to hear first.",
+    activeUntil: (date: string) => `Pro is active until ${date}. Paying again adds time on top.`,
+    period: "Length",
+    months: (n: number, days: number) => (n === 1 ? `${days} days` : `${n * days} days`),
+    payWith: "Pay with",
+    total: "Total",
+    ethNote: "ETH price from Chainlink, plus 1% for price movement.",
+    pay: (amount: string, asset: string) => `Pay ${amount} ${asset}`,
+    working: "Working…",
+    confirm: "Confirm the payment in your wallet…",
+    waiting: (c: number, r: number) => `Payment sent. Waiting for confirmations: ${c} of ${r}…`,
+    done: (date: string) => `You're on Pro until ${date}. Enjoy.`,
+    manual: (amount: string, asset: string, chain: string, from: string) =>
+      `Or send ${amount} ${asset} on ${chain} from ${from} to:`,
+    yourWallet: "your wallet",
+    fine: "Payments are final and checked on-chain. Premium models have a fair-use limit.",
+    terms: "Terms",
+    upgrade: "Upgrade to Pro",
+    extend: "Extend Pro",
+  },
   modelPage: {
     breadcrumb: "Models",
     metaTitle: (name: string) => `${name}: price, context and ranking`,
@@ -596,7 +643,7 @@ export const en = {
     output: "Output, per 1M tokens",
     priceNote: T
       ? "What the provider charges. Explorer and Holder pay nothing."
-      : "What the provider charges. The free models cost you nothing.",
+      : "What the provider charges. The free models cost you nothing; premium models come with Pro.",
     builderNote: "Builder pays this + 15% from prepaid credits.",
     access: "Who can use it",
     accessValue: {

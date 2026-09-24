@@ -183,7 +183,7 @@ OPENROUTER_APP_TITLE=Dualyne
 DAILY_BUDGET_USD=20
 COMPARE_LIMIT_PER_HOUR=10
 COMPARE_MAX_TOKENS=1000
-CHAT_LIMIT_PER_HOUR=30
+CHAT_LIMIT_PER_DAY=20
 JOBS_ENABLED=true
 # Alerts (site down, low OpenRouter credit, daily budget used up). Easiest: Telegram, set up with
 #   bash deploy/pm2/ops.sh telegram

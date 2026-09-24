@@ -6,6 +6,7 @@ import { Footer } from "./Footer";
 import { LocaleProvider } from "./LocaleProvider";
 import { Nav } from "./Nav";
 import { PageView } from "./PageView";
+import { ProDialog } from "./ProDialog";
 import { WalletModal } from "./WalletModal";
 import { WalletProvider } from "./WalletProvider";
 
@@ -20,6 +21,7 @@ export function SiteShell({ locale, children }: { locale: Locale; children: Reac
             {children}
             <Footer locale={locale} />
             <WalletModal />
+            <ProDialog />
             <PageView />
           </WalletProvider>
         </LocaleProvider>

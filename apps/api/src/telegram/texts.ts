@@ -42,7 +42,7 @@ export function welcomeText(models: Pick<Model, "name">[], limit: number): strin
     "🆕 /new: start a new conversation",
     "❓ /help: limits, privacy and all commands",
     "",
-    `Free: ${limit} messages an hour.`,
+    `Free: ${limit} messages a day. For every model, including GPT and Gemini, get Pro on ${brand.siteUrl}`,
   ].join("\n");
 }
 
@@ -61,7 +61,7 @@ export function helpText(limit: number, owner: boolean): string {
     "/about: website and links",
     "",
     "<b>Limits</b>",
-    `${limit} free messages an hour per person (a comparison counts as two). Answers are kept short. The bot reads text only.`,
+    `${limit} free messages a day per person (a comparison counts as two). Answers are kept short. The bot reads text only. Pro on the website adds every model and far higher limits.`,
     "",
     "<b>Privacy</b>",
     "Your messages go to the model you picked to get an answer. The bot keeps the last few messages for an hour, then forgets them; /new forgets them right away. Don't send passwords or private data.",

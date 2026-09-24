@@ -26,7 +26,11 @@ export interface AppContext {
   openrouter: OpenRouter;
   tiers: TierPolicies;
   compareLimiter: SlidingWindowLimiter;
+  /** Free plan: chat messages per person per day. */
   chatLimiter: SlidingWindowLimiter;
+  /** Pro plan: chat messages per wallet per day, and the premium-model part of them. */
+  proChatLimiter: SlidingWindowLimiter;
+  proPremiumLimiter: SlidingWindowLimiter;
   alert: Alerter;
   ipHash: (ip: string) => string;
   /** null when RPC_URL is not configured. */

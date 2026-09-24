@@ -35,8 +35,9 @@ export const chatShareRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const body = chatShareRequestSchema.parse(req.body);
       const model = await ctx.prisma.model.findUnique({ where: { id: body.model } });
-      if (!model || model.minTier !== "explorer") {
-        throw new ApiError(404, "model_not_found", "That model is not one of the free chat models.");
+      // Any chat model (Pro chats included); the answer fingerprints prove the text is real.
+      if (!model || !model.enabled) {
+        throw new ApiError(404, "model_not_found", "That model is not in the catalog.");
       }
       const ipHash = ctx.ipHash(req.ip);
       const answers = body.messages.filter((m) => m.role === "assistant");

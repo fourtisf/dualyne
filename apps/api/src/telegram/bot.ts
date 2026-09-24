@@ -27,7 +27,7 @@ import {
  * @dualynebot: a public AI assistant on Telegram. Anyone can message it and get answers from the
  * free (explorer-tier) models, streamed into the chat as they are written, with buttons to try
  * again, ask another model, compare two models blind (the vote counts toward the leaderboard) or
- * start over. Same protections as the website's Chat page: a per-person hourly limit, the daily
+ * start over. Same protections as the website's Chat page: a per-person daily limit, the daily
  * budget and a fixed max_tokens. In groups it answers /ask, mentions and replies to itself.
  * The owner's chat (TELEGRAM_CHAT_ID, optional) also gets /status and /credit, hidden from
  * everyone else. Uses long polling, so no webhook is needed.
@@ -79,7 +79,7 @@ type Reply = { html: string; keyboard?: Keyboard };
 interface Where {
   chatId: number | string;
   chat: string;
-  /** The person, for the hourly limit and votes. */
+  /** The person, for the daily limit and votes. */
   person: string;
   isPrivate: boolean;
   /** In groups, answers reply to the question. */
@@ -352,7 +352,7 @@ export class TelegramBot {
   private async onMessage(m: TgMessage, w: Where): Promise<Reply | null> {
     const text = m.text?.trim();
     if (!text) return w.isPrivate ? { html: NOT_TEXT } : null;
-    const limit = this.ctx.env.CHAT_LIMIT_PER_HOUR;
+    const limit = this.ctx.env.CHAT_LIMIT_PER_DAY;
 
     if (text.startsWith("/")) {
       const [head = "", ...args] = text.split(/\s+/);
@@ -469,7 +469,7 @@ export class TelegramBot {
   }
 
   private limitText(retryAfterSeconds: number): string {
-    return `You've used your ${this.ctx.env.CHAT_LIMIT_PER_HOUR} free messages for this hour. Try again in ${retryIn(retryAfterSeconds)}.`;
+    return `You've used your ${this.ctx.env.CHAT_LIMIT_PER_DAY} free messages for today. Try again in ${retryIn(retryAfterSeconds)}.`;
   }
 
   /**
@@ -562,7 +562,7 @@ export class TelegramBot {
 
       await this.remember(w.chat, [...messages, { role: "assistant", content: result.text }]);
       const footer = [`<i>${esc(model.name)}</i>`];
-      if (slot.remaining <= 5) footer.push(`<i>${slot.remaining} free messages left this hour</i>`);
+      if (slot.remaining <= 5) footer.push(`<i>${slot.remaining} free messages left today</i>`);
       const parts = splitMarkdown(result.text, PART_CHARS).map(toTelegramHtml);
       parts[parts.length - 1] += `\n\n${footer.join(" · ")}`;
       for (let i = 0; i < parts.length; i++) {
@@ -601,7 +601,7 @@ export class TelegramBot {
         await this.reply(w, PAUSED);
         return;
       }
-      // A comparison is two messages from the hourly allowance.
+      // A comparison is two messages from the daily allowance.
       const first = await ctx.chatLimiter.hit(`tg:${w.person}`);
       const second = first.allowed ? await ctx.chatLimiter.hit(`tg:${w.person}`) : first;
       if (!second.allowed) {
@@ -609,7 +609,7 @@ export class TelegramBot {
         await this.reply(
           w,
           first.allowed
-            ? "A comparison uses two messages, and you have one left this hour. Ask a normal question instead, or try later."
+            ? "A comparison uses two messages, and you have one left today. Ask a normal question instead, or try tomorrow."
             : this.limitText(first.retryAfterSeconds),
         );
         return;

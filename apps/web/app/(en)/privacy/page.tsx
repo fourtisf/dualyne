@@ -70,8 +70,10 @@ export default function PrivacyPage() {
             are signed in). Votes build the public leaderboard, which shows only totals per model.
           </p>
           <p>
-            <strong>Top-ups.</strong> For Builder credits we record the transaction hash, the amount and the
-            wallet that paid. This information is public on the blockchain anyway.
+            <strong>Payments.</strong> For Pro and for API credits we record the transaction hash, the token
+            and amount, and the wallet that paid, and for Pro the date it runs until. This information is
+            public on the blockchain anyway. Pro chats are counted against your wallet instead of your IP
+            address, the same way (model, token counts, cost, never the text).
           </p>
           <p>
             <strong>Your browser.</strong> Your connected address, your Compare votes and a count of your

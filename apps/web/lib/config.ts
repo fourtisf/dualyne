@@ -5,6 +5,12 @@ export const publicConfig = {
   apiUrl: (process.env.NEXT_PUBLIC_API_URL || brand.apiOrigin).replace(/\/$/, ""),
   turnstileSiteKey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
   compareLimitPerHour: Number(process.env.NEXT_PUBLIC_COMPARE_LIMIT_PER_HOUR || 10),
+  /** Plans, copied from the API's settings by deploy.sh so the pricing page matches what the API enforces. */
+  freeChatPerDay: Number(process.env.NEXT_PUBLIC_CHAT_LIMIT_PER_DAY || 20),
+  proPriceUsd: Number(process.env.NEXT_PUBLIC_PRO_PRICE_USD || 19),
+  proDays: Number(process.env.NEXT_PUBLIC_PRO_DAYS || 30),
+  proChatPerDay: Number(process.env.NEXT_PUBLIC_PRO_CHAT_PER_DAY || 300),
+  proPremiumPerDay: Number(process.env.NEXT_PUBLIC_PRO_PREMIUM_PER_DAY || 30),
   /** Chain used for WalletConnect sessions (sign-in uses the chain the API returns). */
   siweChainId: Number(process.env.NEXT_PUBLIC_SIWE_CHAIN_ID || 1),
   walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",

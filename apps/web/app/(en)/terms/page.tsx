@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { brand, tokenTicker } from "@dualyne/config";
+import { publicConfig } from "@/lib/config";
 
 // Draft terms. Have them reviewed by a lawyer (including governing law and the legal entity)
 // before public launch.
@@ -66,12 +67,27 @@ export default function TermsPage() {
             it. You are responsible for how you use the answers.
           </p>
 
-          <h2>Free tiers and paid credits</h2>
+          <h2>Free use</h2>
           <p>
-            Free access is {brand.tokenEnabled ? "funded by the treasury and " : ""}limited by hourly and
-            daily allowances and a shared daily budget, and can pause until 00:00 UTC when that budget is used
-            up. When paid credits launch, prices will be shown before you top up. Credits are non-refundable
-            except where the law requires otherwise.
+            Free access is {brand.tokenEnabled ? "funded by the treasury and " : ""}limited by daily
+            allowances and a shared daily budget, and can pause until 00:00 UTC when that budget is used up.
+          </p>
+
+          <h2 id="pro">Pro and paid credits</h2>
+          <p>
+            Pro costs the price shown on the site when you pay, in the stablecoins or ETH listed there, sent
+            on-chain from the wallet you are signed in with. Each full payment gives {publicConfig.proDays}{" "}
+            days of Pro for that wallet, added on top of any time left. Pro does not renew on its own: nothing
+            is ever taken from your wallet without you sending it. Pro includes daily message limits and a
+            fair-use limit on premium models, shown on the site, so one person can&apos;t use up capacity
+            meant for everyone. A payment below the price does not start Pro; when API credits are available
+            it is added to your credit balance instead.
+          </p>
+          <p>
+            API credits are charged at model cost plus the markup shown before you top up. Pro and credits are
+            non-refundable except where the law requires otherwise, and a transaction sent to the wrong
+            address or on the wrong network can&apos;t be recovered by us. If we end Pro or the Service early,
+            we will refund the unused days of Pro on request.
           </p>
 
           {brand.tokenEnabled && (

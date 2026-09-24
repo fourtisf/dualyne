@@ -37,6 +37,7 @@ import { freeChatRoutes } from "./routes/internal.chat";
 import { catalogRoutes } from "./routes/internal.catalog";
 import { pageViewRoutes } from "./routes/internal.pv";
 import { chatShareRoutes } from "./routes/chatShares";
+import { proRoutes } from "./routes/pro";
 import { healthRoutes } from "./routes/health";
 import { statusRoutes } from "./routes/status";
 
@@ -105,7 +106,9 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
           })
         : null;
   const creditsEnabled = Boolean(
-    chain && env.DEPOSIT_ADDRESS && (env.USDG_TOKEN_ADDRESS || env.ETH_USD_FEED_ADDRESS),
+    chain &&
+      env.DEPOSIT_ADDRESS &&
+      (env.USDG_TOKEN_ADDRESS || env.STABLECOINS.length || env.ETH_USD_FEED_ADDRESS),
   );
   const tierService = new TierService(prisma, redis, chain, {
     dlynToken: env.DLYN_TOKEN_ADDRESS as `0x${string}` | undefined,
@@ -129,7 +132,15 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
     }),
     tiers: tierPolicies(env),
     compareLimiter: new SlidingWindowLimiter(redis, "cmp", env.COMPARE_LIMIT_PER_HOUR, 3_600_000, clock),
-    chatLimiter: new SlidingWindowLimiter(redis, "chat", env.CHAT_LIMIT_PER_HOUR, 3_600_000, clock),
+    chatLimiter: new SlidingWindowLimiter(redis, "chatd", env.CHAT_LIMIT_PER_DAY, 86_400_000, clock),
+    proChatLimiter: new SlidingWindowLimiter(redis, "prochat", env.PRO_CHAT_PER_DAY, 86_400_000, clock),
+    proPremiumLimiter: new SlidingWindowLimiter(
+      redis,
+      "propremium",
+      env.PRO_PREMIUM_PER_DAY,
+      86_400_000,
+      clock,
+    ),
     alert: createAlerter(app.log, {
       webhookUrl: env.ALERT_WEBHOOK_URL,
       telegram:
@@ -265,6 +276,7 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
   await app.register(freeChatRoutes);
   await app.register(pageViewRoutes);
   await app.register(chatShareRoutes);
+  await app.register(proRoutes);
   await app.register(authRoutes);
   await app.register(meRoutes);
   await app.register(treasuryRoutes);

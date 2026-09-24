@@ -72,3 +72,15 @@ export interface SharedChat {
   messages: ChatMessage[];
   createdAt: string;
 }
+
+/** GET /internal/chat/quota: the caller's plan and messages left today. */
+export type ChatQuota =
+  | { plan: "free"; limit: number; remaining: number }
+  | {
+      plan: "pro";
+      limit: number;
+      remaining: number;
+      premiumLimit: number;
+      premiumRemaining: number;
+      proUntil: string;
+    };

@@ -1,4 +1,4 @@
-import type { ChatEvents, ChatMessage } from "@dualyne/shared";
+import type { ChatEvents, ChatMessage, ChatQuota } from "@dualyne/shared";
 
 export class ChatError extends Error {
   constructor(
@@ -33,6 +33,8 @@ export async function runChat(
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
+      // The session cookie tells the API whether this is a Pro wallet.
+      credentials: "include",
       signal,
     });
   } catch (err) {
@@ -92,14 +94,15 @@ export async function runChat(
 }
 
 /** Free messages left this hour for this visitor, or null if the API can't be reached. */
-export async function getChatQuota(apiUrl: string): Promise<{ limit: number; remaining: number } | null> {
+export async function getChatQuota(apiUrl: string): Promise<ChatQuota | null> {
   try {
-    const res = await fetch(`${apiUrl}/internal/chat/quota`, { signal: AbortSignal.timeout(5000) });
+    const res = await fetch(`${apiUrl}/internal/chat/quota`, {
+      credentials: "include",
+      signal: AbortSignal.timeout(5000),
+    });
     if (!res.ok) return null;
-    const j = (await res.json()) as { limit?: unknown; remaining?: unknown };
-    return typeof j.limit === "number" && typeof j.remaining === "number"
-      ? { limit: j.limit, remaining: j.remaining }
-      : null;
+    const j = (await res.json()) as ChatQuota;
+    return typeof j.limit === "number" && typeof j.remaining === "number" ? j : null;
   } catch {
     return null;
   }

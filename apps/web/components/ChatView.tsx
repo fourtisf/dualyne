@@ -1,8 +1,13 @@
 "use client";
 
-import { brand } from "@dualyne/config";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { CHAT_HISTORY_MAX, CHAT_MESSAGE_MAX, type CatalogModel, type ChatMessage } from "@dualyne/shared";
+import {
+  CHAT_HISTORY_MAX,
+  CHAT_MESSAGE_MAX,
+  type CatalogModel,
+  type ChatMessage,
+  type ChatQuota,
+} from "@dualyne/shared";
 import { ChatError, getChatQuota, runChat, shareChat } from "@/lib/chat-client";
 import { publicConfig } from "@/lib/config";
 import { formatWait } from "@/lib/i18n";
@@ -11,7 +16,9 @@ import { store } from "@/lib/storage";
 import { TurnstileRunner } from "@/lib/turnstile";
 import { useCopy } from "@/lib/useCopy";
 import { useT } from "./LocaleProvider";
+import { openPro, PRO_CHANGED_EVENT } from "./ProDialog";
 import { ProviderMark } from "./ProviderMark";
+import { useWallet } from "./WalletProvider";
 
 interface Turn extends ChatMessage {
   /** The model that wrote an assistant turn. */
@@ -52,14 +59,15 @@ const titleOf = (text: string) => {
 
 /**
  * Chat with one AI at a time, like a regular chat app: past chats on the left, a model picker on
- * top, the conversation in the middle and the message box pinned to the bottom. Free models
- * only. Chats are kept in this browser (localStorage), never on the server.
+ * top, the conversation in the middle and the message box pinned to the bottom. Free models for
+ * everyone, premium models on Pro. Chats are kept in this browser (localStorage), never on the server.
  */
 export function ChatView({ models }: { models: CatalogModel[] }) {
   const d = useT();
   const t = d.chat;
+  const w = useWallet();
   const free = models.filter((m) => m.minTier === "explorer" && m.live);
-  const premium = models.filter((m) => !(m.minTier === "explorer" && m.live));
+  const premium = models.filter((m) => m.minTier !== "explorer" && m.live);
 
   const [chats, setChats] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -67,7 +75,7 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [quota, setQuota] = useState<{ limit: number; remaining: number } | null>(null);
+  const [quota, setQuota] = useState<ChatQuota | null>(null);
   const [listOpen, setListOpen] = useState(false);
   /** Saving starts only after saved chats were read, so it can't overwrite them. */
   const [loaded, setLoaded] = useState(false);
@@ -109,16 +117,30 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
     // A question from the home page starts a new chat.
     setActiveId(!q && saved.some((c) => c.id === last) ? last : null);
     const m = params.get("m") || store.get<string>(MODEL_KEY, "");
-    if (free.some((x) => x.id === m)) setModel(m);
+    if ([...free, ...premium].some((x) => x.id === m)) setModel(m);
     if (q) {
       setAutoAsk(q);
       // Drop the question from the address, so a reload doesn't ask it again.
       window.history.replaceState(null, "", window.location.pathname);
     }
     setLoaded(true);
-    void getChatQuota(publicConfig.apiUrl).then((q) => q && setQuota(q));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- read once on load
   }, []);
+
+  const pro = quota?.plan === "pro";
+  // The plan follows the signed-in wallet: re-read it on sign-in, sign-out and after paying.
+  useEffect(() => {
+    if (w.me === undefined) return;
+    const load = () => void getChatQuota(publicConfig.apiUrl).then((q) => q && setQuota(q));
+    load();
+    window.addEventListener(PRO_CHANGED_EVENT, load);
+    return () => window.removeEventListener(PRO_CHANGED_EVENT, load);
+  }, [w.me]);
+  // Without Pro, a premium model picked earlier falls back to the first free one.
+  useEffect(() => {
+    if (quota && !pro && premium.some((m) => m.id === model)) setModel(free[0]?.id ?? "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when the plan changes
+  }, [quota?.plan]);
 
   useEffect(() => {
     if (!loaded || busy) return;
@@ -219,6 +241,11 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
       if (result.remaining !== null) {
         const left = result.remaining;
         setQuota((q) => (q ? { ...q, remaining: left } : q));
+        if (premium.some((m) => m.id === model)) {
+          setQuota((q) =>
+            q?.plan === "pro" ? { ...q, premiumRemaining: Math.max(0, q.premiumRemaining - 1) } : q,
+          );
+        }
       }
       if (!result.completed) {
         setAnswer({ content: answer, failed: true });
@@ -389,14 +416,15 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
         ) : (
           <p className="side-empty">{t.noChats}</p>
         )}
-        {premium.length > 0 && (
-          <a
+        {premium.length > 0 && !pro && (
+          <button
             className="side-premium"
-            href={brand.tokenEnabled ? "/#token" : "/#pricing"}
+            type="button"
             title={premium.map((m) => m.name).join(", ")}
+            onClick={openPro}
           >
             {t.premium(premium.length)}
-          </a>
+          </button>
         )}
         <p className="side-note">{t.local}</p>
       </aside>
@@ -438,16 +466,36 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
                 <span>{m.name}</span>
               </button>
             ))}
+            {premium.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                role="radio"
+                aria-checked={pro && m.id === model}
+                className={pro ? (m.id === model ? "cm pm on" : "cm pm") : "cm pm locked"}
+                disabled={busy}
+                title={pro ? m.bestFor : t.locked(m.name)}
+                onClick={() => (pro ? pick(m.id) : openPro())}
+              >
+                <ProviderMark provider={m.provider} color={m.providerColor} size={20} />
+                <span>{m.name}</span>
+                <em className="cm-pro">
+                  {!pro && (
+                    <svg width="10" height="10" viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.4"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  )}
+                  {t.proBadge}
+                </em>
+              </button>
+            ))}
           </div>
-          {premium.length > 0 && (
-            <a
-              className="chat-premium"
-              href={brand.tokenEnabled ? "/#token" : "/#pricing"}
-              title={premium.map((m) => m.name).join(", ")}
-            >
-              {t.premium(premium.length)}
-            </a>
-          )}
           {active && !busy && turns.some((m) => m.role === "assistant" && m.content && !m.failed) && (
             <div className="chat-share">
               {shared?.chatId === active.id && (
@@ -578,7 +626,17 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
           <span className="hint">{t.hint}</span>
           {quota && (
             <span className={quota.remaining === 0 ? "quota out" : "quota"}>
-              {t.quota(quota.remaining, quota.limit)}
+              {quota.plan === "pro"
+                ? t.quotaPro(quota.remaining, quota.limit, quota.premiumRemaining)
+                : t.quota(quota.remaining, quota.limit)}
+              {quota.plan === "free" && premium.length > 0 && (
+                <>
+                  {" · "}
+                  <button className="link quota-up" type="button" onClick={openPro}>
+                    {t.upgrade}
+                  </button>
+                </>
+              )}
             </span>
           )}
         </div>

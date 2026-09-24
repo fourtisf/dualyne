@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { brand } from "@dualyne/config";
+import { publicConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
   title: "About",
-  description: `Who runs ${brand.name}, how it works, why chat is free and how to reach us.`,
+  description: `Who runs ${brand.name}, how it works, how it makes money and how to reach us.`,
   alternates: { canonical: "/about" },
 };
 
@@ -27,7 +28,8 @@ export default function AboutPage() {
           <ul>
             <li>
               <strong>Chat</strong> with Claude, Llama, DeepSeek and Mistral for free, with no signup, in the
-              browser or on Telegram (<a href="https://t.me/dualynebot">@dualynebot</a>).
+              browser or on Telegram (<a href="https://t.me/dualynebot">@dualynebot</a>). Pro adds GPT-5,
+              Gemini 2.5 Pro and Claude Sonnet and Opus.
             </li>
             <li>
               <strong>Compare</strong> two models on the same prompt, side by side, and vote for the better
@@ -48,12 +50,13 @@ export default function AboutPage() {
             Google) and streams the answer back. We don&apos;t train models and we don&apos;t sell data.
           </p>
 
-          <h2>Why chat is free</h2>
+          <h2>How we make money</h2>
           <p>
-            We pay for free chat and comparisons ourselves, within a daily budget. To keep it fair, each
-            person gets a number of free messages per hour, and on a very busy day free chat can pause until
-            00:00 UTC. Developers who need more use the API and pay model cost plus 15%. That&apos;s the
-            business: no ads, no selling data.
+            Free chat and comparisons run on the smaller models, paid for by us within a daily budget. To keep
+            it fair, each person gets a number of free messages a day, and on a very busy day free chat can
+            pause until 00:00 UTC. <Link href="/#pricing">Pro</Link> is a flat ${publicConfig.proPriceUsd} for{" "}
+            {publicConfig.proDays} days, paid in crypto, and unlocks the premium models. Developers pay model
+            cost plus 15% through the API. That&apos;s the whole business: no ads, no selling data.
           </p>
 
           <h2>Your privacy, in short</h2>

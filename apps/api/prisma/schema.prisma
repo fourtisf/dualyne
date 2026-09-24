@@ -54,6 +54,23 @@ model Wallet {
   sessions     Session[]
   credits      CreditAccount?
   deposits     Deposit[]
+  /// Pro plan: active until this time (null = never bought).
+  proUntil     DateTime?
+  proPayments  ProPayment[]
+}
+
+/// A crypto payment for the Pro plan. One transaction pays once (see also Deposit).
+model ProPayment {
+  txHash    String   @id // lowercase 0x…
+  walletId  String
+  wallet    Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  asset     String // "USDC" | "USDT" | "USDG" | "ETH" …
+  amount    String // in the asset, e.g. "19" or "0.0061"
+  usdMicro  BigInt
+  days      Int
+  createdAt DateTime @default(now())
+
+  @@index([walletId])
 }
 
 /// Signed-in browser session (Sign-In With Ethereum). The id is an HMAC of the cookie value.

@@ -1,25 +1,15 @@
 import { Prisma } from "@prisma/client";
 import type { FastifyPluginAsync } from "fastify";
-import { getAddress, type Address, type Hex } from "viem";
+import { getAddress, type Hex } from "viem";
 import { z } from "zod";
 import { requireOwnOrigin, requireWallet } from "../auth/request";
 import { ApiError } from "../lib/errors";
 import { microToUsd } from "../lib/money";
+import { stablecoins, txAlreadyUsed, verifyPayment } from "../payments";
 
 const depositBody = z
   .object({ txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/, "Invalid transaction hash") })
   .strict();
-
-const sameAddr = (a: string | null | undefined, b: string | null | undefined) =>
-  Boolean(a && b && a.toLowerCase() === b.toLowerCase());
-
-/** Whole-token amount as a decimal string, e.g. 12.5 */
-function formatUnits(units: bigint, decimals: number): string {
-  const s = units.toString().padStart(decimals + 1, "0");
-  const whole = s.slice(0, s.length - decimals);
-  const frac = s.slice(s.length - decimals).replace(/0+$/, "");
-  return frac ? `${whole}.${frac}` : whole;
-}
 
 /** Builder prepaid credit: balance, deposit address and top-ups verified by transaction hash. */
 export const creditRoutes: FastifyPluginAsync = async (app) => {
@@ -49,6 +39,13 @@ export const creditRoutes: FastifyPluginAsync = async (app) => {
       depositAddress: env.DEPOSIT_ADDRESS,
       usdgAddress: env.USDG_TOKEN_ADDRESS ?? null,
       usdgDecimals,
+      tokens: await Promise.all(
+        stablecoins(env).map(async (t) => ({
+          symbol: t.symbol,
+          address: t.address,
+          decimals: ctx.chain ? await ctx.chain.tokenDecimals(t.address).catch(() => null) : null,
+        })),
+      ),
       ethEnabled: Boolean(env.ETH_USD_FEED_ADDRESS),
       confirmations: env.CHAIN_CONFIRMATIONS,
       deposits: deposits.map((d) => ({
@@ -85,55 +82,12 @@ export const creditRoutes: FastifyPluginAsync = async (app) => {
         };
       }
 
-      const tx = await ctx.chain.getDepositTx(hash);
-      if (!tx || tx.status === "pending" || tx.confirmations < env.CHAIN_CONFIRMATIONS) {
-        return reply.status(202).send({
-          status: "pending",
-          confirmations: tx?.confirmations ?? 0,
-          required: env.CHAIN_CONFIRMATIONS,
-        });
+      if ((await txAlreadyUsed(ctx, hash)) === "pro") {
+        throw new ApiError(409, "already_used", "This transaction already paid for Pro.");
       }
-      if (tx.status === "reverted") throw new ApiError(400, "tx_failed", "This transaction failed on-chain.");
-      if (!sameAddr(tx.from, wallet.address)) {
-        throw new ApiError(
-          403,
-          "wrong_sender",
-          "This payment was sent from a different wallet. Top-ups are credited to the wallet that sent them.",
-        );
-      }
-
-      const deposit = env.DEPOSIT_ADDRESS as Address;
-      let asset: "USDG" | "ETH";
-      let amount: string;
-      let usdMicro: bigint;
-      const usdgIn = env.USDG_TOKEN_ADDRESS
-        ? tx.transfers
-            .filter(
-              (t) =>
-                sameAddr(t.token, env.USDG_TOKEN_ADDRESS) &&
-                sameAddr(t.to, deposit) &&
-                sameAddr(t.from, wallet.address),
-            )
-            .reduce((a, t) => a + t.value, 0n)
-        : 0n;
-      if (usdgIn > 0n) {
-        const decimals = await ctx.chain.tokenDecimals(getAddress(env.USDG_TOKEN_ADDRESS!));
-        asset = "USDG";
-        amount = formatUnits(usdgIn, decimals);
-        usdMicro =
-          decimals >= 6 ? usdgIn / 10n ** BigInt(decimals - 6) : usdgIn * 10n ** BigInt(6 - decimals);
-      } else if (sameAddr(tx.to, deposit) && tx.value > 0n && env.ETH_USD_FEED_ADDRESS) {
-        const price = await ctx.chain.ethUsdPrice(getAddress(env.ETH_USD_FEED_ADDRESS));
-        asset = "ETH";
-        amount = formatUnits(tx.value, 18);
-        usdMicro = (tx.value * BigInt(Math.round(price * 1e6))) / 10n ** 18n;
-      } else {
-        throw new ApiError(
-          400,
-          "no_payment",
-          "This transaction didn't send USDG or ETH to the deposit address.",
-        );
-      }
+      const paid = await verifyPayment(ctx, wallet.address, hash);
+      if (paid.status === "pending") return reply.status(202).send(paid);
+      const { asset, amount, usdMicro } = paid;
       if (usdMicro <= 0n) throw new ApiError(400, "no_payment", "The amount is too small to credit.");
 
       let balance: bigint;

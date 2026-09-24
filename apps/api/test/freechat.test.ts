@@ -3,7 +3,7 @@ import { createTestContext, parseSse, type TestContext } from "./helpers";
 
 let t: TestContext;
 beforeEach(async () => {
-  if (!t) t = await createTestContext({ CHAT_LIMIT_PER_HOUR: "2" });
+  if (!t) t = await createTestContext({ CHAT_LIMIT_PER_DAY: "2" });
   await t.reset();
   t.upstream.mode = "stream";
   t.now.value = new Date("2026-09-23T12:00:00Z");
@@ -62,13 +62,13 @@ describe("POST /internal/chat", () => {
 
   it("reports the free messages left without using one", async () => {
     const quota = () => t.app.inject({ method: "GET", url: "/internal/chat/quota" });
-    expect((await quota()).json()).toEqual({ limit: 2, remaining: 2 });
-    expect((await quota()).json()).toEqual({ limit: 2, remaining: 2 });
+    expect((await quota()).json()).toEqual({ plan: "free", limit: 2, remaining: 2 });
+    expect((await quota()).json()).toEqual({ plan: "free", limit: 2, remaining: 2 });
     await send(good);
-    expect((await quota()).json()).toEqual({ limit: 2, remaining: 1 });
+    expect((await quota()).json()).toEqual({ plan: "free", limit: 2, remaining: 1 });
   });
 
-  it("limits each IP per hour", async () => {
+  it("limits each IP per day", async () => {
     expect((await send(good)).statusCode).toBe(200);
     expect((await send(good)).statusCode).toBe(200);
     const res = await send(good);

@@ -55,6 +55,8 @@ export type CreditsResponse =
       depositAddress: string;
       usdgAddress: string | null;
       usdgDecimals: number | null;
+      /** Stablecoins accepted (USDG and any others), 1 token = $1. */
+      tokens: { symbol: string; address: string; decimals: number | null }[];
       ethEnabled: boolean;
       confirmations: number;
       deposits: { txHash: string; asset: string; amount: string; usd: number; createdAt: string }[];
@@ -86,3 +88,27 @@ export interface StatusResponse {
   }[];
   jobs: { modelsVerifiedAt: string | null; treasurySyncedAt: string | null };
 }
+
+/** GET /me/pro: the Pro plan for the signed-in wallet. */
+export interface ProResponse {
+  active: boolean;
+  proUntil: string | null;
+  priceUsd: number;
+  days: number;
+  chatPerDay: number;
+  premiumPerDay: number;
+  /** Payments can be made (chain and address configured). */
+  open: boolean;
+  chainId: number;
+  payTo: string | null;
+  tokens: { symbol: string; address: string; decimals: number | null }[];
+  /** USD per ETH now, null when ETH isn't accepted or the price is unavailable. */
+  ethUsd: number | null;
+  confirmations: number;
+  payments: { txHash: string; asset: string; amount: string; usd: number; days: number; createdAt: string }[];
+}
+
+/** POST /me/pro/payments */
+export type ProPaymentResponse =
+  | { status: "pending"; confirmations: number; required: number }
+  | { status: "active"; proUntil: string; days: number; asset?: string; amount?: string; usd?: number };

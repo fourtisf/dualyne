@@ -31,8 +31,40 @@ const schema = z
     DAILY_BUDGET_USD: z.coerce.number().positive().default(100),
     COMPARE_LIMIT_PER_HOUR: z.coerce.number().int().positive().default(10),
     COMPARE_MAX_TOKENS: z.coerce.number().int().positive().default(1000),
-    /** Free Chat page: messages per IP per hour (free models only, same max_tokens as Compare). */
-    CHAT_LIMIT_PER_HOUR: z.coerce.number().int().positive().default(30),
+    /** Free plan: chat messages per person per day (free models only, same max_tokens as Compare). */
+    CHAT_LIMIT_PER_DAY: z.coerce.number().int().positive().default(20),
+
+    // Pro plan: paid in crypto to DEPOSIT_ADDRESS, unlocks every model in Chat.
+    PRO_PRICE_USD: z.coerce.number().positive().default(19),
+    PRO_DAYS: z.coerce.number().int().positive().default(30),
+    /** Pro: chat messages per day, and how many of them may use a premium model. */
+    PRO_CHAT_PER_DAY: z.coerce.number().int().positive().default(300),
+    PRO_PREMIUM_PER_DAY: z.coerce.number().int().min(0).default(30),
+    /** Pro fair use: model cost of premium answers per Pro period, in USD; past it, free models only. */
+    PRO_FAIR_USE_USD: z.coerce.number().positive().default(15),
+    PRO_MAX_TOKENS: z.coerce.number().int().positive().default(2000),
+    /**
+     * Stablecoins accepted for Pro and Builder top-ups besides USDG, 1 token = $1, on SIWE_CHAIN_ID:
+     * "USDC:0x…,USDT:0x…".
+     */
+    STABLECOINS: z
+      .string()
+      .default("")
+      .transform((v, c) => {
+        const out: { symbol: string; address: string }[] = [];
+        for (const part of v
+          .split(",")
+          .map((x) => x.trim())
+          .filter(Boolean)) {
+          const m = /^([A-Za-z0-9.]{2,10}):(0x[0-9a-fA-F]{40})$/.exec(part);
+          if (!m) {
+            c.addIssue({ code: "custom", message: `STABLECOINS: "${part}" is not SYMBOL:0xaddress` });
+            return z.NEVER;
+          }
+          out.push({ symbol: m[1]!.toUpperCase(), address: m[2]!.toLowerCase() });
+        }
+        return out;
+      }),
     TIER_EXPLORER_DAILY: optionalInt,
     TIER_HOLDER_DAILY: optionalInt,
     TIER_EXPLORER_MAX_TOKENS: optionalInt,

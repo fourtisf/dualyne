@@ -371,6 +371,27 @@ Setelah deploy:
 - Konversi fee ke stablecoin dan top-up saldo OpenRouter tetap dilakukan manual. Website hanya mencatat apa yang terlihat di blockchain.
 - Top-up Builder dicek otomatis lewat hash transaksi dan dikreditkan satu kali saja. Tombol **Top up credits** di dashboard aktif setelah `DEPOSIT_ADDRESS` diisi.
 
+### Paket Pro ($19 / 30 hari, bayar crypto)
+
+Pengunjung bisa chat gratis (`CHAT_LIMIT_PER_DAY` pesan per hari, model gratis saja). **Pro** membuka semua model (GPT-5, Gemini 2.5 Pro, Claude Sonnet dan Opus) untuk wallet yang membayar. Pembayaran dicek otomatis di blockchain lewat hash transaksi: pengirimnya harus wallet yang sedang login, dan satu transaksi hanya bisa dipakai sekali. Pro tidak diperpanjang otomatis.
+
+Isi di `.env` server, lalu jalankan `deploy.sh`:
+
+| Variabel               | Isi                                                                                                  |
+| ---------------------- | ---------------------------------------------------------------------------------------------------- |
+| `RPC_URL`              | Endpoint RPC jaringan pembayaran (misalnya Base dari Alchemy)                                        |
+| `SIWE_CHAIN_ID`        | `8453` untuk Base (biaya transaksi murah)                                                            |
+| `DEPOSIT_ADDRESS`      | Wallet Anda yang menerima pembayaran                                                                 |
+| `STABLECOINS`          | Stablecoin yang diterima, format `SIMBOL:alamat`, dipisah koma. Cek setiap alamat di explorer        |
+| `ETH_USD_FEED_ADDRESS` | Price feed Chainlink ETH/USD di jaringan itu, supaya bisa bayar pakai ETH (kosongkan jika tidak mau) |
+| `PRO_PRICE_USD`        | Harga Pro (default `19`)                                                                             |
+| `PRO_DAYS`             | Lama Pro per pembayaran (default `30`)                                                               |
+| `PRO_CHAT_PER_DAY`     | Pesan per hari untuk Pro (default `300`)                                                             |
+| `PRO_PREMIUM_PER_DAY`  | Berapa dari pesan itu boleh memakai model premium (default `30`)                                     |
+| `PRO_FAIR_USE_USD`     | Batas biaya model premium per wallet per `PRO_DAYS` hari, supaya Anda tidak rugi (default `15`)      |
+
+Selama `DEPOSIT_ADDRESS` atau `RPC_URL` kosong, tombol **Upgrade to Pro** tetap tampil tetapi dialognya menulis "Pro payments open soon". Pembayaran kurang dari harga tidak mengaktifkan Pro; jumlahnya dimasukkan ke saldo kredit API wallet itu.
+
 ## 21. Jika ada kecurangan voting
 
 Jika leaderboard terlihat dimanipulasi, ubah `COMPARE_BLIND_MODE=always` di `.env` lalu jalankan `deploy.sh`. Semua perbandingan menjadi _blind_ (nama model disembunyikan sampai pengguna memilih), dan hanya vote blind yang dihitung di leaderboard mulai update malam berikutnya.
@@ -494,7 +515,7 @@ cd /var/www/dualyne && bash deploy/pm2/ops.sh telegram && bash deploy/pm2/deploy
 
 Script menanyakan token bot (buat lewat **@BotFather** di Telegram → `/newbot`), lalu meminta Anda mengirim pesan apa saja ke bot itu. Chat id terisi otomatis dan pesan tes dikirim. `deploy.sh` membuat API ikut memakai notifikasi ini. Batas saldo diatur dengan `OPENROUTER_LOW_BALANCE_USD` di `.env` (default 2 USD, `0` = mati).
 
-Bot ini **publik**: siapa pun bisa chat dengan AI gratis langsung di Telegram (model explorer: Claude Swift, Llama, DeepSeek, Mistral), dengan batas yang sama seperti halaman Chat (`CHAT_LIMIT_PER_HOUR` per orang per jam, budget harian, jawaban maks. `COMPARE_MAX_TOKENS`).
+Bot ini **publik**: siapa pun bisa chat dengan AI gratis langsung di Telegram (model explorer: Claude Swift, Llama, DeepSeek, Mistral), dengan batas yang sama seperti halaman Chat (`CHAT_LIMIT_PER_DAY` per orang per hari, budget harian, jawaban maks. `COMPARE_MAX_TOKENS`).
 
 - Jawaban muncul bertahap saat ditulis (pesan diperbarui), dalam bahasa si penanya. Tiap jawaban punya tombol 🔄 Try again · 🔀 Other model · ⚖️ Compare · 🆕 New chat.
 - `/compare pertanyaan`: dua model acak menjawab tanpa nama; penanya vote, lalu nama model terungkap. Vote masuk leaderboard (sama seperti vote di website). Satu perbandingan = 2 pesan dari jatah per jam.

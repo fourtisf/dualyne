@@ -79,7 +79,7 @@ describe("sharing a chat by link", () => {
   it("validates the conversation", async () => {
     await ask("Say hi");
     const bad = (payload: Record<string, unknown>) => share({ ...convo(), ...payload });
-    expect((await bad({ model: "gpt" })).statusCode).toBe(404); // premium models aren't in free chat
+    expect((await bad({ model: "not-a-model" })).statusCode).toBe(404);
     expect((await bad({ messages: [{ role: "user", content: "Say hi" }] })).statusCode).toBe(400);
     expect(
       (

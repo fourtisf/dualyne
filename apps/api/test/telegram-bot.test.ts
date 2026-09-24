@@ -11,7 +11,7 @@ let cfg: BotConfig;
 
 beforeEach(async () => {
   if (!t) {
-    t = await createTestContext({ OPENROUTER_LOW_BALANCE_USD: "2", CHAT_LIMIT_PER_HOUR: "5" });
+    t = await createTestContext({ OPENROUTER_LOW_BALANCE_USD: "2", CHAT_LIMIT_PER_DAY: "5" });
     cfg = { token: TOKEN, ownerChatId: "42", apiUrl: t.upstream.url };
     bot = new TelegramBot(t.app.ctx, t.app.log, cfg);
     await bot.setUpProfile(); // learns its username (@dualynebot) for group mentions
@@ -84,7 +84,7 @@ describe("Telegram bot: chat", () => {
     expect(user).toEqual({ role: "user", content: "What is an API?" });
 
     const [answer] = sent();
-    expect(answer!.text).toBe("Hello ✓\n\n<i>Claude Swift</i> · <i>4 free messages left this hour</i>");
+    expect(answer!.text).toBe("Hello ✓\n\n<i>Claude Swift</i> · <i>4 free messages left today</i>");
     expect(buttons(answer)).toEqual(["act:retry", "act:other", "act:compare", "act:new"]);
     expect(calls("sendChatAction")[0]).toMatchObject({ chat_id: 7, action: "typing" });
 
@@ -104,7 +104,7 @@ describe("Telegram bot: chat", () => {
     // The stand-in numbers messages 1000 + its call count.
     const partialId = 1001 + t.upstream.telegram.findIndex((m) => m.method === "sendMessage");
     expect(final).toMatchObject({ chat_id: 7, message_id: partialId });
-    expect(final.text).toBe("Hello ✓\n\n<i>Claude Swift</i> · <i>4 free messages left this hour</i>");
+    expect(final.text).toBe("Hello ✓\n\n<i>Claude Swift</i> · <i>4 free messages left today</i>");
     expect(buttons(final)).toEqual(["act:retry", "act:other", "act:compare", "act:new"]);
     expect(sent()).toHaveLength(1);
   });
@@ -164,7 +164,7 @@ describe("Telegram bot: chat", () => {
     expect(await t.redis.get("tgbot:model:7")).toBe("mistral");
   });
 
-  it("stops at the hourly limit per person, and a failed answer doesn't count", async () => {
+  it("stops at the daily limit per person, and a failed answer doesn't count", async () => {
     t.upstream.mode = "error";
     await say(msg(8, "one"));
     expect(texts()[0]).toMatch(/Claude Swift didn't answer this time/);
@@ -172,9 +172,7 @@ describe("Telegram bot: chat", () => {
     t.upstream.mode = "stream";
     for (const q of ["two", "three", "four", "five", "six"]) await say(msg(8, q));
     await say(msg(8, "seven"));
-    expect(texts().at(-1)).toMatch(
-      /You've used your 5 free messages for this hour\. Try again in 60 minutes\./,
-    );
+    expect(texts().at(-1)).toMatch(/You've used your 5 free messages for today\. Try again in 24 hours\./);
     expect(t.upstream.requests).toHaveLength(6);
   });
 
