@@ -209,6 +209,24 @@ describe("self-serve API keys", () => {
     expect(await t.prisma.apiKey.count()).toBe(1);
   });
 
+  it("refuses new keys while the API is coming soon", async () => {
+    const closed = await createTestContext({ API_OPEN: "false", SYBIL_CHECK: "off" }, { chain: null });
+    try {
+      const { cookie } = await signIn(closed);
+      const res = await closed.app.inject({
+        method: "POST",
+        url: "/me/keys",
+        headers: { cookie, origin: WEB_ORIGIN },
+        payload: {},
+      });
+      expect(res.statusCode).toBe(403);
+      expect(res.json().error.code).toBe("api_closed");
+      expect(await closed.prisma.apiKey.count()).toBe(0);
+    } finally {
+      await closed.close();
+    }
+  });
+
   it("requires a session and the website origin", async () => {
     expect((await t.app.inject({ method: "GET", url: "/me" })).statusCode).toBe(401);
     const { cookie } = await signIn(t);

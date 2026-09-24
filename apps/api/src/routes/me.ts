@@ -116,6 +116,13 @@ export const meRoutes: FastifyPluginAsync = async (app) => {
   app.post("/me/keys", { config: { rateLimit: { max: 10, timeWindow: 3_600_000 } } }, async (req, reply) => {
     requireOwnOrigin(ctx, req);
     const wallet = await requireWallet(ctx, req);
+    if (!ctx.env.API_OPEN) {
+      throw new ApiError(
+        403,
+        "api_closed",
+        "API keys are coming soon. Follow us on X to hear when they open.",
+      );
+    }
     const body = createKeyBody.parse(req.body ?? {});
     const { tier } = await ctx.tierService.resolve(wallet);
     const policy = ctx.tiers[tier];

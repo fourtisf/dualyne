@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { brand } from "@dualyne/config";
 import type { KeyInfo, MeResponse } from "@dualyne/shared";
 import { ApiRequestError } from "@/lib/api";
+import { publicConfig } from "@/lib/config";
 import { apiErrorText, type Dict } from "@/lib/i18n";
 import { shortAddr } from "@/lib/format";
 import { isPhone, KNOWN_WALLETS, safeWalletIcon, walletConnectEnabled } from "@/lib/wallet";
@@ -274,13 +275,14 @@ export function WalletModal() {
                 id="newKey"
                 type="button"
                 style={{ marginLeft: "auto" }}
-                disabled={atMax || Boolean(notEligible) || busy === "key"}
-                title={createTitle}
+                disabled={!publicConfig.apiOpen || atMax || Boolean(notEligible) || busy === "key"}
+                title={publicConfig.apiOpen ? createTitle : t.keysSoonNote}
                 onClick={createKey}
               >
-                {busy === "key" ? t.creating : t.createKey}
+                {!publicConfig.apiOpen ? t.keysSoon : busy === "key" ? t.creating : t.createKey}
               </button>
             </div>
+            {!publicConfig.apiOpen && !w.keys.length && <div className="msg soft">{t.keysSoonNote}</div>}
             {notEligible && <div className="msg">{notEligible}</div>}
             {fresh && (
               <div className="fresh">

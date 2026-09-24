@@ -371,6 +371,10 @@ Setelah deploy:
 - Konversi fee ke stablecoin dan top-up saldo OpenRouter tetap dilakukan manual. Website hanya mencatat apa yang terlihat di blockchain.
 - Top-up Builder dicek otomatis lewat hash transaksi dan dikreditkan satu kali saja. Tombol **Top up credits** di dashboard aktif setelah `DEPOSIT_ADDRESS` diisi.
 
+### API key: Coming soon
+
+Secara default pembuatan API key ditutup (`API_OPEN=false`): kartu **API** di halaman harga menampilkan "Coming soon" dan tombol **Create key** di jendela wallet nonaktif. Key yang sudah pernah dibuat tetap berfungsi. Untuk membuka, tambahkan `API_OPEN=true` di `.env` lalu jalankan `deploy.sh`.
+
 ### Paket Pro ($19 / 30 hari, bayar crypto)
 
 Pengunjung bisa chat gratis (`CHAT_LIMIT_PER_DAY` pesan per hari, model gratis saja). **Pro** membuka semua model (GPT-5, Gemini 2.5 Pro, Claude Sonnet dan Opus) untuk wallet yang membayar. Pembayaran dicek otomatis di blockchain lewat hash transaksi: pengirimnya harus wallet yang sedang login, dan satu transaksi hanya bisa dipakai sekali. Pro tidak diperpanjang otomatis.

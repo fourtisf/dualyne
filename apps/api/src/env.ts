@@ -32,9 +32,11 @@ const schema = z
     COMPARE_LIMIT_PER_HOUR: z.coerce.number().int().positive().default(10),
     COMPARE_MAX_TOKENS: z.coerce.number().int().positive().default(1000),
     /** Free plan: chat messages per person per day (free models only, same max_tokens as Compare). */
-    CHAT_LIMIT_PER_DAY: z.coerce.number().int().positive().default(20),
+    CHAT_LIMIT_PER_DAY: z.coerce.number().int().positive().default(10),
 
     // Pro plan: paid in crypto to DEPOSIT_ADDRESS, unlocks every model in Chat.
+    /** Let wallets create API keys. Off: the API is shown as coming soon (existing keys keep working). */
+    API_OPEN: bool.default("false"),
     /** Take Pro payments. Off: the site shows Pro as coming soon (wallets already on Pro keep it). */
     PRO_OPEN: bool.default("false"),
     PRO_PRICE_USD: z.coerce.number().positive().default(19),

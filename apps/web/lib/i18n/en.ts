@@ -493,6 +493,8 @@ export const en = {
     of: "of",
     keys: "API keys",
     createKey: "Create key",
+    keysSoon: "API keys soon",
+    keysSoonNote: "API keys are coming soon. Follow us on X to hear when they open.",
     creating: "Creating…",
     explorerOneKey: T
       ? "Explorer wallets get one key. Hold the token for five."

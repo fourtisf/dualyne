@@ -89,7 +89,9 @@ export function Pricing({ locale }: { locale: Locale }) {
             </div>
           )}
           <div className="tier">
-            <div className="nm">{t.apiName}</div>
+            <div className="nm">
+              {t.apiName} {!c.apiOpen && <span className="pop">{t.soon}</span>}
+            </div>
             <div className="pr">
               {t.cost}
               <small>+ 15%</small>
@@ -103,7 +105,17 @@ export function Pricing({ locale }: { locale: Locale }) {
                 </li>
               ))}
             </ul>
-            <OpenWalletButton className="btn dark">{t.builderCta}</OpenWalletButton>
+            {c.apiOpen ? (
+              <OpenWalletButton className="btn dark">{t.builderCta}</OpenWalletButton>
+            ) : brand.social.x ? (
+              <a className="btn dark" href={brand.social.x} rel="noopener" target="_blank">
+                {t.soon} · {t.notify}
+              </a>
+            ) : (
+              <span className="btn dark" aria-disabled="true">
+                {t.soon}
+              </span>
+            )}
           </div>
         </div>
         <p className="fine">{t.fine(c.proDays)}</p>

@@ -6,7 +6,9 @@ export const publicConfig = {
   turnstileSiteKey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
   compareLimitPerHour: Number(process.env.NEXT_PUBLIC_COMPARE_LIMIT_PER_HOUR || 10),
   /** Plans, copied from the API's settings by deploy.sh so the pricing page matches what the API enforces. */
-  freeChatPerDay: Number(process.env.NEXT_PUBLIC_CHAT_LIMIT_PER_DAY || 20),
+  freeChatPerDay: Number(process.env.NEXT_PUBLIC_CHAT_LIMIT_PER_DAY || 10),
+  /** Wallets can create API keys. Off: the API is shown as coming soon. */
+  apiOpen: process.env.NEXT_PUBLIC_API_OPEN === "true",
   /** Pro takes payments. Off: Pro is shown as coming soon. */
   proOpen: process.env.NEXT_PUBLIC_PRO_OPEN === "true",
   proPriceUsd: Number(process.env.NEXT_PUBLIC_PRO_PRICE_USD || 19),

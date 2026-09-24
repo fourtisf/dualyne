@@ -213,6 +213,7 @@ export async function createTestContext(
     WEB_ORIGINS: "http://localhost:3000",
     IP_HASH_SECRET: "test-ip-secret-test-ip-secret-test-ip",
     JOBS_ENABLED: "false",
+    API_OPEN: "true",
     SESSION_SECRET: "test-session-secret-test-session-secret",
     ...envOverrides,
   });
