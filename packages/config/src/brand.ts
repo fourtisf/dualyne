@@ -34,11 +34,11 @@ export const brand = {
   description:
     "Send one prompt to two AI models at once and compare them side by side. Then ship the one you like through a single OpenAI-compatible API key.",
   /**
-   * Community links. Set NEXT_PUBLIC_X_URL / NEXT_PUBLIC_TELEGRAM_URL (or edit here). While X and
+   * Community links. NEXT_PUBLIC_X_URL / NEXT_PUBLIC_TELEGRAM_URL override the values here. While X and
    * Telegram are empty the site shows them as "coming soon"; an empty GitHub link is hidden.
    */
   social: {
-    x: env("NEXT_PUBLIC_X_URL"),
+    x: env("NEXT_PUBLIC_X_URL") || "https://x.com/DualyneAi",
     telegram: env("NEXT_PUBLIC_TELEGRAM_URL"),
     github: "",
   },
