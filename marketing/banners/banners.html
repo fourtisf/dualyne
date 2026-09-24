@@ -4,7 +4,8 @@
     <meta charset="utf-8" />
     <title>Dualyne banners</title>
     <!--
-  Social banners in the website's look (apps/web/app/globals.css): same colors, Geist, grid and glow.
+  Social banners in the website's look (apps/web/app/globals.css), dressed up: aurora light, film grain,
+  a 3D grid floor, glass cards with gradient edges, tilted product mockups.
   Render to PNG: node marketing/banners/render.mjs  (1200×675 at 2×, and the X header 1500×500 at 2×)
 -->
     <style>
@@ -20,16 +21,12 @@
         font-weight: 100 900;
       }
       :root {
-        --bg: #050507;
-        --s0: #0a0a0e;
-        --s1: #0f0f14;
-        --s2: #15151c;
+        --bg: #040406;
+        --text: #f2f2f5;
+        --muted: #9a9aa6;
+        --faint: #6e6e7a;
         --line: rgba(255, 255, 255, 0.07);
         --line2: rgba(255, 255, 255, 0.12);
-        --line3: rgba(255, 255, 255, 0.2);
-        --text: #ededef;
-        --muted: #8a8a94;
-        --faint: #7a7a84;
         --violet: #8b5cf6;
         --blue: #60a5fa;
         --cyan: #67e8f9;
@@ -40,13 +37,14 @@
         --b: #a78bfa;
         --sans: Geist, system-ui, sans-serif;
         --mono: "Geist Mono", ui-monospace, monospace;
+        --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
       }
       * {
         box-sizing: border-box;
       }
       body {
         margin: 0;
-        background: #222;
+        background: #1a1a1a;
         display: flex;
         flex-direction: column;
         gap: 40px;
@@ -55,7 +53,7 @@
         -webkit-font-smoothing: antialiased;
       }
 
-      /* ---------- frame ---------- */
+      /* ================= frame ================= */
       .banner {
         position: relative;
         width: 1200px;
@@ -70,40 +68,130 @@
         width: 1500px;
         height: 500px;
       }
+      /* aurora */
+      .aurora {
+        position: absolute;
+        inset: 0;
+        z-index: -3;
+        pointer-events: none;
+      }
+      .aurora i {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(70px);
+        opacity: 0.9;
+      }
+      /* grain, on top of everything, very light */
+      .banner::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        pointer-events: none;
+        background: var(--grain);
+        opacity: 0.07;
+        mix-blend-mode: overlay;
+      }
+      /* vignette */
       .banner::before {
         content: "";
         position: absolute;
         inset: 0;
-        z-index: -2;
-        background:
-          linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0/100% 56px,
-          linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0/56px 100%;
-        -webkit-mask: radial-gradient(60% 65% at var(--gx, 50%) var(--gy, 20%), #000, transparent 80%);
-      }
-      .glow {
-        position: absolute;
         z-index: -1;
         pointer-events: none;
-        width: 1000px;
-        height: 640px;
-        border-radius: 50%;
-        background: radial-gradient(
-          closest-side,
-          rgba(139, 92, 246, 0.3),
-          rgba(96, 165, 250, 0.09) 55%,
+        background: radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.7));
+      }
+      /* flat grid, faded */
+      .grid {
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        pointer-events: none;
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px) 0 0/100% 48px,
+          linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px) 0 0/48px 100%;
+        -webkit-mask: radial-gradient(55% 60% at var(--gx, 50%) var(--gy, 30%), #000, transparent 75%);
+      }
+      /* 3D grid floor */
+      .floor {
+        position: absolute;
+        left: -40%;
+        right: -40%;
+        bottom: -6%;
+        height: 58%;
+        z-index: -2;
+        pointer-events: none;
+        background:
+          linear-gradient(rgba(139, 92, 246, 0.35) 1px, transparent 1px) 0 0/100% 44px,
+          linear-gradient(90deg, rgba(139, 92, 246, 0.35) 1px, transparent 1px) 0 0/44px 100%;
+        transform: perspective(520px) rotateX(64deg);
+        transform-origin: 50% 100%;
+        -webkit-mask: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent 80%);
+      }
+      /* beam from the top */
+      .beam {
+        position: absolute;
+        top: -40px;
+        width: 2px;
+        height: 340px;
+        z-index: -1;
+        background: linear-gradient(
+          180deg,
+          transparent,
+          rgba(167, 139, 250, 0.9) 30%,
+          rgba(103, 232, 249, 0.6) 70%,
           transparent
         );
+        filter: blur(0.5px);
+        box-shadow: 0 0 30px 6px rgba(139, 92, 246, 0.35);
       }
-      .glow.pink {
-        background: radial-gradient(closest-side, rgba(244, 114, 182, 0.16), transparent);
+      /* hairline frame with corner ticks */
+      .frame {
+        position: absolute;
+        inset: 18px;
+        z-index: 5;
+        pointer-events: none;
+        border: 1px solid rgba(255, 255, 255, 0.055);
+        border-radius: 18px;
       }
-      .glow.cyan {
-        background: radial-gradient(closest-side, rgba(103, 232, 249, 0.14), transparent);
+      .frame b {
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        border-color: rgba(255, 255, 255, 0.35);
+        border-style: solid;
       }
+      .frame b:nth-child(1) {
+        left: -1px;
+        top: -1px;
+        border-width: 1px 0 0 1px;
+        border-top-left-radius: 18px;
+      }
+      .frame b:nth-child(2) {
+        right: -1px;
+        top: -1px;
+        border-width: 1px 1px 0 0;
+        border-top-right-radius: 18px;
+      }
+      .frame b:nth-child(3) {
+        left: -1px;
+        bottom: -1px;
+        border-width: 0 0 1px 1px;
+        border-bottom-left-radius: 18px;
+      }
+      .frame b:nth-child(4) {
+        right: -1px;
+        bottom: -1px;
+        border-width: 0 1px 1px 0;
+        border-bottom-right-radius: 18px;
+      }
+
+      /* top row */
       .brand {
         position: absolute;
-        left: 56px;
-        top: 44px;
+        left: 52px;
+        top: 46px;
+        z-index: 6;
         display: flex;
         align-items: center;
         gap: 11px;
@@ -113,143 +201,181 @@
       .brand svg {
         width: 28px;
         height: 28px;
+        filter: drop-shadow(0 0 10px rgba(103, 232, 249, 0.35));
       }
-      .site {
+      .pill {
         position: absolute;
-        right: 56px;
-        top: 47px;
-        font: 500 15px/1 var(--mono);
-        color: var(--muted);
+        right: 52px;
+        top: 40px;
+        z-index: 6;
+        height: 36px;
+        padding: 0 14px;
+        border-radius: 999px;
         display: flex;
         align-items: center;
         gap: 9px;
+        font: 500 13.5px/1 var(--mono);
+        color: #cfcfd8;
       }
-      .site .dot {
+      .pill .dot {
         width: 7px;
         height: 7px;
         border-radius: 50%;
         background: var(--ok);
-        box-shadow: 0 0 10px var(--ok);
+        box-shadow:
+          0 0 0 3px rgba(74, 222, 128, 0.15),
+          0 0 12px var(--ok);
       }
-      .kick {
-        font: 500 13px/1 var(--mono);
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--muted);
+      /* bottom row */
+      .foot {
+        position: absolute;
+        left: 52px;
+        right: 52px;
+        bottom: 36px;
+        z-index: 6;
         display: flex;
         align-items: center;
+        gap: 14px;
+        font: 500 11.5px/1 var(--mono);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--faint);
+      }
+      .foot .rule {
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.12), transparent);
+      }
+      .foot .rule.r {
+        background: linear-gradient(270deg, rgba(255, 255, 255, 0.12), transparent);
+      }
+
+      /* ================= type ================= */
+      .kick {
+        display: inline-flex;
+        align-items: center;
         gap: 10px;
+        font: 500 12.5px/1 var(--mono);
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--muted);
       }
       .kick i {
         font-style: normal;
-        color: var(--text);
-        padding: 6px 9px;
+        color: #fff;
+        height: 26px;
+        padding: 0 9px;
+        display: inline-flex;
+        align-items: center;
         border-radius: 7px;
-        border: 1px solid var(--line2);
-        background: rgba(255, 255, 255, 0.03);
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.35), rgba(96, 165, 250, 0.2));
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
       }
       h1,
       h2 {
         margin: 0;
         font-weight: 600;
-        letter-spacing: -0.05em;
-        line-height: 1.02;
+        letter-spacing: -0.055em;
+        line-height: 0.98;
       }
       h1 {
-        font-size: 78px;
+        font-size: 84px;
       }
       h2 {
-        font-size: 60px;
+        font-size: 62px;
       }
-      .grad {
-        background: linear-gradient(180deg, #ffffff 40%, rgba(255, 255, 255, 0.62));
+      .metal {
+        background: linear-gradient(180deg, #ffffff 30%, #b9b9c6 75%, #8e8e9c);
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
+        filter: drop-shadow(0 2px 24px rgba(255, 255, 255, 0.08));
       }
-      .hue {
-        background: linear-gradient(90deg, var(--cyan), var(--b) 55%, var(--pink));
+      .accent {
+        background: linear-gradient(92deg, #8bf3ff 0%, #b79cff 45%, #ff8fcb 100%);
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
+        filter: drop-shadow(0 0 28px rgba(167, 139, 250, 0.35));
       }
       .lede {
-        font-size: 20px;
-        line-height: 1.5;
-        color: var(--muted);
         margin: 0;
-      }
-      .badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        height: 36px;
-        padding: 0 16px 0 5px;
-        border-radius: 999px;
-        border: 1px solid var(--line2);
-        background: rgba(255, 255, 255, 0.03);
-        font-size: 15px;
+        font-size: 19px;
+        line-height: 1.55;
         color: var(--muted);
       }
-      .badge b {
-        height: 27px;
-        display: inline-flex;
-        align-items: center;
-        padding: 0 11px;
-        border-radius: 999px;
+      .lede b {
+        color: #e6e6ec;
         font-weight: 500;
-        font-size: 13.5px;
-        color: #fff;
-        background: linear-gradient(90deg, var(--violet), var(--blue));
       }
-      .btn {
-        height: 50px;
-        padding: 0 24px;
-        border-radius: 13px;
-        display: inline-flex;
-        align-items: center;
-        gap: 9px;
-        font: 500 17px/1 var(--sans);
-        letter-spacing: -0.01em;
-        color: #08080a;
-        background: linear-gradient(180deg, #ffffff, #d9d9df);
+
+      /* ================= materials ================= */
+      .glass {
+        border-radius: 20px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.02));
+        -webkit-backdrop-filter: blur(18px);
+        backdrop-filter: blur(18px);
         box-shadow:
-          0 0 0 1px rgba(255, 255, 255, 0.25) inset,
-          0 8px 26px -8px rgba(255, 255, 255, 0.3);
+          0 30px 80px -30px rgba(0, 0, 0, 0.9),
+          inset 0 1px 0 rgba(255, 255, 255, 0.12);
       }
-      .btn.dark {
-        color: var(--text);
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
-        box-shadow: 0 0 0 1px var(--line2) inset;
+      .glass::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1px;
+        pointer-events: none;
+        background: linear-gradient(
+          160deg,
+          rgba(255, 255, 255, 0.34),
+          rgba(255, 255, 255, 0.05) 35%,
+          rgba(255, 255, 255, 0.03) 65%,
+          rgba(167, 139, 250, 0.45)
+        );
+        -webkit-mask:
+          linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
       }
-      .card {
+      .pill.glass {
+        border-radius: 999px;
+      }
+      .bento .glass,
+      .steps .glass,
+      .ca.glass {
+        position: relative;
+      }
+      .window {
         position: relative;
         border-radius: 18px;
-        background: linear-gradient(180deg, #101017, #0a0a0e);
-        border: 1px solid var(--line2);
+        background: linear-gradient(180deg, #12121a, #0a0a10);
         box-shadow:
-          0 0 0 1px rgba(0, 0, 0, 0.6),
-          0 50px 100px -30px rgba(0, 0, 0, 0.9),
-          0 1px 0 rgba(255, 255, 255, 0.08) inset;
+          0 0 0 1px rgba(255, 255, 255, 0.11),
+          0 60px 120px -30px rgba(0, 0, 0, 0.95),
+          0 0 80px -20px rgba(139, 92, 246, 0.35),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
         overflow: hidden;
       }
-      .card::before {
+      .window::before {
         content: "";
         position: absolute;
         top: 0;
-        left: 12%;
-        width: 46%;
+        left: 10%;
+        width: 55%;
         height: 1px;
         background: linear-gradient(90deg, transparent, var(--cyan), var(--violet), transparent);
+        z-index: 2;
       }
       .bar {
         display: flex;
         align-items: center;
         gap: 12px;
-        height: 48px;
-        padding: 0 18px;
+        height: 46px;
+        padding: 0 16px;
         border-bottom: 1px solid var(--line);
-        font-size: 14px;
+        font-size: 13.5px;
         color: var(--muted);
       }
       .bar .t {
@@ -264,22 +390,23 @@
         width: 10px;
         height: 10px;
         border-radius: 50%;
-        background: #2a2a33;
+        background: #2a2a34;
       }
-      .tag {
-        font: 500 12px/1 var(--mono);
-        padding: 6px 8px;
-        border-radius: 6px;
-        color: var(--amber);
-        background: rgba(251, 191, 36, 0.08);
-        border: 1px solid rgba(251, 191, 36, 0.18);
+      .lights span:nth-child(1) {
+        background: #ff5f57;
+      }
+      .lights span:nth-child(2) {
+        background: #febc2e;
+      }
+      .lights span:nth-child(3) {
+        background: #28c840;
       }
       .live {
         margin-left: auto;
         display: flex;
         align-items: center;
         gap: 8px;
-        font: 500 12.5px/1 var(--mono);
+        font: 500 12px/1 var(--mono);
       }
       .live .dot {
         width: 7px;
@@ -288,37 +415,26 @@
         background: var(--ok);
         box-shadow: 0 0 10px var(--ok);
       }
-      .list {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        display: grid;
-        gap: 15px;
+      .btn {
+        height: 50px;
+        padding: 0 22px;
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font: 500 16.5px/1 var(--sans);
+        letter-spacing: -0.01em;
+        color: #08080a;
+        background: linear-gradient(180deg, #ffffff, #d6d6de);
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.4),
+          0 10px 30px -8px rgba(255, 255, 255, 0.35),
+          0 0 0 6px rgba(255, 255, 255, 0.04);
       }
-      .list li {
-        display: flex;
-        gap: 13px;
-        align-items: flex-start;
-        font-size: 18.5px;
-        color: #c9c9d1;
-        line-height: 1.4;
-      }
-      .list li::before {
-        content: "";
-        flex: none;
-        width: 22px;
-        height: 22px;
-        margin-top: 1px;
-        border-radius: 7px;
-        background:
-          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='%2367E8F9' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
-            center/14px no-repeat,
-          rgba(103, 232, 249, 0.08);
-        border: 1px solid rgba(103, 232, 249, 0.22);
-      }
-      .list li b {
+      .btn.ghost {
         color: var(--text);
-        font-weight: 500;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
       }
       .chip {
         display: inline-flex;
@@ -326,206 +442,335 @@
         gap: 8px;
         height: 34px;
         padding: 0 13px;
-        border-radius: 10px;
-        border: 1px solid var(--line2);
-        background: rgba(255, 255, 255, 0.03);
+        border-radius: 11px;
         font: 500 14px/1 var(--sans);
-        color: #c9c9d1;
+        color: #d4d4dc;
         white-space: nowrap;
+        background: rgba(255, 255, 255, 0.04);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
       }
       .chip img {
         width: 16px;
         height: 16px;
       }
+      .chip.on {
+        color: #fff;
+        background: linear-gradient(180deg, rgba(103, 232, 249, 0.16), rgba(103, 232, 249, 0.06));
+        box-shadow:
+          inset 0 0 0 1px rgba(103, 232, 249, 0.5),
+          0 0 24px -6px rgba(103, 232, 249, 0.6);
+      }
       img[src$="/anthropic.svg"] {
         filter: invert(1) sepia(0.5) saturate(2) hue-rotate(-10deg) brightness(0.95);
       }
-      .chip.on {
-        border-color: rgba(103, 232, 249, 0.45);
-        background: rgba(103, 232, 249, 0.08);
-        color: #fff;
-      }
-      .mono {
-        font-family: var(--mono);
-      }
-      .foot {
+      .float {
         position: absolute;
-        left: 56px;
-        right: 56px;
-        bottom: 40px;
+        z-index: 4;
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        font: 500 14px/1 var(--mono);
-        color: var(--faint);
+        gap: 10px;
+        height: 44px;
+        padding: 0 16px;
+        border-radius: 14px;
+        font: 500 14px/1 var(--sans);
+        color: #ededf2;
+        white-space: nowrap;
+      }
+      .float .ic {
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-size: 14px;
+      }
+      .float small {
+        font: 500 12px/1 var(--mono);
+        color: var(--muted);
+      }
+      .list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 14px;
+      }
+      .list li {
+        display: flex;
+        gap: 13px;
+        align-items: center;
+        font-size: 17.5px;
+        color: #c9c9d2;
+      }
+      .list li b {
+        color: #fff;
+        font-weight: 500;
+      }
+      .list li::before {
+        content: "";
+        flex: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 8px;
+        background:
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='white' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+            center/13px no-repeat,
+          linear-gradient(135deg, #22d3ee, #8b5cf6);
+        box-shadow: 0 0 16px -2px rgba(139, 92, 246, 0.7);
       }
 
-      /* ---------- 01 intro ---------- */
-      #intro {
-        --gy: 28%;
-      }
-      #intro .glow {
-        left: 100px;
-        top: -330px;
-      }
-      #intro .center {
+      /* ================= 01 intro: the hub ================= */
+      #intro .copy {
         position: absolute;
-        left: 0;
-        right: 0;
-        top: 118px;
-        text-align: center;
+        left: 52px;
+        top: 128px;
+        width: 600px;
         display: flex;
         flex-direction: column;
-        align-items: center;
+        gap: 24px;
+        z-index: 3;
       }
       #intro h1 {
-        margin: 26px 0 22px;
-      }
-      #intro .lede {
-        max-width: 760px;
+        font-size: 68px;
       }
       #intro .ctas {
         display: flex;
         gap: 12px;
-        margin-top: 30px;
+        margin-top: 6px;
       }
-      #intro .logos {
+      .hub {
         position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 44px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 18px;
+        left: 655px;
+        top: 95px;
+        width: 520px;
+        height: 520px;
+        z-index: 2;
       }
-      #intro .logos p {
-        margin: 0;
-        font: 500 12.5px/1 var(--mono);
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--faint);
+      .hub svg.lines {
+        position: absolute;
+        inset: 0;
       }
-      #intro .logos div {
-        display: flex;
-        gap: 44px;
-        align-items: center;
+      .hub .core {
+        position: absolute;
+        left: 185px;
+        top: 185px;
+        width: 150px;
+        height: 150px;
+        border-radius: 40px;
+        display: grid;
+        place-items: center;
       }
-      #intro .logos img {
-        height: 30px;
-        opacity: 0.72;
-        filter: invert(1);
+      .hub .core svg {
+        width: 84px;
+        height: 84px;
+        filter: drop-shadow(0 0 18px rgba(103, 232, 249, 0.5));
+      }
+      .hub .core::before {
+        content: "";
+        position: absolute;
+        inset: -60px;
+        border-radius: 50%;
+        z-index: -1;
+        background: radial-gradient(
+          closest-side,
+          rgba(139, 92, 246, 0.55),
+          rgba(96, 165, 250, 0.15) 60%,
+          transparent
+        );
+      }
+      .orb {
+        position: absolute;
+        width: 76px;
+        height: 76px;
+        margin: -38px 0 0 -38px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+      }
+      .orb img {
+        width: 34px;
+        height: 34px;
+      }
+      .orb span {
+        position: absolute;
+        top: 84px;
+        left: 50%;
+        transform: translateX(-50%);
+        font: 500 12px/1 var(--mono);
+        color: var(--muted);
+        white-space: nowrap;
       }
 
-      /* ---------- 02 features ---------- */
-      #features {
-        --gy: 0%;
-      }
-      #features .glow {
-        left: 100px;
-        top: -420px;
-      }
+      /* ================= 02 features: bento ================= */
       #features .head {
         position: absolute;
-        left: 0;
-        right: 0;
-        top: 112px;
-        text-align: center;
+        left: 52px;
+        right: 52px;
+        top: 104px;
         display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 18px;
+        align-items: flex-end;
+        justify-content: space-between;
       }
-      #features .grid {
+      #features .head h2 {
+        font-size: 50px;
+      }
+      #features .head p {
+        margin: 0 0 6px;
+        width: 330px;
+        font-size: 16px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .bento {
         position: absolute;
-        left: 56px;
-        right: 56px;
-        top: 270px;
+        left: 52px;
+        right: 52px;
+        top: 268px;
+        height: 340px;
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: 1fr 1fr;
+        gap: 14px;
       }
-      .tile {
-        position: relative;
-        border-radius: 16px;
-        border: 1px solid var(--line2);
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
-        padding: 20px 22px 22px;
-        min-height: 162px;
+      .bento .glass {
+        padding: 20px 20px 18px;
         overflow: hidden;
       }
-      .tile .ic {
-        width: 38px;
-        height: 38px;
+      .bento .big {
+        grid-row: span 2;
+        grid-column: span 2;
+        padding: 24px;
+      }
+      .bento h3 {
+        margin: 0 0 6px;
+        font-size: 17.5px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      .bento p {
+        margin: 0;
+        font-size: 13.8px;
+        line-height: 1.45;
+        color: var(--muted);
+      }
+      .bento .ic {
+        width: 36px;
+        height: 36px;
         border-radius: 11px;
         display: grid;
         place-items: center;
         margin-bottom: 12px;
-        border: 1px solid var(--line2);
-        background: rgba(255, 255, 255, 0.04);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
       }
-      .tile .ic svg {
+      .bento .ic svg {
+        width: 19px;
+        height: 19px;
+      }
+      .mini {
+        position: absolute;
+        left: 24px;
+        right: 24px;
+        bottom: 22px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .mini > div {
+        border-radius: 12px;
+        padding: 12px 13px;
+        background: rgba(0, 0, 0, 0.35);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+        font-size: 12.5px;
+        line-height: 1.5;
+        color: #cfcfd7;
+      }
+      .mini em {
+        font: 600 11px/1 var(--mono);
+        font-style: normal;
+        display: inline-grid;
+        place-items: center;
         width: 20px;
         height: 20px;
+        border-radius: 6px;
+        color: #08080a;
+        margin-right: 8px;
+        vertical-align: -4px;
       }
-      .tile h3 {
-        margin: 0 0 6px;
-        font-size: 18.5px;
-        font-weight: 600;
-        letter-spacing: -0.02em;
+      .mini .ma em {
+        background: var(--a);
       }
-      .tile p {
-        margin: 0;
-        font-size: 14.5px;
-        line-height: 1.45;
-        color: var(--muted);
+      .mini .mb em {
+        background: var(--b);
+      }
+      .mini .bars {
+        margin-top: 10px;
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+      }
+      .mini .bars i {
+        display: block;
+        height: 100%;
+        border-radius: 3px;
+      }
+      .mini .ma .bars i {
+        width: 72%;
+        background: linear-gradient(90deg, #22d3ee, #67e8f9);
+      }
+      .mini .mb .bars i {
+        width: 58%;
+        background: linear-gradient(90deg, #8b5cf6, #c4b5fd);
       }
 
-      /* ---------- 03 chat ---------- */
-      #chat {
-        --gx: 78%;
-        --gy: 40%;
-      }
-      #chat .glow {
-        left: 520px;
-        top: -180px;
-      }
-      #chat .left {
+      /* ================= 03 chat ================= */
+      #chat .copy {
         position: absolute;
-        left: 56px;
-        top: 150px;
+        left: 52px;
+        top: 160px;
         width: 470px;
         display: flex;
         flex-direction: column;
         gap: 24px;
+        z-index: 3;
       }
-      #chat .ui {
+      .stage3d {
         position: absolute;
-        left: 590px;
-        top: 112px;
-        width: 560px;
+        perspective: 1400px;
+        z-index: 2;
+      }
+      #chat .stage3d {
+        left: 560px;
+        top: 100px;
+        width: 600px;
         height: 520px;
+      }
+      #chat .window {
+        width: 560px;
+        height: 470px;
+        transform: rotateY(-13deg) rotateX(5deg) rotateZ(0.5deg);
+        transform-origin: 40% 50%;
       }
       .chips {
         display: flex;
         gap: 8px;
-        padding: 14px 18px;
+        padding: 13px 16px;
         border-bottom: 1px solid var(--line);
       }
       .msgs {
-        padding: 22px 22px 0;
+        padding: 20px 20px 0;
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 15px;
       }
       .me {
         align-self: flex-end;
-        max-width: 78%;
-        padding: 12px 16px;
+        max-width: 80%;
+        padding: 11px 15px;
         border-radius: 16px 16px 5px 16px;
-        background: linear-gradient(180deg, #26263a, #1e1e2e);
-        border: 1px solid var(--line2);
-        font-size: 15.5px;
+        background: linear-gradient(135deg, #3b2a7a, #24245a);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+        font-size: 15px;
       }
       .ai {
         display: flex;
@@ -538,242 +783,265 @@
         border-radius: 10px;
         display: grid;
         place-items: center;
-        background: rgba(212, 162, 127, 0.12);
-        border: 1px solid rgba(212, 162, 127, 0.3);
+        background: rgba(212, 162, 127, 0.14);
+        box-shadow: inset 0 0 0 1px rgba(212, 162, 127, 0.35);
       }
       .ai .av img {
         width: 17px;
       }
       .ai .who {
-        font: 500 13px/1 var(--mono);
+        font: 500 12.5px/1 var(--mono);
         color: var(--muted);
         margin: 3px 0 8px;
       }
       .ai p {
-        margin: 0 0 9px;
-        font-size: 15.5px;
+        margin: 0 0 8px;
+        font-size: 15px;
         line-height: 1.55;
-        color: #d6d6dd;
+        color: #dcdce3;
       }
-      .ai .acts {
-        display: flex;
-        gap: 8px;
-        margin-top: 4px;
-      }
-      .ai .acts span {
-        font: 500 12px/1 var(--mono);
-        color: var(--muted);
-        padding: 7px 9px;
-        border-radius: 8px;
-        border: 1px solid var(--line);
+      .caret {
+        display: inline-block;
+        width: 8px;
+        height: 17px;
+        margin-left: 3px;
+        vertical-align: -3px;
+        background: var(--cyan);
+        border-radius: 2px;
+        box-shadow: 0 0 12px var(--cyan);
       }
       .composer {
         position: absolute;
-        left: 18px;
-        right: 18px;
-        bottom: 18px;
-        height: 54px;
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        height: 52px;
         border-radius: 14px;
-        border: 1px solid var(--line2);
-        background: #0c0c11;
+        background: #0c0c12;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
         display: flex;
         align-items: center;
-        padding: 0 8px 0 18px;
+        padding: 0 7px 0 16px;
         color: var(--faint);
-        font-size: 15.5px;
+        font-size: 15px;
       }
       .composer .send {
         margin-left: auto;
         width: 38px;
         height: 38px;
-        border-radius: 10px;
-        background: linear-gradient(180deg, #fff, #d9d9df);
+        border-radius: 11px;
+        background: linear-gradient(180deg, #fff, #d6d6de);
         display: grid;
         place-items: center;
       }
-      .quota {
-        position: absolute;
-        right: 22px;
-        bottom: 84px;
-        font: 500 12px/1 var(--mono);
-        color: var(--faint);
-      }
 
-      /* ---------- 04 compare ---------- */
-      #compare {
-        --gy: 0%;
-      }
-      #compare .glow {
-        left: 100px;
-        top: -440px;
-      }
+      /* ================= 04 compare ================= */
       #compare .head {
         position: absolute;
         left: 0;
         right: 0;
-        top: 128px;
+        top: 104px;
         text-align: center;
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 16px;
+        z-index: 3;
       }
-      #compare .ui {
+      #compare .duel {
         position: absolute;
-        left: 80px;
-        right: 80px;
-        top: 326px;
+        left: 40px;
+        right: 40px;
+        top: 292px;
+        height: 280px;
+        perspective: 1500px;
+        z-index: 2;
       }
-      .prompt {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 14px 18px;
-        border-bottom: 1px solid var(--line);
-        font-size: 15.5px;
+      .side {
+        position: absolute;
+        top: 0;
+        width: 470px;
+        height: 236px;
+        padding: 20px 22px;
       }
-      .prompt .q {
-        color: var(--faint);
-        font: 500 12.5px/1 var(--mono);
+      .side.a {
+        left: 40px;
+        transform: rotateY(14deg);
+        transform-origin: 100% 50%;
+        box-shadow:
+          0 0 0 1px rgba(103, 232, 249, 0.35),
+          0 60px 120px -30px rgba(0, 0, 0, 0.95),
+          0 0 90px -20px rgba(103, 232, 249, 0.35),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
       }
-      .cols {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+      .side.b {
+        right: 40px;
+        transform: rotateY(-14deg);
+        transform-origin: 0 50%;
+        box-shadow:
+          0 0 0 1px rgba(167, 139, 250, 0.45),
+          0 60px 120px -30px rgba(0, 0, 0, 0.95),
+          0 0 90px -20px rgba(167, 139, 250, 0.45),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
       }
-      .col {
-        padding: 18px 22px;
-        border-right: 1px solid var(--line);
-      }
-      .col:last-child {
-        border-right: 0;
-      }
-      .col .top {
+      .side .top {
         display: flex;
         align-items: center;
         gap: 10px;
         margin-bottom: 12px;
       }
-      .col .lab {
-        width: 24px;
-        height: 24px;
-        border-radius: 7px;
+      .side .lab {
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
         display: grid;
         place-items: center;
-        font: 600 13px/1 var(--mono);
+        font: 700 13px/1 var(--mono);
         color: #08080a;
       }
-      .col.a .lab {
+      .side.a .lab {
         background: var(--a);
+        box-shadow: 0 0 16px rgba(103, 232, 249, 0.6);
       }
-      .col.b .lab {
+      .side.b .lab {
         background: var(--b);
+        box-shadow: 0 0 16px rgba(167, 139, 250, 0.6);
       }
-      .col .nm {
+      .side .nm {
         font-weight: 500;
         font-size: 15.5px;
       }
-      .col .nm img {
-        width: 15px;
-        vertical-align: -2px;
-        margin-right: 6px;
+      .side .tg {
+        margin-left: auto;
+        font: 500 11.5px/1 var(--mono);
+        color: var(--muted);
       }
-      .col p {
+      .side p {
         margin: 0;
-        font-size: 16px;
+        font-size: 15.5px;
         line-height: 1.55;
-        color: #d6d6dd;
+        color: #dcdce3;
       }
-      .metrics {
+      .side .metrics {
+        position: absolute;
+        left: 22px;
+        right: 22px;
+        bottom: 18px;
         display: flex;
         gap: 16px;
-        margin-top: 14px;
-        font: 500 12px/1 var(--mono);
+        font: 500 11.5px/1 var(--mono);
         color: var(--muted);
       }
-      .metrics b {
-        color: var(--text);
+      .side .metrics b {
+        color: #fff;
         font-weight: 500;
       }
-      .vote {
+      .vs {
+        position: absolute;
+        left: 50%;
+        top: 78px;
+        width: 84px;
+        height: 84px;
+        margin-left: -42px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font: 700 22px/1 var(--sans);
+        letter-spacing: -0.04em;
+        z-index: 3;
+        background: radial-gradient(circle at 35% 30%, #2a2440, #0b0b12 70%);
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.18),
+          0 0 0 8px rgba(139, 92, 246, 0.08),
+          0 0 60px rgba(139, 92, 246, 0.6);
+      }
+      .vs::before {
+        content: "";
+        position: absolute;
+        inset: -3px;
+        border-radius: 50%;
+        z-index: -1;
+        background: conic-gradient(from 0deg, var(--cyan), var(--violet), var(--pink), var(--cyan));
+        -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
+      }
+      .votebar {
+        position: absolute;
+        left: 50%;
+        bottom: 78px;
+        transform: translateX(-50%);
+        z-index: 4;
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 14px 22px;
-        border-top: 1px solid var(--line);
-        font-size: 14px;
-        color: var(--muted);
+        gap: 8px;
+        padding: 7px 7px 7px 18px;
+        border-radius: 16px;
       }
-      .vote .q {
-        margin-right: 6px;
-        color: var(--text);
+      .votebar .q {
         font-weight: 500;
+        font-size: 14.5px;
+        margin-right: 6px;
       }
-      .vote .note {
-        margin-left: auto;
-        font: 500 12.5px/1 var(--mono);
-        color: var(--faint);
-      }
-      .vote span {
+      .votebar span {
         height: 36px;
-        padding: 0 16px;
-        border-radius: 10px;
+        padding: 0 15px;
+        border-radius: 11px;
         display: inline-flex;
         align-items: center;
-        gap: 8px;
         font: 500 14px/1 var(--sans);
-        border: 1px solid var(--line2);
-        background: #121219;
+        color: #cfcfd8;
+        background: rgba(255, 255, 255, 0.04);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
       }
-      .vote span.win {
-        border-color: rgba(167, 139, 250, 0.6);
-        background: rgba(167, 139, 250, 0.14);
+      .votebar span.win {
         color: #fff;
+        background: linear-gradient(180deg, rgba(167, 139, 250, 0.35), rgba(139, 92, 246, 0.18));
+        box-shadow:
+          inset 0 0 0 1px rgba(196, 181, 253, 0.6),
+          0 0 24px -4px rgba(139, 92, 246, 0.7);
       }
 
-      /* ---------- 05 api ---------- */
-      #api {
-        --gx: 75%;
-        --gy: 45%;
-      }
-      #api .glow {
-        left: 560px;
-        top: -160px;
-      }
-      #api .left {
+      /* ================= 05 api ================= */
+      #api .copy {
         position: absolute;
-        left: 56px;
-        top: 168px;
-        width: 470px;
+        left: 52px;
+        top: 170px;
+        width: 540px;
         display: flex;
         flex-direction: column;
         gap: 24px;
+        z-index: 3;
       }
-      #api .ui {
-        position: absolute;
-        left: 580px;
-        top: 128px;
+      #api .stage3d {
+        left: 560px;
+        top: 108px;
+        width: 600px;
+        height: 500px;
+      }
+      #api .window {
         width: 570px;
+        transform: rotateY(-12deg) rotateX(4deg);
+        transform-origin: 40% 50%;
       }
       .tabs {
         display: flex;
         gap: 4px;
-        margin-left: 8px;
+        margin-left: 6px;
       }
       .tabs span {
-        font: 500 12.5px/1 var(--mono);
+        font: 500 12px/1 var(--mono);
         padding: 7px 10px;
         border-radius: 7px;
         color: var(--muted);
       }
       .tabs span.on {
-        color: var(--text);
-        background: rgba(255, 255, 255, 0.06);
+        color: #fff;
+        background: rgba(255, 255, 255, 0.08);
       }
       pre {
         margin: 0;
-        padding: 22px 24px;
-        font: 400 15px/1.75 var(--mono);
-        color: #c9c9d1;
+        padding: 20px 22px;
+        font: 400 14.5px/1.75 var(--mono);
+        color: #c9c9d2;
         white-space: pre;
       }
       .k {
@@ -783,106 +1051,112 @@
         color: #86efac;
       }
       .c {
-        color: #6b6b76;
+        color: #6b6b78;
       }
       .f {
         color: #67e8f9;
       }
-      .n {
-        color: #fbbf24;
-      }
       .ids {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
-        padding: 16px 22px;
+        gap: 7px;
+        padding: 14px 20px 16px;
         border-top: 1px solid var(--line);
       }
       .ids span {
-        font: 500 12.5px/1 var(--mono);
+        font: 500 12px/1 var(--mono);
         padding: 7px 10px;
         border-radius: 8px;
-        border: 1px solid var(--line2);
-        color: #c9c9d1;
+        color: #c9c9d2;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
       }
       .ids span.on {
         color: #08080a;
-        background: var(--cyan);
-        border-color: var(--cyan);
+        background: linear-gradient(180deg, #a5f3fc, #67e8f9);
+        box-shadow: 0 0 18px -2px rgba(103, 232, 249, 0.7);
       }
 
-      /* ---------- 06 telegram ---------- */
-      #telegram {
-        --gx: 72%;
-        --gy: 50%;
-      }
-      #telegram .glow {
-        left: 520px;
-        top: -150px;
-      }
-      #telegram .glow.cyan {
-        left: 700px;
-        top: 200px;
-        width: 700px;
-        height: 600px;
-      }
-      #telegram .left {
+      /* ================= 06 telegram ================= */
+      #telegram .copy {
         position: absolute;
-        left: 56px;
-        top: 140px;
+        left: 52px;
+        top: 150px;
         width: 520px;
         display: flex;
         flex-direction: column;
         gap: 22px;
+        z-index: 3;
       }
       .handle {
         display: inline-flex;
         align-items: center;
         gap: 10px;
         align-self: flex-start;
-        height: 40px;
-        padding: 0 16px 0 6px;
+        height: 42px;
+        padding: 0 18px 0 6px;
         border-radius: 999px;
-        background: rgba(42, 171, 238, 0.1);
-        border: 1px solid rgba(42, 171, 238, 0.35);
         font: 500 16px/1 var(--mono);
-        color: #bfe6fb;
+        color: #d6f0ff;
+        background: linear-gradient(180deg, rgba(42, 171, 238, 0.22), rgba(42, 171, 238, 0.08));
+        box-shadow:
+          inset 0 0 0 1px rgba(42, 171, 238, 0.5),
+          0 0 30px -6px rgba(42, 171, 238, 0.6);
       }
       .handle i {
-        width: 30px;
-        height: 30px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
-        background: #2aabee;
+        background: linear-gradient(180deg, #37bbfe, #1e96d6);
         display: grid;
         place-items: center;
       }
+      #telegram .stage3d {
+        left: 690px;
+        top: 92px;
+        width: 420px;
+        height: 640px;
+      }
       .phone {
         position: absolute;
-        left: 700px;
-        top: 150px;
-        width: 390px;
+        left: 10px;
+        top: 0;
+        width: 380px;
         height: 640px;
-        border-radius: 48px;
-        padding: 12px;
-        background: linear-gradient(180deg, #1c1c24, #101015);
-        border: 1px solid var(--line3);
+        border-radius: 54px;
+        padding: 11px;
+        transform: rotateY(-16deg) rotateX(6deg) rotateZ(2deg);
+        transform-origin: 50% 50%;
+        background: linear-gradient(145deg, #3a3a46, #15151b 40%, #0c0c10);
         box-shadow:
-          0 60px 120px -30px rgba(0, 0, 0, 0.95),
-          0 0 0 1px rgba(0, 0, 0, 0.6);
+          0 0 0 1px rgba(255, 255, 255, 0.14),
+          0 0 0 3px #08080b,
+          0 80px 140px -30px rgba(0, 0, 0, 0.95),
+          0 0 100px -20px rgba(42, 171, 238, 0.4);
       }
       .screen {
         position: relative;
         height: 100%;
-        border-radius: 37px;
+        border-radius: 44px;
         overflow: hidden;
         background: #0e1621;
       }
+      .island {
+        position: absolute;
+        left: 50%;
+        top: 10px;
+        width: 96px;
+        height: 28px;
+        margin-left: -48px;
+        border-radius: 20px;
+        background: #000;
+        z-index: 3;
+      }
       .tg-top {
-        height: 74px;
-        padding: 24px 18px 0;
+        height: 92px;
+        padding: 40px 16px 0;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 11px;
         background: #17212b;
         border-bottom: 1px solid rgba(0, 0, 0, 0.4);
       }
@@ -893,41 +1167,41 @@
         background: #050507;
         display: grid;
         place-items: center;
-        border: 1px solid var(--line2);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
       }
       .tg-top .pic svg {
         width: 22px;
       }
       .tg-top b {
         display: block;
-        font-size: 15.5px;
+        font-size: 15px;
         font-weight: 600;
       }
       .tg-top small {
-        font-size: 12.5px;
+        font-size: 12px;
         color: #7f91a4;
       }
       .tg-body {
-        padding: 14px 12px;
+        padding: 12px 11px;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 7px;
       }
       .tg-me {
         align-self: flex-end;
-        max-width: 80%;
-        padding: 9px 12px;
+        max-width: 82%;
+        padding: 8px 12px;
         border-radius: 15px 15px 4px 15px;
         background: #2b5278;
-        font-size: 14.5px;
+        font-size: 14px;
         line-height: 1.4;
       }
       .tg-bot {
         max-width: 90%;
-        padding: 10px 12px 8px;
+        padding: 9px 12px 7px;
         border-radius: 15px 15px 15px 4px;
         background: #182533;
-        font-size: 14px;
+        font-size: 13.5px;
         line-height: 1.45;
         color: #e4e8ec;
       }
@@ -936,10 +1210,10 @@
       }
       .tg-bot .ft {
         display: block;
-        margin-top: 8px;
+        margin-top: 6px;
         font-style: italic;
         color: #7f91a4;
-        font-size: 12.5px;
+        font-size: 12px;
       }
       .tg-btns {
         display: grid;
@@ -948,165 +1222,233 @@
         max-width: 90%;
       }
       .tg-btns span {
-        height: 36px;
+        height: 34px;
         border-radius: 9px;
-        background: rgba(24, 37, 51, 0.9);
+        background: rgba(24, 37, 51, 0.95);
         display: grid;
         place-items: center;
-        font-size: 13px;
+        font-size: 12.5px;
         font-weight: 500;
         color: #e4e8ec;
       }
-      .tg-in {
-        position: absolute;
-        left: 10px;
-        right: 10px;
-        bottom: 12px;
-        height: 46px;
-        border-radius: 23px;
-        background: #17212b;
-        display: flex;
-        align-items: center;
-        padding: 0 16px;
-        color: #6d7f92;
-        font-size: 14px;
-      }
 
-      /* ---------- 07 token ---------- */
-      #token {
-        --gy: 30%;
-      }
-      #token .glow {
-        left: 100px;
-        top: -300px;
-      }
-      #token .glow.pink {
-        left: 600px;
-        top: 260px;
-        width: 800px;
-      }
-      #token .head {
+      /* ================= 07 token ================= */
+      #token .copy {
         position: absolute;
-        left: 0;
-        right: 0;
-        top: 112px;
-        text-align: center;
+        left: 52px;
+        top: 118px;
+        width: 560px;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        gap: 16px;
+        gap: 18px;
+        z-index: 3;
       }
       #token .tick {
         font-size: 112px;
-        letter-spacing: -0.06em;
         font-weight: 700;
-        line-height: 0.95;
+        letter-spacing: -0.065em;
+        line-height: 0.9;
+        margin-left: -4px;
       }
-      #token .flow {
-        position: absolute;
-        left: 56px;
-        right: 56px;
-        top: 372px;
+      .steps {
         display: grid;
-        grid-template-columns: 1fr 36px 1fr 36px 1fr;
-        align-items: center;
+        gap: 10px;
+        margin-top: 6px;
       }
-      #token .arrow {
+      .steps .glass {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 13px 16px;
+        border-radius: 15px;
+      }
+      .steps em {
+        font: 600 12px/1 var(--mono);
+        font-style: normal;
+        width: 28px;
+        height: 28px;
+        flex: none;
+        border-radius: 9px;
         display: grid;
         place-items: center;
-        color: var(--faint);
+        color: #fff;
+        background: linear-gradient(135deg, #22d3ee, #8b5cf6);
       }
-      #token .tile {
-        min-height: 0;
-        height: auto;
-        padding: 22px 24px;
-      }
-      #token .tile h3 {
-        font-size: 20px;
-      }
-      #token .tile p {
+      .steps b {
+        font-weight: 500;
         font-size: 15.5px;
       }
+      .steps span {
+        color: var(--muted);
+        font-size: 14.5px;
+      }
       .ca {
-        position: absolute;
-        left: 50%;
-        bottom: 38px;
-        transform: translateX(-50%);
-        display: flex;
+        display: inline-flex;
+        align-self: flex-start;
         align-items: center;
         gap: 12px;
         height: 44px;
-        padding: 0 8px 0 16px;
-        border-radius: 12px;
-        border: 1px solid var(--line2);
-        background: rgba(255, 255, 255, 0.03);
-        font: 500 14.5px/1 var(--mono);
+        margin-top: 6px;
+        padding: 0 7px 0 16px;
+        border-radius: 13px;
+        font: 500 14px/1 var(--mono);
         color: var(--muted);
-        white-space: nowrap;
       }
       .ca b {
-        color: var(--text);
-        font-weight: 500;
+        color: #fff;
+        font-weight: 600;
       }
       .ca span {
-        padding: 7px 10px;
-        border-radius: 8px;
-        background: rgba(255, 255, 255, 0.07);
-        color: var(--text);
+        padding: 8px 11px;
+        border-radius: 9px;
+        background: linear-gradient(180deg, #fff, #d6d6de);
+        color: #08080a;
         font-size: 12.5px;
+      }
+      .coinstage {
+        position: absolute;
+        left: 660px;
+        top: 120px;
+        width: 470px;
+        height: 470px;
+        perspective: 1200px;
+        z-index: 2;
+      }
+      .ring {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        transform: translate(-50%, -50%) rotateX(72deg);
+      }
+      .ring.r1 {
+        width: 520px;
+        height: 520px;
+        border-color: rgba(167, 139, 250, 0.35);
+        box-shadow: 0 0 30px rgba(139, 92, 246, 0.25);
+      }
+      .ring.r2 {
+        width: 420px;
+        height: 420px;
+        border-style: dashed;
+        border-color: rgba(103, 232, 249, 0.3);
+      }
+      .coin {
+        position: absolute;
+        left: 85px;
+        top: 70px;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        transform: rotateY(-20deg) rotateX(10deg);
+        background:
+          radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 26%),
+          conic-gradient(from 210deg, #67e8f9, #818cf8, #c084fc, #f472b6, #fbbf24, #67e8f9);
+        box-shadow:
+          0 50px 120px -20px rgba(139, 92, 246, 0.75),
+          0 0 0 1px rgba(255, 255, 255, 0.3),
+          inset 0 -18px 40px rgba(0, 0, 0, 0.4),
+          inset 0 12px 30px rgba(255, 255, 255, 0.45),
+          16px 10px 0 -2px #3b2a66;
+      }
+      .coin .face {
+        position: absolute;
+        inset: 20px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: radial-gradient(circle at 35% 28%, #262236, #09090e 70%);
+        box-shadow:
+          inset 0 3px 0 rgba(255, 255, 255, 0.22),
+          inset 0 -10px 40px rgba(139, 92, 246, 0.4),
+          0 0 0 1px rgba(0, 0, 0, 0.4);
+      }
+      .coin .face::before {
+        content: "";
+        position: absolute;
+        inset: 14px;
+        border-radius: 50%;
+        border: 1px dashed rgba(255, 255, 255, 0.14);
+      }
+      .coin .face div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+      .coin .face svg {
+        width: 96px;
+        height: 96px;
+        filter: drop-shadow(0 0 20px rgba(103, 232, 249, 0.55));
+      }
+      .coin .face span {
+        font: 600 18px/1 var(--mono);
+        letter-spacing: 0.12em;
+        color: #e9e9f0;
+      }
+      .sparkle {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 0 12px 3px rgba(255, 255, 255, 0.7);
       }
       .fine {
         position: absolute;
-        left: 56px;
-        bottom: 48px;
-        font: 500 11.5px/1.4 var(--mono);
-        color: #5e5e68;
-        width: 260px;
+        right: 52px;
+        bottom: 62px;
+        z-index: 6;
+        font: 500 11px/1.4 var(--mono);
+        color: #5e5e6a;
+        text-align: right;
       }
 
-      /* ---------- X header ---------- */
-      #header {
-        --gx: 50%;
-        --gy: 40%;
-      }
-      #header .glow {
-        left: 250px;
-        top: -300px;
-      }
-      #header .glow.cyan {
-        left: 900px;
-        top: 120px;
-        width: 700px;
-        height: 500px;
-      }
-      #header .center {
+      /* ================= X header ================= */
+      #header .copy {
         position: absolute;
         left: 0;
         right: 0;
-        top: 128px;
+        top: 146px;
         text-align: center;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 22px;
+        gap: 24px;
+        z-index: 3;
       }
       #header h1 {
-        font-size: 84px;
+        font-size: 88px;
       }
       #header .row {
         display: flex;
         gap: 10px;
       }
+      #header .row .chip {
+        height: 40px;
+        padding: 0 15px;
+        font-size: 15px;
+        border-radius: 13px;
+        background: rgba(255, 255, 255, 0.05);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+      }
+      #header .foot {
+        left: auto;
+        right: 60px;
+        bottom: 34px;
+        width: 760px;
+      }
     </style>
   </head>
   <body>
-    <!-- shared bits -->
     <template id="logo"
       ><svg viewBox="0 0 100 100" aria-hidden="true">
         <path
           d="M18 26 L42 50 L18 74"
           fill="none"
-          stroke="#EDEDEF"
+          stroke="#F2F2F5"
           stroke-width="10"
           stroke-linecap="round"
           stroke-linejoin="round"
@@ -1114,52 +1456,178 @@
         <rect x="52" y="56" width="34" height="9" rx="4.5" fill="#67E8F9" />
         <rect x="52" y="71" width="24" height="9" rx="4.5" fill="#F472B6" /></svg
     ></template>
+    <template id="chrome"
+      ><div class="grid"></div>
+      <div class="frame"><b></b><b></b><b></b><b></b></div
+    ></template>
 
     <!-- 01 · Introduction -->
-    <section class="banner" id="intro">
-      <div class="glow"></div>
+    <section class="banner" id="intro" style="--gx: 72%; --gy: 50%">
+      <div class="aurora">
+        <i
+          style="left: 560px; top: -120px; width: 620px; height: 420px; background: #5b2fd6; opacity: 0.55"
+        ></i>
+        <i
+          style="left: 820px; top: 300px; width: 460px; height: 380px; background: #0e7490; opacity: 0.45"
+        ></i>
+        <i
+          style="left: -120px; top: 380px; width: 520px; height: 360px; background: #9d174d; opacity: 0.28"
+        ></i>
+      </div>
+      <div class="floor"></div>
+      <div data-chrome></div>
       <div class="brand" data-logo>dualyne</div>
-      <div class="site"><span class="dot"></span>dualyne.com</div>
-      <div class="center">
-        <span class="badge"><b>New</b>Free AI chat · no signup</span>
-        <h1 class="grad">Every AI model.<br />One prompt away.</h1>
+      <div class="pill glass"><span class="dot"></span>Live · dualyne.com</div>
+      <div class="copy">
+        <span class="kick"><i>New</i>Free AI chat · no signup</span>
+        <h1><span class="metal">Every AI model.</span><br /><span class="accent">One prompt away.</span></h1>
         <p class="lede">
-          Chat with Claude, GPT, Gemini, Llama, DeepSeek and Mistral in one place.<br />Compare answers side
-          by side, then ship the best one with a single key.
+          Chat with <b>Claude, GPT, Gemini, Llama, DeepSeek</b> and <b>Mistral</b> in one place. Compare
+          answers side by side, then ship the best one with a single key.
         </p>
         <div class="ctas">
-          <span class="btn">Start chatting →</span><span class="btn dark">Compare models</span>
+          <span class="btn"
+            >Start chatting
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M5 12h14M13 6l6 6-6 6" /></svg></span
+          ><span class="btn ghost">Compare models</span>
         </div>
       </div>
-      <div class="logos">
-        <p>One catalog for the models teams actually use</p>
-        <div>
-          <img src="../../apps/web/public/providers/mono/anthropic.svg" alt="" />
-          <img src="../../apps/web/public/providers/mono/openai.svg" alt="" />
-          <img src="../../apps/web/public/providers/mono/google.svg" alt="" />
-          <img src="../../apps/web/public/providers/mono/meta.svg" alt="" />
-          <img src="../../apps/web/public/providers/mono/deepseek.svg" alt="" />
-          <img src="../../apps/web/public/providers/mono/mistral.svg" alt="" />
+      <div class="hub">
+        <svg class="lines" viewBox="0 0 520 520">
+          <defs>
+            <linearGradient id="ln" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#67E8F9" stop-opacity=".8" />
+              <stop offset="1" stop-color="#A78BFA" stop-opacity=".25" />
+            </linearGradient>
+            <radialGradient id="dotg">
+              <stop offset="0" stop-color="#fff" />
+              <stop offset="1" stop-color="#67E8F9" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+          <circle
+            cx="260"
+            cy="260"
+            r="200"
+            fill="none"
+            stroke="rgba(255,255,255,.1)"
+            stroke-dasharray="3 7"
+          />
+          <circle cx="260" cy="260" r="128" fill="none" stroke="rgba(167,139,250,.22)" />
+          <g stroke="url(#ln)" stroke-width="1.4">
+            <line x1="260" y1="260" x2="260" y2="60" />
+            <line x1="260" y1="260" x2="433" y2="160" />
+            <line x1="260" y1="260" x2="433" y2="360" />
+            <line x1="260" y1="260" x2="260" y2="460" />
+            <line x1="260" y1="260" x2="87" y2="360" />
+            <line x1="260" y1="260" x2="87" y2="160" />
+          </g>
+          <g fill="url(#dotg)">
+            <circle cx="260" cy="118" r="7" />
+            <circle cx="376" cy="193" r="7" />
+            <circle cx="364" cy="320" r="6" />
+            <circle cx="260" cy="392" r="6" />
+            <circle cx="150" cy="323" r="7" />
+            <circle cx="155" cy="199" r="6" />
+          </g>
+        </svg>
+        <div class="core glass" data-logo-only></div>
+        <div class="orb glass" style="left: 260px; top: 60px">
+          <img src="../../apps/web/public/providers/anthropic.svg" alt="" /><span>Claude</span>
         </div>
+        <div class="orb glass" style="left: 433px; top: 160px">
+          <img src="../../apps/web/public/providers/openai.svg" alt="" style="filter: invert(1)" /><span
+            >GPT</span
+          >
+        </div>
+        <div class="orb glass" style="left: 433px; top: 360px">
+          <img src="../../apps/web/public/providers/gemini.svg" alt="" /><span>Gemini</span>
+        </div>
+        <div class="orb glass" style="left: 260px; top: 460px">
+          <img src="../../apps/web/public/providers/meta.svg" alt="" /><span>Llama</span>
+        </div>
+        <div class="orb glass" style="left: 87px; top: 360px">
+          <img src="../../apps/web/public/providers/deepseek.svg" alt="" /><span>DeepSeek</span>
+        </div>
+        <div class="orb glass" style="left: 87px; top: 160px">
+          <img src="../../apps/web/public/providers/mistral.svg" alt="" /><span>Mistral</span>
+        </div>
+      </div>
+      <div class="foot">
+        <span>Chat</span><span class="rule"></span><span>Compare</span><span class="rule"></span
+        ><span>One API key</span><span class="rule"></span><span style="color: #c9c9d2">dualyne.com</span>
       </div>
     </section>
 
     <!-- 02 · Features -->
-    <section class="banner" id="features">
-      <div class="glow"></div>
-      <div class="brand" data-logo>dualyne</div>
-      <div class="site"><span class="dot"></span>dualyne.com</div>
-      <div class="head">
-        <div class="kick"><i>Product</i>What you get</div>
-        <h2 class="grad">Built for choosing, then shipping.</h2>
+    <section class="banner" id="features" style="--gy: 10%">
+      <div class="aurora">
+        <i
+          style="left: 250px; top: -260px; width: 700px; height: 420px; background: #5b2fd6; opacity: 0.5"
+        ></i>
+        <i
+          style="left: -100px; top: 420px; width: 500px; height: 360px; background: #0e7490; opacity: 0.3"
+        ></i>
+        <i
+          style="left: 860px; top: 420px; width: 480px; height: 360px; background: #9d174d; opacity: 0.28"
+        ></i>
       </div>
-      <div class="grid">
-        <div class="tile">
-          <div class="ic">
+      <div data-chrome></div>
+      <div class="brand" data-logo>dualyne</div>
+      <div class="pill glass"><span class="dot"></span>Live · dualyne.com</div>
+      <div class="head">
+        <div style="display: flex; flex-direction: column; gap: 16px">
+          <span class="kick"><i>Product</i>What you get</span>
+          <h2>
+            <span class="metal">Built for choosing,</span><br /><span class="accent">then shipping.</span>
+          </h2>
+        </div>
+        <p>Find the right model and put it to work, without a single signup form.</p>
+      </div>
+      <div class="bento">
+        <div class="glass big">
+          <div
+            class="ic"
+            style="background: linear-gradient(135deg, rgba(167, 139, 250, 0.35), rgba(96, 165, 250, 0.12))"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round">
+              <rect x="3" y="4" width="8" height="16" rx="2" />
+              <rect x="13" y="4" width="8" height="16" rx="2" />
+            </svg>
+          </div>
+          <h3 style="font-size: 21px">Side-by-side compare</h3>
+          <p style="font-size: 14.5px; max-width: 380px">
+            One prompt, two models. Speed and quality in the same view, then a blind vote.
+          </p>
+          <div class="mini">
+            <div class="ma">
+              <em>A</em>“Small cups, big mornings.”
+              <div class="bars"><i></i></div>
+            </div>
+            <div class="mb">
+              <em>B</em>“Your neighborhood’s favorite pause.”
+              <div class="bars"><i></i></div>
+            </div>
+          </div>
+        </div>
+        <div class="glass">
+          <div
+            class="ic"
+            style="background: linear-gradient(135deg, rgba(103, 232, 249, 0.3), rgba(103, 232, 249, 0.08))"
+          >
             <svg
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#67E8F9"
+              stroke="#fff"
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -1168,24 +1636,17 @@
             </svg>
           </div>
           <h3>Free AI chat</h3>
-          <p>Claude, Llama, DeepSeek and Mistral. No signup, no card.</p>
+          <p>Claude, Llama, DeepSeek, Mistral. No signup.</p>
         </div>
-        <div class="tile">
-          <div class="ic">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2" stroke-linecap="round">
-              <rect x="3" y="4" width="8" height="16" rx="2" />
-              <rect x="13" y="4" width="8" height="16" rx="2" />
-            </svg>
-          </div>
-          <h3>Side-by-side compare</h3>
-          <p>One prompt, two models. See speed and quality in the same view.</p>
-        </div>
-        <div class="tile">
-          <div class="ic">
+        <div class="glass">
+          <div
+            class="ic"
+            style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(251, 191, 36, 0.08))"
+          >
             <svg
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#FBBF24"
+              stroke="#fff"
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -1195,14 +1656,17 @@
             </svg>
           </div>
           <h3>Community leaderboard</h3>
-          <p>Blind votes rank the models by what people actually prefer.</p>
+          <p>Blind votes rank what people prefer.</p>
         </div>
-        <div class="tile">
-          <div class="ic">
+        <div class="glass">
+          <div
+            class="ic"
+            style="background: linear-gradient(135deg, rgba(96, 165, 250, 0.3), rgba(96, 165, 250, 0.08))"
+          >
             <svg
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#60A5FA"
+              stroke="#fff"
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -1210,32 +1674,18 @@
               <path d="M8 9l-4 3 4 3M16 9l4 3-4 3M13.5 6l-3 12" />
             </svg>
           </div>
-          <h3>One OpenAI-compatible key</h3>
-          <p>Change the base URL. Your app, bot or agent keeps working.</p>
+          <h3>One API key</h3>
+          <p>OpenAI-compatible. Change one URL.</p>
         </div>
-        <div class="tile">
-          <div class="ic">
+        <div class="glass">
+          <div
+            class="ic"
+            style="background: linear-gradient(135deg, rgba(42, 171, 238, 0.35), rgba(42, 171, 238, 0.08))"
+          >
             <svg
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#F472B6"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <rect x="3" y="6" width="18" height="13" rx="3" />
-              <path d="M16 12.5h2M3 10h18" />
-            </svg>
-          </div>
-          <h3>Your wallet is your account</h3>
-          <p>No email, no password. Sign once, create keys, revoke any time.</p>
-        </div>
-        <div class="tile">
-          <div class="ic">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#4ADE80"
+              stroke="#fff"
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -1243,149 +1693,204 @@
               <path d="M21.5 4.5L2.5 11l6 2.5 2.5 6.5 3.5-4.5 5 3.5z" />
             </svg>
           </div>
-          <h3>Also on Telegram</h3>
-          <p>Ask anything, in any language, with @dualynebot.</p>
+          <h3>On Telegram</h3>
+          <p>Ask anything in any language.</p>
         </div>
+      </div>
+      <div class="foot">
+        <span>01 / Overview</span><span class="rule"></span><span style="color: #c9c9d2">dualyne.com</span>
       </div>
     </section>
 
     <!-- 03 · Chat -->
-    <section class="banner" id="chat">
-      <div class="glow"></div>
+    <section class="banner" id="chat" style="--gx: 75%; --gy: 45%">
+      <div class="aurora">
+        <i
+          style="left: 620px; top: -100px; width: 560px; height: 420px; background: #5b2fd6; opacity: 0.55"
+        ></i>
+        <i
+          style="left: 760px; top: 360px; width: 460px; height: 340px; background: #0e7490; opacity: 0.4"
+        ></i>
+      </div>
+      <div class="floor" style="opacity: 0.6"></div>
+      <div data-chrome></div>
       <div class="brand" data-logo>dualyne</div>
-      <div class="site"><span class="dot"></span>dualyne.com/chat</div>
-      <div class="left">
-        <div class="kick"><i>01</i>Chat</div>
-        <h2 class="grad">Ask anything.<br />Free, no signup.</h2>
+      <div class="pill glass"><span class="dot"></span>dualyne.com/chat</div>
+      <div class="copy">
+        <span class="kick"><i>01</i>Chat</span>
+        <h2><span class="metal">Ask anything.</span><br /><span class="accent">Free, no signup.</span></h2>
         <ul class="list">
           <li>
-            <span><b>Four free models:</b> Claude, Llama, DeepSeek, Mistral</span>
+            <span><b>Four free models</b> · Claude, Llama, DeepSeek, Mistral</span>
           </li>
           <li>
-            <span><b>Switch models</b> with one tap, mid-conversation</span>
+            <span><b>Switch models</b> with one tap</span>
           </li>
           <li>
-            <span><b>Chats stay in your browser.</b> Nothing to sign up for</span>
+            <span><b>Chats stay in your browser</b></span>
           </li>
         </ul>
       </div>
-      <div class="card ui">
-        <div class="bar">
-          <div class="lights"><span></span><span></span><span></span></div>
-          <span class="t">New chat</span><span class="live"><span class="dot"></span>4 models live</span>
-        </div>
-        <div class="chips">
-          <span class="chip on"
-            ><img src="../../apps/web/public/providers/anthropic.svg" alt="" />Claude Swift</span
-          >
-          <span class="chip"><img src="../../apps/web/public/providers/meta.svg" alt="" />Llama</span>
-          <span class="chip"><img src="../../apps/web/public/providers/deepseek.svg" alt="" />DeepSeek</span>
-          <span class="chip"><img src="../../apps/web/public/providers/mistral.svg" alt="" />Mistral</span>
-        </div>
-        <div class="msgs">
-          <div class="me">Explain blockchains in three sentences.</div>
-          <div class="ai">
-            <div class="av"><img src="../../apps/web/public/providers/anthropic.svg" alt="" /></div>
-            <div>
-              <div class="who">Claude Swift</div>
-              <p>
-                A blockchain is a shared record of transactions that many computers keep at the same time.
-              </p>
-              <p>
-                New entries are grouped into blocks, and each block is linked to the one before it, so past
-                records are very hard to change.
-              </p>
-              <div class="acts"><span>Copy</span><span>Regenerate</span></div>
+      <div class="stage3d">
+        <div class="window">
+          <div class="bar">
+            <div class="lights"><span></span><span></span><span></span></div>
+            <span class="t">New chat</span><span class="live"><span class="dot"></span>4 models live</span>
+          </div>
+          <div class="chips">
+            <span class="chip on"
+              ><img src="../../apps/web/public/providers/anthropic.svg" alt="" />Claude Swift</span
+            >
+            <span class="chip"><img src="../../apps/web/public/providers/meta.svg" alt="" />Llama</span>
+            <span class="chip"
+              ><img src="../../apps/web/public/providers/deepseek.svg" alt="" />DeepSeek</span
+            >
+            <span class="chip"><img src="../../apps/web/public/providers/mistral.svg" alt="" />Mistral</span>
+          </div>
+          <div class="msgs">
+            <div class="me">Explain blockchains in three sentences.</div>
+            <div class="ai">
+              <div class="av"><img src="../../apps/web/public/providers/anthropic.svg" alt="" /></div>
+              <div>
+                <div class="who">Claude Swift</div>
+                <p>
+                  A blockchain is a shared record of transactions that many computers keep at the same time.
+                </p>
+                <p>
+                  New entries are grouped into blocks, each linked to the one before it, so past records are
+                  very hard to change.<span class="caret"></span>
+                </p>
+              </div>
             </div>
           </div>
+          <div class="composer">
+            Message Claude Swift…<span class="send"
+              ><svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#08080A"
+                stroke-width="2.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 19V5M5 12l7-7 7 7" /></svg
+            ></span>
+          </div>
         </div>
-        <div class="composer">
-          Message Claude Swift…<span class="send"
-            ><svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#08080A"
-              stroke-width="2.6"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M12 19V5M5 12l7-7 7 7" /></svg
-          ></span>
-        </div>
+      </div>
+      <div class="float glass" style="left: 500px; top: 196px">
+        <span class="ic" style="background: rgba(74, 222, 128, 0.18)">✓</span>Free<small>no card</small>
+      </div>
+      <div class="float glass" style="left: 1010px; top: 560px">
+        <span class="ic" style="background: rgba(103, 232, 249, 0.18)">⚡</span>Streaming
+      </div>
+      <div class="foot">
+        <span>02 / Chat</span><span class="rule"></span><span style="color: #c9c9d2">dualyne.com/chat</span>
       </div>
     </section>
 
     <!-- 04 · Compare -->
-    <section class="banner" id="compare">
-      <div class="glow"></div>
-      <div class="brand" data-logo>dualyne</div>
-      <div class="site"><span class="dot"></span>dualyne.com/#compare</div>
-      <div class="head">
-        <div class="kick"><i>02</i>Compare</div>
-        <h2 class="grad">Two answers. Side by side.<br />You pick the winner.</h2>
+    <section class="banner" id="compare" style="--gy: 18%">
+      <div class="aurora">
+        <i style="left: 40px; top: 260px; width: 520px; height: 360px; background: #0e7490; opacity: 0.5"></i>
+        <i
+          style="left: 640px; top: 260px; width: 520px; height: 360px; background: #5b2fd6; opacity: 0.6"
+        ></i>
+        <i
+          style="left: 350px; top: -280px; width: 500px; height: 380px; background: #9d174d; opacity: 0.25"
+        ></i>
       </div>
-      <div class="card ui">
-        <div class="prompt">
-          <span class="q">PROMPT</span>Write a tagline for a small coffee shop.<span class="live"
-            ><span class="tag">BLIND</span></span
+      <div class="floor" style="height: 46%"></div>
+      <div data-chrome></div>
+      <div class="brand" data-logo>dualyne</div>
+      <div class="pill glass"><span class="dot"></span>dualyne.com/#compare</div>
+      <div class="head">
+        <span class="kick"><i>02</i>Compare</span>
+        <h2>
+          <span class="metal">Two answers. Side by side.</span><br /><span class="accent"
+            >You pick the winner.</span
           >
-        </div>
-        <div class="cols">
-          <div class="col a">
-            <div class="top"><span class="lab">A</span><span class="nm">Model A</span></div>
-            <p>“Small cups, big mornings.” Warm, short and easy to remember on a sign.</p>
-            <div class="metrics">
-              <span>first word <b>0.4s</b></span
-              ><span>total <b>1.9s</b></span
-              ><span><b>14</b> words</span>
-            </div>
+        </h2>
+      </div>
+      <div class="duel">
+        <div class="side a window">
+          <div class="top">
+            <span class="lab">A</span><span class="nm">Model A</span
+            ><span class="tg">hidden until you vote</span>
           </div>
-          <div class="col b">
-            <div class="top"><span class="lab">B</span><span class="nm">Model B</span></div>
-            <p>“Your neighborhood’s favorite pause.” It sells the break, not just the coffee.</p>
-            <div class="metrics">
-              <span>first word <b>0.6s</b></span
-              ><span>total <b>2.3s</b></span
-              ><span><b>13</b> words</span>
-            </div>
+          <p>“Small cups, big mornings.” Warm, short and easy to remember on a sign.</p>
+          <div class="metrics">
+            <span>first word <b>0.4s</b></span
+            ><span>total <b>1.9s</b></span
+            ><span><b>14</b> words</span>
           </div>
         </div>
-        <div class="vote">
-          <b class="q">Which is better?</b><span>A is better</span><span>Tie</span
-          ><span class="win">B is better ✓</span><em class="note">votes build the leaderboard →</em>
+        <div class="vs glass">VS</div>
+        <div class="side b window">
+          <div class="top">
+            <span class="lab">B</span><span class="nm">Model B</span
+            ><span class="tg">hidden until you vote</span>
+          </div>
+          <p>“Your neighborhood’s favorite pause.” It sells the break, not just the coffee.</p>
+          <div class="metrics">
+            <span>first word <b>0.6s</b></span
+            ><span>total <b>2.3s</b></span
+            ><span><b>13</b> words</span>
+          </div>
         </div>
+      </div>
+      <div class="votebar glass">
+        <b class="q">Which is better?</b><span>A</span><span>Tie</span><span class="win">B ✓</span>
+      </div>
+      <div class="foot">
+        <span>03 / Compare</span><span class="rule"></span><span>Votes build the leaderboard</span>
       </div>
     </section>
 
     <!-- 05 · API -->
-    <section class="banner" id="api">
-      <div class="glow"></div>
+    <section class="banner" id="api" style="--gx: 75%; --gy: 45%">
+      <div class="aurora">
+        <i
+          style="left: 640px; top: -120px; width: 560px; height: 420px; background: #1d4ed8; opacity: 0.5"
+        ></i>
+        <i
+          style="left: 760px; top: 360px; width: 460px; height: 340px; background: #5b2fd6; opacity: 0.45"
+        ></i>
+        <i
+          style="left: -160px; top: 420px; width: 460px; height: 320px; background: #0e7490; opacity: 0.25"
+        ></i>
+      </div>
+      <div class="floor" style="opacity: 0.5"></div>
+      <div data-chrome></div>
       <div class="brand" data-logo>dualyne</div>
-      <div class="site"><span class="dot"></span>dualyne.com/docs</div>
-      <div class="left">
-        <div class="kick"><i>03</i>API</div>
-        <h2 class="grad" style="font-size: 54px">One key.<br />The whole catalog.</h2>
+      <div class="pill glass"><span class="dot"></span>dualyne.com/docs</div>
+      <div class="copy">
+        <span class="kick"><i>03</i>API</span>
+        <h2 style="font-size: 56px">
+          <span class="metal">One key.</span><br /><span class="accent">The whole catalog.</span>
+        </h2>
         <ul class="list">
           <li>
-            <span><b>OpenAI-compatible:</b> keep your SDKs</span>
+            <span><b>OpenAI-compatible</b> · keep your SDKs</span>
           </li>
           <li>
             <span><b>Switch models</b> by changing one string</span>
           </li>
           <li>
-            <span><b>Streaming, tools, JSON mode</b> included</span>
+            <span><b>Streaming, tools, JSON mode</b></span>
           </li>
         </ul>
       </div>
-      <div class="card ui">
-        <div class="bar">
-          <div class="lights"><span></span><span></span><span></span></div>
-          <div class="tabs"><span class="on">python</span><span>node</span><span>curl</span></div>
-          <span class="live"><span class="dot"></span>api.dualyne.com</span>
-        </div>
-        <pre><span class="k">from</span> openai <span class="k">import</span> OpenAI
+      <div class="stage3d">
+        <div class="window">
+          <div class="bar">
+            <div class="lights"><span></span><span></span><span></span></div>
+            <div class="tabs"><span class="on">python</span><span>node</span><span>curl</span></div>
+            <span class="live"><span class="dot"></span>api.dualyne.com</span>
+          </div>
+          <pre><span class="k">from</span> openai <span class="k">import</span> OpenAI
 
 client = <span class="f">OpenAI</span>(
     base_url=<span class="s">"https://api.dualyne.com/v1"</span>,
@@ -1396,25 +1901,44 @@ reply = client.chat.completions.<span class="f">create</span>(
     model=<span class="s">"claude-swift"</span>,  <span class="c"># swap to any model id</span>
     messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: <span class="s">"Hi!"</span>}],
 )</pre>
-        <div class="ids">
-          <span class="on">claude-swift</span><span>claude-balanced</span><span>claude-deep</span
-          ><span>gpt</span><span>gemini</span><span>llama</span><span>deepseek</span><span>mistral</span>
+          <div class="ids">
+            <span class="on">claude-swift</span><span>claude-balanced</span><span>claude-deep</span
+            ><span>gpt</span><span>gemini</span><span>llama</span><span>deepseek</span><span>mistral</span>
+          </div>
         </div>
+      </div>
+      <div class="float glass" style="left: 600px; top: 568px">
+        <span
+          class="ic"
+          style="background: rgba(74, 222, 128, 0.18); color: #4ade80; font: 700 11px/1 var(--mono)"
+          >200</span
+        >OK<small>streamed</small>
+      </div>
+      <div class="foot">
+        <span>04 / API</span><span class="rule"></span><span style="color: #c9c9d2">api.dualyne.com/v1</span>
       </div>
     </section>
 
     <!-- 06 · Telegram -->
-    <section class="banner" id="telegram">
-      <div class="glow"></div>
-      <div class="glow cyan"></div>
+    <section class="banner" id="telegram" style="--gx: 72%; --gy: 50%">
+      <div class="aurora">
+        <i
+          style="left: 640px; top: -60px; width: 560px; height: 460px; background: #0369a1; opacity: 0.55"
+        ></i>
+        <i
+          style="left: 520px; top: 380px; width: 520px; height: 340px; background: #5b2fd6; opacity: 0.45"
+        ></i>
+      </div>
+      <div class="floor" style="opacity: 0.55"></div>
+      <div data-chrome></div>
       <div class="brand" data-logo>dualyne</div>
-      <div class="site"><span class="dot"></span>t.me/dualynebot</div>
-      <div class="left">
-        <div class="kick"><i>04</i>Telegram</div>
-        <h2 class="grad">Dualyne AI,<br />right in Telegram.</h2>
+      <div class="pill glass"><span class="dot"></span>t.me/dualynebot</div>
+      <div class="copy">
+        <span class="kick"><i>04</i>Telegram</span>
+        <h2><span class="metal">Dualyne AI,</span><br /><span class="accent">right in Telegram.</span></h2>
         <span class="handle"
           ><i
-            ><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff">
+            ><svg width="17" height="17" viewBox="0 0 24 24" fill="#fff">
               <path
                 d="M21.5 4.5L2.8 11.6c-1 .4-1 1.2-.2 1.5l4.7 1.5 1.8 5.6c.2.6.4.8.9.8.4 0 .6-.2.9-.5l2.3-2.2 4.7 3.5c.9.5 1.5.2 1.7-.8l3.1-14.5c.3-1.3-.5-1.9-1.4-1.5zM9.4 14.3l8.5-5.4-6.9 6.5-.3 3.2z"
               /></svg></i
@@ -1422,108 +1946,121 @@ reply = client.chat.completions.<span class="f">create</span>(
         >
         <ul class="list">
           <li>
-            <span><b>Ask in any language</b>, get the answer as it’s written</span>
+            <span><b>Any language</b> · answers appear as they’re written</span>
           </li>
           <li>
             <span><b>/compare</b> two models blind, then vote</span>
           </li>
           <li>
-            <span><b>Works in groups:</b> /ask or mention the bot</span>
+            <span><b>Groups too</b> · /ask or mention the bot</span>
           </li>
         </ul>
       </div>
-      <div class="phone">
-        <div class="screen">
-          <div class="tg-top">
-            <span class="pic" data-logo-only></span>
-            <div><b>Dualyne AI</b><small>bot</small></div>
+      <div class="stage3d">
+        <div class="phone">
+          <div class="screen">
+            <div class="island"></div>
+            <div class="tg-top">
+              <span class="pic" data-logo-only></span>
+              <div><b>Dualyne AI</b><small>bot</small></div>
+            </div>
+            <div class="tg-body">
+              <div class="tg-me">What is an API? Keep it short</div>
+              <div class="tg-bot">
+                An <b>API</b> is a bridge that lets two apps talk to each other.<br /><br />• App A sends a
+                request<br />• The API passes it to app B<br />• B sends the answer back<span class="ft"
+                  >Claude Swift</span
+                >
+              </div>
+              <div class="tg-btns">
+                <span>🔄 Try again</span><span>🔀 Other model</span><span>⚖️ Compare</span
+                ><span>🆕 New chat</span>
+              </div>
+              <div class="tg-me" style="margin-top: 4px">/compare Best way to learn Python?</div>
+              <div class="tg-bot">
+                🅰️ <b>Answer A</b><br /><br />Build small projects from day one: a to-do list, a weather app,
+                a bot…
+              </div>
+            </div>
           </div>
-          <div class="tg-body">
-            <div class="tg-me">What is an API? Keep it short</div>
-            <div class="tg-bot">
-              An <b>API</b> is a bridge that lets two apps talk to each other.<br /><br />• App A sends a
-              request<br />• The API passes it to app B<br />• B sends the answer back<br /><span class="ft"
-                >Claude Swift</span
-              >
-            </div>
-            <div class="tg-btns">
-              <span>🔄 Try again</span><span>🔀 Other model</span><span>⚖️ Compare</span
-              ><span>🆕 New chat</span>
-            </div>
-            <div class="tg-me" style="margin-top: 6px">/compare Best way to learn Python?</div>
-            <div class="tg-bot">
-              🅰️ <b>Answer A</b><br /><br />Build small projects from day one: a to-do list, a weather app, a
-              bot…
-            </div>
-          </div>
-          <div class="tg-in">Message</div>
         </div>
       </div>
+      <div class="float glass" style="left: 600px; top: 212px">
+        <span class="ic" style="background: rgba(167, 139, 250, 0.22)">⚖️</span>Blind vote
+      </div>
+      <div class="float glass" style="left: 590px; top: 500px">
+        <span class="ic" style="background: rgba(103, 232, 249, 0.18)">⚡</span>Live answers
+      </div>
+      <div class="foot" style="right: 560px"><span>05 / Telegram</span><span class="rule"></span></div>
     </section>
 
     <!-- 07 · Token -->
-    <section class="banner" id="token">
-      <div class="glow"></div>
-      <div class="glow pink"></div>
+    <section class="banner" id="token" style="--gx: 72%; --gy: 45%">
+      <div class="aurora">
+        <i style="left: 640px; top: 40px; width: 560px; height: 520px; background: #6d28d9; opacity: 0.6"></i>
+        <i
+          style="left: 860px; top: 380px; width: 420px; height: 320px; background: #be185d; opacity: 0.35"
+        ></i>
+        <i
+          style="left: -140px; top: -120px; width: 520px; height: 360px; background: #0e7490; opacity: 0.3"
+        ></i>
+      </div>
+      <div class="floor" style="opacity: 0.7"></div>
+      <div data-chrome></div>
       <div class="brand" data-logo>dualyne</div>
-      <div class="site"><span class="dot"></span>dualyne.com/#token</div>
-      <div class="head">
-        <div class="kick"><i>05</i>Token</div>
-        <div class="tick hue">$DLYN</div>
-        <p class="lede" style="font-size: 22px; color: #c9c9d1">The token that pays for the compute.</p>
+      <div class="pill glass"><span class="dot"></span>dualyne.com/#token</div>
+      <div class="copy">
+        <span class="kick"><i>05</i>Token</span>
+        <div class="tick accent">$DLYN</div>
+        <p class="lede" style="font-size: 21px; color: #d4d4dc">The token that pays for the compute.</p>
+        <div class="steps">
+          <div class="glass">
+            <em>1</em><b>Every trade</b><span>adds a fee to the inference treasury</span>
+          </div>
+          <div class="glass">
+            <em>2</em><b>The treasury</b><span>pays for everyone’s free AI, on a public ledger</span>
+          </div>
+          <div class="glass">
+            <em>3</em><b>Holders</b><span>unlock premium models and higher limits</span>
+          </div>
+        </div>
+        <div class="ca glass"><b>CA</b>Coming soon<span>Copy</span></div>
       </div>
-      <div class="flow">
-        <div class="tile">
-          <h3>Every trade</h3>
-          <p>A fee from each trade goes to the inference treasury.</p>
+      <div class="coinstage">
+        <div class="ring r1"></div>
+        <div class="ring r2"></div>
+        <div class="coin">
+          <div class="face">
+            <div><span data-logo-only style="display: block"></span><span>$DLYN</span></div>
+          </div>
         </div>
-        <div class="arrow">
-          <svg
-            width="26"
-            height="26"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M5 12h14M13 6l6 6-6 6" />
-          </svg>
-        </div>
-        <div class="tile">
-          <h3>Free AI for everyone</h3>
-          <p>The treasury pays for free requests. Every dollar is on a public ledger.</p>
-        </div>
-        <div class="arrow">
-          <svg
-            width="26"
-            height="26"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M5 12h14M13 6l6 6-6 6" />
-          </svg>
-        </div>
-        <div class="tile">
-          <h3>Holders get more</h3>
-          <p>Higher limits and every premium model, including GPT and Gemini.</p>
-        </div>
+        <i class="sparkle" style="left: 92px; top: 96px"></i
+        ><i class="sparkle" style="left: 400px; top: 70px; width: 4px; height: 4px"></i
+        ><i class="sparkle" style="left: 420px; top: 340px; width: 5px; height: 5px"></i>
       </div>
-      <div class="ca"><b>CA</b> Coming soon <span>Copy</span></div>
-      <div class="fine">Utility token. Not an investment or a promise of profit.</div>
+      <div class="fine">Utility token. Not an investment<br />or a promise of profit.</div>
+      <div class="foot">
+        <span>06 / Token</span><span class="rule"></span><span style="color: #c9c9d2">dualyne.com</span>
+      </div>
     </section>
 
     <!-- X header (1500×500) -->
-    <section class="banner header" id="header">
-      <div class="glow"></div>
-      <div class="glow cyan"></div>
-      <div class="center">
-        <h1 class="grad">Every AI model. One prompt away.</h1>
+    <section class="banner header" id="header" style="--gy: 45%">
+      <div class="aurora">
+        <i
+          style="left: 420px; top: -240px; width: 680px; height: 420px; background: #5b2fd6; opacity: 0.6"
+        ></i>
+        <i
+          style="left: 1000px; top: 220px; width: 560px; height: 360px; background: #0e7490; opacity: 0.45"
+        ></i>
+        <i
+          style="left: -120px; top: 240px; width: 520px; height: 360px; background: #9d174d; opacity: 0.3"
+        ></i>
+      </div>
+      <div class="floor" style="height: 62%"></div>
+      <div data-chrome></div>
+      <div class="copy">
+        <h1><span class="metal">Every AI model.</span> <span class="accent">One prompt away.</span></h1>
         <div class="row">
           <span class="chip"><img src="../../apps/web/public/providers/anthropic.svg" alt="" />Claude</span>
           <span class="chip"
@@ -1539,14 +2076,16 @@ reply = client.chat.completions.<span class="f">create</span>(
           <span class="chip"><img src="../../apps/web/public/providers/mistral.svg" alt="" />Mistral</span>
         </div>
       </div>
-      <div class="foot" style="left: 560px; right: auto; bottom: 44px; gap: 28px">
-        <span>Chat free</span><span>·</span><span>Compare</span><span>·</span><span>One API key</span
-        ><span>·</span><span style="color: var(--text)">dualyne.com</span>
+      <div class="foot">
+        <span>Chat free</span><span class="rule"></span><span>Compare</span><span class="rule"></span
+        ><span>One API key</span><span class="rule"></span><span style="color: #fff">dualyne.com</span>
       </div>
     </section>
 
     <script>
       const logo = document.getElementById("logo").innerHTML;
+      const chrome = document.getElementById("chrome").innerHTML;
+      document.querySelectorAll("[data-chrome]").forEach((el) => (el.outerHTML = chrome));
       document.querySelectorAll("[data-logo]").forEach((el) => el.insertAdjacentHTML("afterbegin", logo));
       document.querySelectorAll("[data-logo-only]").forEach((el) => (el.innerHTML = logo));
     </script>
