@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 const LOGOS: Record<string, string> = {
   Anthropic: "anthropic",
   OpenAI: "openai",
-  Google: "google",
+  Google: "gemini",
   Meta: "meta",
   DeepSeek: "deepseek",
   Mistral: "mistral",
