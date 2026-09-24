@@ -1,3 +1,4 @@
+import { brand } from "@dualyne/config";
 import { MODEL_ID_RE, tierAllows } from "@dualyne/shared";
 import type { FastifyPluginAsync, FastifyReply } from "fastify";
 import { z } from "zod";
@@ -78,7 +79,9 @@ export const chatRoutes: FastifyPluginAsync<RouteOpts> = async (app, opts) => {
         throw new ApiError(
           403,
           "model_not_in_tier",
-          `"${model.id}" needs the ${ctx.tiers[model.minTier].label} tier. Your key is ${ctx.tiers[principal.tier].label}.`,
+          brand.tokenEnabled
+            ? `"${model.id}" needs the ${ctx.tiers[model.minTier].label} tier. Your key is ${ctx.tiers[principal.tier].label}.`
+            : `"${model.id}" is not in the free tier. Use a model from GET /v1/models, or ${ctx.credits.enabled ? "top up credits in the dashboard to use every model" : "wait for paid credits, which open soon"}.`,
         );
       }
       const policy = ctx.tiers[principal.tier];

@@ -15,6 +15,8 @@ describe("tier check", () => {
     const res = await chat(t.app, key, hello("gpt"));
     expect(res.statusCode).toBe(403);
     expect(res.json().error).toMatchObject({ code: "model_not_in_tier", type: "permission_error" });
+    // With the token hidden, the message doesn't mention the Holder tier.
+    expect(res.json().error.message).toMatch(/not in the free tier/);
     expect(t.upstream.requests).toHaveLength(0);
   });
 

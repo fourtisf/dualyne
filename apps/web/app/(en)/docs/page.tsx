@@ -3,6 +3,7 @@ import Link from "next/link";
 import { brand } from "@dualyne/config";
 import { TIER_DEFAULTS } from "@dualyne/shared";
 import { getCatalog } from "@/lib/catalog";
+import { publicConfig } from "@/lib/config";
 
 export const revalidate = 60;
 
@@ -36,6 +37,20 @@ export default async function DocsPage() {
         </nav>
         <article className="prose">
           <h1 className="grad">{brand.name} documentation</h1>
+          {!publicConfig.apiOpen && (
+            <div className="call">
+              The API opens soon: new keys can&apos;t be created yet.
+              {brand.social.x && (
+                <>
+                  {" "}
+                  <a href={brand.social.x} rel="noopener">
+                    Follow us on X
+                  </a>{" "}
+                  to hear when it opens.
+                </>
+              )}
+            </div>
+          )}
           <p>
             {brand.name} gives you every major AI model through one OpenAI-compatible endpoint. If your code
             already calls OpenAI, you only change two values.
@@ -97,7 +112,7 @@ print(reply.choices[0].message.content)`}</code>
                   </td>
                   <td>string</td>
                   <td>
-                    Model id from the models list, for example <code>gemini</code>
+                    Model id from the models list, for example <code>llama</code>
                   </td>
                 </tr>
                 <tr>
@@ -187,7 +202,7 @@ print(reply.choices[0].message.content)`}</code>
             <code>:</code> are keep-alive comments and can be ignored (the OpenAI SDKs do this for you).
           </p>
           <pre tabIndex={0}>
-            <code>{`for chunk in client.chat.completions.create(model="gpt", messages=msgs, stream=True):
+            <code>{`for chunk in client.chat.completions.create(model="llama", messages=msgs, stream=True):
     print(chunk.choices[0].delta.content or "", end="")`}</code>
           </pre>
           <pre tabIndex={0}>
@@ -240,7 +255,7 @@ print(reply.choices[0].message.content)`}</code>
                   <td>No cap</td>
                   <td>Model limit</td>
                   <td>Unlimited</td>
-                  <td>Model cost + 15%, prepaid in USDG or ETH</td>
+                  <td>Model cost + 15%, prepaid in stablecoins or ETH</td>
                 </tr>
               </tbody>
             </table>
@@ -252,9 +267,9 @@ print(reply.choices[0].message.content)`}</code>
             to 120 requests a minute.
           </p>
           <p>
-            Builder wallets top up with USDG or ETH from the dashboard. Each request reserves its worst-case
-            cost (model price + 15%) and is then charged the real amount; the difference goes straight back to
-            your balance. The dashboard lists every top-up and what each key spent.
+            Builder wallets top up with stablecoins or ETH from the dashboard. Each request reserves its
+            worst-case cost (model price + 15%) and is then charged the real amount; the difference goes
+            straight back to your balance. The dashboard lists every top-up and what each key spent.
           </p>
           <p>
             Free tiers share a daily budget{brand.tokenEnabled ? " paid for by the treasury" : ""}. On the
@@ -301,7 +316,11 @@ print(reply.choices[0].message.content)`}</code>
                     <code>403</code>
                   </td>
                   <td>Model not in your tier</td>
-                  <td>Hold the token or top up credits</td>
+                  <td>
+                    {brand.tokenEnabled
+                      ? "Hold the token or top up credits"
+                      : "Use a free model, or top up credits"}
+                  </td>
                 </tr>
                 <tr>
                   <td>
