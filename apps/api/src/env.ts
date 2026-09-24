@@ -31,6 +31,8 @@ const schema = z
     DAILY_BUDGET_USD: z.coerce.number().positive().default(100),
     COMPARE_LIMIT_PER_HOUR: z.coerce.number().int().positive().default(10),
     COMPARE_MAX_TOKENS: z.coerce.number().int().positive().default(1000),
+    /** Free Chat page: messages per IP per hour (free models only, same max_tokens as Compare). */
+    CHAT_LIMIT_PER_HOUR: z.coerce.number().int().positive().default(30),
     TIER_EXPLORER_DAILY: optionalInt,
     TIER_HOLDER_DAILY: optionalInt,
     TIER_EXPLORER_MAX_TOKENS: optionalInt,

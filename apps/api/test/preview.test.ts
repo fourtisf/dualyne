@@ -44,6 +44,17 @@ describe("without an OpenRouter key", () => {
     expect(await t.prisma.usageLog.count()).toBe(0);
   });
 
+  it("chat answers 503 models_not_live and calls no model", async () => {
+    const res = await t.app.inject({
+      method: "POST",
+      url: "/internal/chat",
+      payload: { model: "llama", messages: [{ role: "user", content: "Hi" }] },
+    });
+    expect(res.statusCode).toBe(503);
+    expect(res.json().error.code).toBe("models_not_live");
+    expect(t.upstream.requests).toHaveLength(0);
+  });
+
   it("the API checks the key first, then answers 503 models_not_live", async () => {
     expect((await chat(t.app, "dly_live_nope", hello("llama"))).statusCode).toBe(401);
 

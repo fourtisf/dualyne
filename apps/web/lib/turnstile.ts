@@ -46,6 +46,8 @@ export class TurnstileRunner {
   constructor(
     private readonly siteKey: string,
     private readonly container: HTMLElement,
+    /** Must match the action the API checks for the route ("compare" or "chat"). */
+    private readonly action: "compare" | "chat" = "compare",
   ) {}
 
   async token(): Promise<string> {
@@ -58,7 +60,7 @@ export class TurnstileRunner {
     if (this.widgetId === null) {
       this.widgetId = ts.render(this.container, {
         sitekey: this.siteKey,
-        action: "compare",
+        action: this.action,
         execution: "execute",
         appearance: "interaction-only",
         theme: "dark",

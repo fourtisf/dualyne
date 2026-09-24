@@ -33,6 +33,7 @@ import { tierPolicies } from "./tiers";
 import { chatRoutes } from "./routes/v1.chat";
 import { modelsRoutes } from "./routes/v1.models";
 import { compareRoutes } from "./routes/internal.compare";
+import { freeChatRoutes } from "./routes/internal.chat";
 import { catalogRoutes } from "./routes/internal.catalog";
 import { healthRoutes } from "./routes/health";
 import { statusRoutes } from "./routes/status";
@@ -47,9 +48,15 @@ export interface BuildOptions {
 }
 
 /** Paths called from the website with the session cookie: CORS limited to our own origins. */
-const CREDENTIALED_PREFIXES = ["/internal/compare", "/auth/", "/me", "/votes"];
+const CREDENTIALED_PREFIXES = ["/internal/compare", "/internal/chat", "/auth/", "/me", "/votes"];
 
-export const EXPOSED_HEADERS = ["x-request-id", "x-dualyne-remaining", "x-compare-remaining", "retry-after"];
+export const EXPOSED_HEADERS = [
+  "x-request-id",
+  "x-dualyne-remaining",
+  "x-compare-remaining",
+  "x-chat-remaining",
+  "retry-after",
+];
 
 export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
   const { env } = opts;
@@ -120,6 +127,7 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
     }),
     tiers: tierPolicies(env),
     compareLimiter: new SlidingWindowLimiter(redis, "cmp", env.COMPARE_LIMIT_PER_HOUR, 3_600_000, clock),
+    chatLimiter: new SlidingWindowLimiter(redis, "chat", env.CHAT_LIMIT_PER_HOUR, 3_600_000, clock),
     alert: createAlerter(app.log, env.ALERT_WEBHOOK_URL),
     ipHash: (ip) => hashIp(env.IP_HASH_SECRET, ip),
     chain,
@@ -246,6 +254,7 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
   await app.register(modelsRoutes, { routeConfig: keyLimit });
   await app.register(chatRoutes, { routeConfig: keyLimit });
   await app.register(compareRoutes);
+  await app.register(freeChatRoutes);
   await app.register(authRoutes);
   await app.register(meRoutes);
   await app.register(treasuryRoutes);

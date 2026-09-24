@@ -2,7 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import type { FastifyBaseLogger } from "fastify";
 
 export interface UsageRow {
-  source: "api" | "compare";
+  source: "api" | "compare" | "chat";
   apiKeyId?: string | null;
   walletId?: string | null;
   walletAddress?: string | null;

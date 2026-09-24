@@ -60,7 +60,15 @@ export async function startFakeUpstream(): Promise<FakeUpstream> {
     if (path.startsWith("/turnstile")) {
       const token = new URLSearchParams(raw).get("response");
       res.setHeader("content-type", "application/json");
-      res.end(JSON.stringify({ success: token === "good", hostname: "dualyne.com", action: "compare" }));
+      // "good" passes for Compare, "good-chat" for Chat (the widget's action comes back in the reply).
+      const action = token === "good-chat" ? "chat" : "compare";
+      res.end(
+        JSON.stringify({
+          success: token === "good" || token === "good-chat",
+          hostname: "dualyne.com",
+          action,
+        }),
+      );
       return;
     }
     if (path === "/v1/models") {

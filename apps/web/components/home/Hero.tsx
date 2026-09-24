@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import type { CatalogModel } from "@dualyne/shared";
 import { getDict, type Locale } from "@/lib/i18n";
 import { CompareConsole } from "../CompareConsole";
-import { OpenWalletButton } from "../WalletProvider";
+import Link from "next/link";
 import { Check } from "./Check";
 
 const d = (v: string) => ({ "--d": v }) as CSSProperties;
@@ -34,10 +34,12 @@ export function Hero({
             {t.lede}
           </p>
           <div className="ctas rise" style={d(".34s")}>
-            <a className="btn lg" href="#compare">
-              {t.start}
+            <Link className="btn lg" href="/chat">
+              {t.chat}
+            </Link>
+            <a className="btn dark lg" href="#compare">
+              {t.compare}
             </a>
-            <OpenWalletButton className="btn dark lg">{t.getKey}</OpenWalletButton>
           </div>
           <div className="trust rise" style={d(".42s")}>
             {t.trust.map((x) => (

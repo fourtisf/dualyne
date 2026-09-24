@@ -26,6 +26,7 @@ export interface AppContext {
   openrouter: OpenRouter;
   tiers: TierPolicies;
   compareLimiter: SlidingWindowLimiter;
+  chatLimiter: SlidingWindowLimiter;
   alert: Alerter;
   ipHash: (ip: string) => string;
   /** null when RPC_URL is not configured. */

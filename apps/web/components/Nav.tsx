@@ -37,6 +37,9 @@ export function Nav() {
           </Link>
           <ul>
             <li>
+              <Link href="/chat">{t.chat}</Link>
+            </li>
+            <li>
               <a href={h("/#compare")}>{t.compare}</a>
             </li>
             <li>
@@ -79,6 +82,9 @@ export function Nav() {
         </div>
       </header>
       <nav className={menuOpen ? "mnav open" : "mnav"} id="mnav" aria-label={t.mobile}>
+        <Link href="/chat" onClick={close}>
+          {t.chat}
+        </Link>
         <a href={h("/#compare")} onClick={close}>
           {t.compare}
         </a>

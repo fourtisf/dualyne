@@ -589,3 +589,43 @@ td a.mname:hover{text-decoration:underline; text-underline-offset:3px; text-deco
 .pmark.none{background:var(--c)}
 .logos li{display:inline-flex; align-items:center; gap:10px}
 .lmark{width:22px; height:22px; flex:none; background:currentColor; -webkit-mask:var(--m) center/contain no-repeat; mask:var(--m) center/contain no-repeat}
+
+/* Chat page: one AI at a time, beginner friendly */
+.chat{max-width:860px; margin:0 auto}
+.chat-head{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:22px}
+.chat-head h1{font:600 clamp(30px,4vw,42px)/1.1 var(--sans); letter-spacing:-.035em; margin:0 0 8px}
+.chat-head p{margin:0; color:var(--muted); font-size:15.5px}
+.chat-models{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px}
+.cm{display:inline-flex; align-items:center; gap:8px; height:40px; padding:0 12px 0 8px; border-radius:11px; border:1px solid var(--line2); background:rgba(255,255,255,.02); color:var(--text); font:500 14px/1 var(--sans); cursor:pointer; transition:border-color .15s, background .15s}
+.cm:hover:not(:disabled){border-color:var(--line3); background:rgba(255,255,255,.05)}
+.cm.on{border-color:rgba(139,92,246,.75); background:rgba(139,92,246,.12); box-shadow:0 0 0 1px rgba(139,92,246,.4) inset}
+.cm:disabled{cursor:not-allowed; opacity:.55}
+.cm .tag{font:500 10.5px/1 var(--mono); letter-spacing:.03em; padding:3px 6px; border-radius:6px; color:var(--muted); background:rgba(255,255,255,.06)}
+.cm .tag.free{color:#86EFAC; background:rgba(34,197,94,.1)}
+.chat-box{border-radius:18px; border:1px solid var(--line2); background:linear-gradient(180deg,#101017,#0A0A0E); box-shadow:0 40px 90px -40px rgba(0,0,0,.9)}
+.chat-log{height:clamp(300px, calc(100vh - 470px), 640px); height:clamp(300px, calc(100dvh - 470px), 640px); overflow-y:auto; overscroll-behavior:contain; padding:24px 22px 8px}
+.chat-empty{display:flex; flex-direction:column; align-items:center; text-align:center; gap:14px; padding:40px 0 24px}
+.chat-empty h2{font:600 22px/1.2 var(--sans); letter-spacing:-.02em; margin:4px 0 6px}
+.chat-sugg{display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; max-width:620px}
+.chat-sugg .chip{height:auto; min-height:44px; padding:10px 14px; text-align:left; line-height:1.35; font-size:13.5px}
+.msg-user{display:flex; justify-content:flex-end; margin:0 0 18px}
+.msg-user .bubble{max-width:78%; padding:11px 15px; border-radius:16px 16px 4px 16px; background:rgba(139,92,246,.18); border:1px solid rgba(139,92,246,.3); white-space:pre-wrap; overflow-wrap:anywhere; font-size:15px; line-height:1.55}
+.msg-ai{display:flex; gap:12px; margin:0 0 22px}
+.msg-ai .ai-body{min-width:0; flex:1}
+.msg-ai .ai-name{font:600 13px/1 var(--sans); color:var(--muted); margin:5px 0 8px}
+.msg-ai .lb{padding:0; font-size:15px}
+.typing{display:flex; gap:5px; padding:8px 0}
+.typing i{width:7px; height:7px; border-radius:50%; background:var(--muted); animation:typing 1.2s infinite ease-in-out}
+.typing i:nth-child(2){animation-delay:.15s}
+.typing i:nth-child(3){animation-delay:.3s}
+@keyframes typing{0%,80%,100%{opacity:.25; transform:translateY(0)}40%{opacity:1; transform:translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.typing i{animation:none; opacity:.6}}
+.chat-err{margin:0 22px 10px; padding:10px 14px; border-radius:10px; border:1px solid rgba(248,113,113,.35); background:rgba(248,113,113,.08); color:#FCA5A5; font-size:13.5px}
+.chat-input{display:flex; gap:10px; align-items:flex-end; margin:0 14px; padding:10px; border-radius:14px; border:1px solid var(--line2); background:rgba(255,255,255,.03)}
+.chat-input:focus-within{border-color:rgba(139,92,246,.6)}
+.chat-input textarea{flex:1; min-height:44px; max-height:200px; resize:none; field-sizing:content; border:0; outline:0; background:transparent; color:var(--text); font:400 15.5px/1.5 var(--sans); padding:10px 6px}
+.chat-input textarea::placeholder{color:var(--faint)}
+.chat-input .btn{height:44px; flex:none}
+.chat-foot{display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px 16px; padding:10px 18px 14px; color:var(--faint); font-size:12px}
+@media (max-width:640px){.chat-sugg{grid-template-columns:1fr}.chat-log{padding:18px 14px 6px}.msg-user .bubble{max-width:88%}.chat-foot span:first-child{display:none}}
+@media (max-width:640px){.chat-models{flex-wrap:nowrap; overflow-x:auto; margin:0 -16px 14px; padding:0 16px 4px; scrollbar-width:none}.chat-models::-webkit-scrollbar{display:none}.cm{flex:none}.chat-head{align-items:flex-start}}
