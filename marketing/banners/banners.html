@@ -1,331 +1,1391 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<title>Dualyne banners</title>
-<!--
+  <head>
+    <meta charset="utf-8" />
+    <title>Dualyne banners</title>
+    <!--
   Social banners in the website's look (apps/web/app/globals.css): same colors, Geist, grid and glow.
   Render to PNG: node marketing/banners/render.mjs  (1200×675 at 2×, and the X header 1500×500 at 2×)
 -->
-<style>
-@font-face{font-family:Geist; src:url(../../apps/web/node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2) format("woff2"); font-weight:100 900}
-@font-face{font-family:"Geist Mono"; src:url(../../apps/web/node_modules/geist/dist/fonts/geist-mono/GeistMono-Variable.woff2) format("woff2"); font-weight:100 900}
-:root{
-  --bg:#050507; --s0:#0A0A0E; --s1:#0F0F14; --s2:#15151C;
-  --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.12); --line3:rgba(255,255,255,.2);
-  --text:#EDEDEF; --muted:#8A8A94; --faint:#7A7A84;
-  --violet:#8B5CF6; --blue:#60A5FA; --cyan:#67E8F9; --pink:#F472B6; --amber:#FBBF24; --ok:#4ADE80;
-  --a:#67E8F9; --b:#A78BFA;
-  --sans:Geist, system-ui, sans-serif; --mono:"Geist Mono", ui-monospace, monospace;
-}
-*{box-sizing:border-box}
-body{margin:0; background:#222; display:flex; flex-direction:column; gap:40px; padding:40px; align-items:flex-start; -webkit-font-smoothing:antialiased}
+    <style>
+      @font-face {
+        font-family: Geist;
+        src: url(../../apps/web/node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2) format("woff2");
+        font-weight: 100 900;
+      }
+      @font-face {
+        font-family: "Geist Mono";
+        src: url(../../apps/web/node_modules/geist/dist/fonts/geist-mono/GeistMono-Variable.woff2)
+          format("woff2");
+        font-weight: 100 900;
+      }
+      :root {
+        --bg: #050507;
+        --s0: #0a0a0e;
+        --s1: #0f0f14;
+        --s2: #15151c;
+        --line: rgba(255, 255, 255, 0.07);
+        --line2: rgba(255, 255, 255, 0.12);
+        --line3: rgba(255, 255, 255, 0.2);
+        --text: #ededef;
+        --muted: #8a8a94;
+        --faint: #7a7a84;
+        --violet: #8b5cf6;
+        --blue: #60a5fa;
+        --cyan: #67e8f9;
+        --pink: #f472b6;
+        --amber: #fbbf24;
+        --ok: #4ade80;
+        --a: #67e8f9;
+        --b: #a78bfa;
+        --sans: Geist, system-ui, sans-serif;
+        --mono: "Geist Mono", ui-monospace, monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #222;
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+        padding: 40px;
+        align-items: flex-start;
+        -webkit-font-smoothing: antialiased;
+      }
 
-/* ---------- frame ---------- */
-.banner{position:relative; width:1200px; height:675px; overflow:hidden; background:var(--bg); color:var(--text); font:400 16px/1.5 var(--sans); isolation:isolate}
-.banner.header{width:1500px; height:500px}
-.banner::before{content:""; position:absolute; inset:0; z-index:-2;
-  background:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px) 0 0/100% 56px, linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px) 0 0/56px 100%;
-  -webkit-mask:radial-gradient(60% 65% at var(--gx,50%) var(--gy,20%),#000,transparent 80%)}
-.glow{position:absolute; z-index:-1; pointer-events:none; width:1000px; height:640px; border-radius:50%;
-  background:radial-gradient(closest-side, rgba(139,92,246,.30), rgba(96,165,250,.09) 55%, transparent)}
-.glow.pink{background:radial-gradient(closest-side, rgba(244,114,182,.16), transparent)}
-.glow.cyan{background:radial-gradient(closest-side, rgba(103,232,249,.14), transparent)}
-.brand{position:absolute; left:56px; top:44px; display:flex; align-items:center; gap:11px; font:500 21px/1 var(--mono); letter-spacing:-.01em}
-.brand svg{width:28px; height:28px}
-.site{position:absolute; right:56px; top:47px; font:500 15px/1 var(--mono); color:var(--muted); display:flex; align-items:center; gap:9px}
-.site .dot{width:7px; height:7px; border-radius:50%; background:var(--ok); box-shadow:0 0 10px var(--ok)}
-.kick{font:500 13px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:10px}
-.kick i{font-style:normal; color:var(--text); padding:6px 9px; border-radius:7px; border:1px solid var(--line2); background:rgba(255,255,255,.03)}
-h1,h2{margin:0; font-weight:600; letter-spacing:-.05em; line-height:1.02}
-h1{font-size:78px}
-h2{font-size:60px}
-.grad{background:linear-gradient(180deg,#FFFFFF 40%,rgba(255,255,255,.62)); -webkit-background-clip:text; background-clip:text; color:transparent}
-.hue{background:linear-gradient(90deg,var(--cyan),var(--b) 55%,var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent}
-.lede{font-size:20px; line-height:1.5; color:var(--muted); margin:0}
-.badge{display:inline-flex; align-items:center; gap:10px; height:36px; padding:0 16px 0 5px; border-radius:999px; border:1px solid var(--line2); background:rgba(255,255,255,.03); font-size:15px; color:var(--muted)}
-.badge b{height:27px; display:inline-flex; align-items:center; padding:0 11px; border-radius:999px; font-weight:500; font-size:13.5px; color:#fff; background:linear-gradient(90deg,var(--violet),var(--blue))}
-.btn{height:50px; padding:0 24px; border-radius:13px; display:inline-flex; align-items:center; gap:9px; font:500 17px/1 var(--sans); letter-spacing:-.01em; color:#08080A; background:linear-gradient(180deg,#FFFFFF,#D9D9DF); box-shadow:0 0 0 1px rgba(255,255,255,.25) inset, 0 8px 26px -8px rgba(255,255,255,.3)}
-.btn.dark{color:var(--text); background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03)); box-shadow:0 0 0 1px var(--line2) inset}
-.card{position:relative; border-radius:18px; background:linear-gradient(180deg,#101017,#0A0A0E); border:1px solid var(--line2); box-shadow:0 0 0 1px rgba(0,0,0,.6), 0 50px 100px -30px rgba(0,0,0,.9), 0 1px 0 rgba(255,255,255,.08) inset; overflow:hidden}
-.card::before{content:""; position:absolute; top:0; left:12%; width:46%; height:1px; background:linear-gradient(90deg,transparent,var(--cyan),var(--violet),transparent)}
-.bar{display:flex; align-items:center; gap:12px; height:48px; padding:0 18px; border-bottom:1px solid var(--line); font-size:14px; color:var(--muted)}
-.bar .t{color:var(--text); font-weight:500}
-.lights{display:flex; gap:7px}
-.lights span{width:10px; height:10px; border-radius:50%; background:#2A2A33}
-.tag{font:500 12px/1 var(--mono); padding:6px 8px; border-radius:6px; color:var(--amber); background:rgba(251,191,36,.08); border:1px solid rgba(251,191,36,.18)}
-.live{margin-left:auto; display:flex; align-items:center; gap:8px; font:500 12.5px/1 var(--mono)}
-.live .dot{width:7px; height:7px; border-radius:50%; background:var(--ok); box-shadow:0 0 10px var(--ok)}
-.list{list-style:none; margin:0; padding:0; display:grid; gap:15px}
-.list li{display:flex; gap:13px; align-items:flex-start; font-size:18.5px; color:#C9C9D1; line-height:1.4}
-.list li::before{content:""; flex:none; width:22px; height:22px; margin-top:1px; border-radius:7px; background:
-  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='%2367E8F9' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat, rgba(103,232,249,.08); border:1px solid rgba(103,232,249,.22)}
-.list li b{color:var(--text); font-weight:500}
-.chip{display:inline-flex; align-items:center; gap:8px; height:34px; padding:0 13px; border-radius:10px; border:1px solid var(--line2); background:rgba(255,255,255,.03); font:500 14px/1 var(--sans); color:#C9C9D1; white-space:nowrap}
-.chip img{width:16px; height:16px}
-img[src$="/anthropic.svg"]{filter:invert(1) sepia(.5) saturate(2) hue-rotate(-10deg) brightness(.95)}
-.chip.on{border-color:rgba(103,232,249,.45); background:rgba(103,232,249,.08); color:#fff}
-.mono{font-family:var(--mono)}
-.foot{position:absolute; left:56px; right:56px; bottom:40px; display:flex; align-items:center; justify-content:space-between; font:500 14px/1 var(--mono); color:var(--faint)}
+      /* ---------- frame ---------- */
+      .banner {
+        position: relative;
+        width: 1200px;
+        height: 675px;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--text);
+        font: 400 16px/1.5 var(--sans);
+        isolation: isolate;
+      }
+      .banner.header {
+        width: 1500px;
+        height: 500px;
+      }
+      .banner::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0/100% 56px,
+          linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0/56px 100%;
+        -webkit-mask: radial-gradient(60% 65% at var(--gx, 50%) var(--gy, 20%), #000, transparent 80%);
+      }
+      .glow {
+        position: absolute;
+        z-index: -1;
+        pointer-events: none;
+        width: 1000px;
+        height: 640px;
+        border-radius: 50%;
+        background: radial-gradient(
+          closest-side,
+          rgba(139, 92, 246, 0.3),
+          rgba(96, 165, 250, 0.09) 55%,
+          transparent
+        );
+      }
+      .glow.pink {
+        background: radial-gradient(closest-side, rgba(244, 114, 182, 0.16), transparent);
+      }
+      .glow.cyan {
+        background: radial-gradient(closest-side, rgba(103, 232, 249, 0.14), transparent);
+      }
+      .brand {
+        position: absolute;
+        left: 56px;
+        top: 44px;
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        font: 500 21px/1 var(--mono);
+        letter-spacing: -0.01em;
+      }
+      .brand svg {
+        width: 28px;
+        height: 28px;
+      }
+      .site {
+        position: absolute;
+        right: 56px;
+        top: 47px;
+        font: 500 15px/1 var(--mono);
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+      .site .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--ok);
+        box-shadow: 0 0 10px var(--ok);
+      }
+      .kick {
+        font: 500 13px/1 var(--mono);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .kick i {
+        font-style: normal;
+        color: var(--text);
+        padding: 6px 9px;
+        border-radius: 7px;
+        border: 1px solid var(--line2);
+        background: rgba(255, 255, 255, 0.03);
+      }
+      h1,
+      h2 {
+        margin: 0;
+        font-weight: 600;
+        letter-spacing: -0.05em;
+        line-height: 1.02;
+      }
+      h1 {
+        font-size: 78px;
+      }
+      h2 {
+        font-size: 60px;
+      }
+      .grad {
+        background: linear-gradient(180deg, #ffffff 40%, rgba(255, 255, 255, 0.62));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .hue {
+        background: linear-gradient(90deg, var(--cyan), var(--b) 55%, var(--pink));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .lede {
+        font-size: 20px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        height: 36px;
+        padding: 0 16px 0 5px;
+        border-radius: 999px;
+        border: 1px solid var(--line2);
+        background: rgba(255, 255, 255, 0.03);
+        font-size: 15px;
+        color: var(--muted);
+      }
+      .badge b {
+        height: 27px;
+        display: inline-flex;
+        align-items: center;
+        padding: 0 11px;
+        border-radius: 999px;
+        font-weight: 500;
+        font-size: 13.5px;
+        color: #fff;
+        background: linear-gradient(90deg, var(--violet), var(--blue));
+      }
+      .btn {
+        height: 50px;
+        padding: 0 24px;
+        border-radius: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        font: 500 17px/1 var(--sans);
+        letter-spacing: -0.01em;
+        color: #08080a;
+        background: linear-gradient(180deg, #ffffff, #d9d9df);
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.25) inset,
+          0 8px 26px -8px rgba(255, 255, 255, 0.3);
+      }
+      .btn.dark {
+        color: var(--text);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+        box-shadow: 0 0 0 1px var(--line2) inset;
+      }
+      .card {
+        position: relative;
+        border-radius: 18px;
+        background: linear-gradient(180deg, #101017, #0a0a0e);
+        border: 1px solid var(--line2);
+        box-shadow:
+          0 0 0 1px rgba(0, 0, 0, 0.6),
+          0 50px 100px -30px rgba(0, 0, 0, 0.9),
+          0 1px 0 rgba(255, 255, 255, 0.08) inset;
+        overflow: hidden;
+      }
+      .card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 12%;
+        width: 46%;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--cyan), var(--violet), transparent);
+      }
+      .bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: 48px;
+        padding: 0 18px;
+        border-bottom: 1px solid var(--line);
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .bar .t {
+        color: var(--text);
+        font-weight: 500;
+      }
+      .lights {
+        display: flex;
+        gap: 7px;
+      }
+      .lights span {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #2a2a33;
+      }
+      .tag {
+        font: 500 12px/1 var(--mono);
+        padding: 6px 8px;
+        border-radius: 6px;
+        color: var(--amber);
+        background: rgba(251, 191, 36, 0.08);
+        border: 1px solid rgba(251, 191, 36, 0.18);
+      }
+      .live {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font: 500 12.5px/1 var(--mono);
+      }
+      .live .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--ok);
+        box-shadow: 0 0 10px var(--ok);
+      }
+      .list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 15px;
+      }
+      .list li {
+        display: flex;
+        gap: 13px;
+        align-items: flex-start;
+        font-size: 18.5px;
+        color: #c9c9d1;
+        line-height: 1.4;
+      }
+      .list li::before {
+        content: "";
+        flex: none;
+        width: 22px;
+        height: 22px;
+        margin-top: 1px;
+        border-radius: 7px;
+        background:
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='%2367E8F9' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+            center/14px no-repeat,
+          rgba(103, 232, 249, 0.08);
+        border: 1px solid rgba(103, 232, 249, 0.22);
+      }
+      .list li b {
+        color: var(--text);
+        font-weight: 500;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 34px;
+        padding: 0 13px;
+        border-radius: 10px;
+        border: 1px solid var(--line2);
+        background: rgba(255, 255, 255, 0.03);
+        font: 500 14px/1 var(--sans);
+        color: #c9c9d1;
+        white-space: nowrap;
+      }
+      .chip img {
+        width: 16px;
+        height: 16px;
+      }
+      img[src$="/anthropic.svg"] {
+        filter: invert(1) sepia(0.5) saturate(2) hue-rotate(-10deg) brightness(0.95);
+      }
+      .chip.on {
+        border-color: rgba(103, 232, 249, 0.45);
+        background: rgba(103, 232, 249, 0.08);
+        color: #fff;
+      }
+      .mono {
+        font-family: var(--mono);
+      }
+      .foot {
+        position: absolute;
+        left: 56px;
+        right: 56px;
+        bottom: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font: 500 14px/1 var(--mono);
+        color: var(--faint);
+      }
 
-/* ---------- 01 intro ---------- */
-#intro{--gy:28%}
-#intro .glow{left:100px; top:-330px}
-#intro .center{position:absolute; left:0; right:0; top:118px; text-align:center; display:flex; flex-direction:column; align-items:center}
-#intro h1{margin:26px 0 22px}
-#intro .lede{max-width:760px}
-#intro .ctas{display:flex; gap:12px; margin-top:30px}
-#intro .logos{position:absolute; left:0; right:0; bottom:44px; display:flex; flex-direction:column; align-items:center; gap:18px}
-#intro .logos p{margin:0; font:500 12.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--faint)}
-#intro .logos div{display:flex; gap:44px; align-items:center}
-#intro .logos img{height:30px; opacity:.72; filter:invert(1)}
+      /* ---------- 01 intro ---------- */
+      #intro {
+        --gy: 28%;
+      }
+      #intro .glow {
+        left: 100px;
+        top: -330px;
+      }
+      #intro .center {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 118px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      #intro h1 {
+        margin: 26px 0 22px;
+      }
+      #intro .lede {
+        max-width: 760px;
+      }
+      #intro .ctas {
+        display: flex;
+        gap: 12px;
+        margin-top: 30px;
+      }
+      #intro .logos {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 44px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+      }
+      #intro .logos p {
+        margin: 0;
+        font: 500 12.5px/1 var(--mono);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--faint);
+      }
+      #intro .logos div {
+        display: flex;
+        gap: 44px;
+        align-items: center;
+      }
+      #intro .logos img {
+        height: 30px;
+        opacity: 0.72;
+        filter: invert(1);
+      }
 
-/* ---------- 02 features ---------- */
-#features{--gy:0%}
-#features .glow{left:100px; top:-420px}
-#features .head{position:absolute; left:0; right:0; top:112px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:18px}
-#features .grid{position:absolute; left:56px; right:56px; top:270px; display:grid; grid-template-columns:repeat(3,1fr); gap:16px}
-.tile{position:relative; border-radius:16px; border:1px solid var(--line2); background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01)); padding:20px 22px 22px; min-height:162px; overflow:hidden}
-.tile .ic{width:38px; height:38px; border-radius:11px; display:grid; place-items:center; margin-bottom:12px; border:1px solid var(--line2); background:rgba(255,255,255,.04)}
-.tile .ic svg{width:20px; height:20px}
-.tile h3{margin:0 0 6px; font-size:18.5px; font-weight:600; letter-spacing:-.02em}
-.tile p{margin:0; font-size:14.5px; line-height:1.45; color:var(--muted)}
+      /* ---------- 02 features ---------- */
+      #features {
+        --gy: 0%;
+      }
+      #features .glow {
+        left: 100px;
+        top: -420px;
+      }
+      #features .head {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 112px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+      }
+      #features .grid {
+        position: absolute;
+        left: 56px;
+        right: 56px;
+        top: 270px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      .tile {
+        position: relative;
+        border-radius: 16px;
+        border: 1px solid var(--line2);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
+        padding: 20px 22px 22px;
+        min-height: 162px;
+        overflow: hidden;
+      }
+      .tile .ic {
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
+        display: grid;
+        place-items: center;
+        margin-bottom: 12px;
+        border: 1px solid var(--line2);
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .tile .ic svg {
+        width: 20px;
+        height: 20px;
+      }
+      .tile h3 {
+        margin: 0 0 6px;
+        font-size: 18.5px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      .tile p {
+        margin: 0;
+        font-size: 14.5px;
+        line-height: 1.45;
+        color: var(--muted);
+      }
 
-/* ---------- 03 chat ---------- */
-#chat{--gx:78%; --gy:40%}
-#chat .glow{left:520px; top:-180px}
-#chat .left{position:absolute; left:56px; top:150px; width:470px; display:flex; flex-direction:column; gap:24px}
-#chat .ui{position:absolute; left:590px; top:112px; width:560px; height:520px}
-.chips{display:flex; gap:8px; padding:14px 18px; border-bottom:1px solid var(--line)}
-.msgs{padding:22px 22px 0; display:flex; flex-direction:column; gap:16px}
-.me{align-self:flex-end; max-width:78%; padding:12px 16px; border-radius:16px 16px 5px 16px; background:linear-gradient(180deg,#26263A,#1E1E2E); border:1px solid var(--line2); font-size:15.5px}
-.ai{display:flex; gap:12px}
-.ai .av{flex:none; width:32px; height:32px; border-radius:10px; display:grid; place-items:center; background:rgba(212,162,127,.12); border:1px solid rgba(212,162,127,.3)}
-.ai .av img{width:17px}
-.ai .who{font:500 13px/1 var(--mono); color:var(--muted); margin:3px 0 8px}
-.ai p{margin:0 0 9px; font-size:15.5px; line-height:1.55; color:#D6D6DD}
-.ai .acts{display:flex; gap:8px; margin-top:4px}
-.ai .acts span{font:500 12px/1 var(--mono); color:var(--muted); padding:7px 9px; border-radius:8px; border:1px solid var(--line)}
-.composer{position:absolute; left:18px; right:18px; bottom:18px; height:54px; border-radius:14px; border:1px solid var(--line2); background:#0C0C11; display:flex; align-items:center; padding:0 8px 0 18px; color:var(--faint); font-size:15.5px}
-.composer .send{margin-left:auto; width:38px; height:38px; border-radius:10px; background:linear-gradient(180deg,#fff,#D9D9DF); display:grid; place-items:center}
-.quota{position:absolute; right:22px; bottom:84px; font:500 12px/1 var(--mono); color:var(--faint)}
+      /* ---------- 03 chat ---------- */
+      #chat {
+        --gx: 78%;
+        --gy: 40%;
+      }
+      #chat .glow {
+        left: 520px;
+        top: -180px;
+      }
+      #chat .left {
+        position: absolute;
+        left: 56px;
+        top: 150px;
+        width: 470px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+      #chat .ui {
+        position: absolute;
+        left: 590px;
+        top: 112px;
+        width: 560px;
+        height: 520px;
+      }
+      .chips {
+        display: flex;
+        gap: 8px;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line);
+      }
+      .msgs {
+        padding: 22px 22px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .me {
+        align-self: flex-end;
+        max-width: 78%;
+        padding: 12px 16px;
+        border-radius: 16px 16px 5px 16px;
+        background: linear-gradient(180deg, #26263a, #1e1e2e);
+        border: 1px solid var(--line2);
+        font-size: 15.5px;
+      }
+      .ai {
+        display: flex;
+        gap: 12px;
+      }
+      .ai .av {
+        flex: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        background: rgba(212, 162, 127, 0.12);
+        border: 1px solid rgba(212, 162, 127, 0.3);
+      }
+      .ai .av img {
+        width: 17px;
+      }
+      .ai .who {
+        font: 500 13px/1 var(--mono);
+        color: var(--muted);
+        margin: 3px 0 8px;
+      }
+      .ai p {
+        margin: 0 0 9px;
+        font-size: 15.5px;
+        line-height: 1.55;
+        color: #d6d6dd;
+      }
+      .ai .acts {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+      .ai .acts span {
+        font: 500 12px/1 var(--mono);
+        color: var(--muted);
+        padding: 7px 9px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+      }
+      .composer {
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        bottom: 18px;
+        height: 54px;
+        border-radius: 14px;
+        border: 1px solid var(--line2);
+        background: #0c0c11;
+        display: flex;
+        align-items: center;
+        padding: 0 8px 0 18px;
+        color: var(--faint);
+        font-size: 15.5px;
+      }
+      .composer .send {
+        margin-left: auto;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: linear-gradient(180deg, #fff, #d9d9df);
+        display: grid;
+        place-items: center;
+      }
+      .quota {
+        position: absolute;
+        right: 22px;
+        bottom: 84px;
+        font: 500 12px/1 var(--mono);
+        color: var(--faint);
+      }
 
-/* ---------- 04 compare ---------- */
-#compare{--gy:0%}
-#compare .glow{left:100px; top:-440px}
-#compare .head{position:absolute; left:0; right:0; top:128px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:16px}
-#compare .ui{position:absolute; left:80px; right:80px; top:326px}
-.prompt{display:flex; align-items:center; gap:12px; padding:14px 18px; border-bottom:1px solid var(--line); font-size:15.5px}
-.prompt .q{color:var(--faint); font:500 12.5px/1 var(--mono)}
-.cols{display:grid; grid-template-columns:1fr 1fr}
-.col{padding:18px 22px; border-right:1px solid var(--line)}
-.col:last-child{border-right:0}
-.col .top{display:flex; align-items:center; gap:10px; margin-bottom:12px}
-.col .lab{width:24px; height:24px; border-radius:7px; display:grid; place-items:center; font:600 13px/1 var(--mono); color:#08080A}
-.col.a .lab{background:var(--a)} .col.b .lab{background:var(--b)}
-.col .nm{font-weight:500; font-size:15.5px}
-.col .nm img{width:15px; vertical-align:-2px; margin-right:6px}
-.col p{margin:0; font-size:16px; line-height:1.55; color:#D6D6DD}
-.metrics{display:flex; gap:16px; margin-top:14px; font:500 12px/1 var(--mono); color:var(--muted)}
-.metrics b{color:var(--text); font-weight:500}
-.vote{display:flex; align-items:center; gap:10px; padding:14px 22px; border-top:1px solid var(--line); font-size:14px; color:var(--muted)}
-.vote .q{margin-right:6px; color:var(--text); font-weight:500}
-.vote .note{margin-left:auto; font:500 12.5px/1 var(--mono); color:var(--faint)}
-.vote span{height:36px; padding:0 16px; border-radius:10px; display:inline-flex; align-items:center; gap:8px; font:500 14px/1 var(--sans); border:1px solid var(--line2); background:#121219}
-.vote span.win{border-color:rgba(167,139,250,.6); background:rgba(167,139,250,.14); color:#fff}
+      /* ---------- 04 compare ---------- */
+      #compare {
+        --gy: 0%;
+      }
+      #compare .glow {
+        left: 100px;
+        top: -440px;
+      }
+      #compare .head {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 128px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+      #compare .ui {
+        position: absolute;
+        left: 80px;
+        right: 80px;
+        top: 326px;
+      }
+      .prompt {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line);
+        font-size: 15.5px;
+      }
+      .prompt .q {
+        color: var(--faint);
+        font: 500 12.5px/1 var(--mono);
+      }
+      .cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      .col {
+        padding: 18px 22px;
+        border-right: 1px solid var(--line);
+      }
+      .col:last-child {
+        border-right: 0;
+      }
+      .col .top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .col .lab {
+        width: 24px;
+        height: 24px;
+        border-radius: 7px;
+        display: grid;
+        place-items: center;
+        font: 600 13px/1 var(--mono);
+        color: #08080a;
+      }
+      .col.a .lab {
+        background: var(--a);
+      }
+      .col.b .lab {
+        background: var(--b);
+      }
+      .col .nm {
+        font-weight: 500;
+        font-size: 15.5px;
+      }
+      .col .nm img {
+        width: 15px;
+        vertical-align: -2px;
+        margin-right: 6px;
+      }
+      .col p {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.55;
+        color: #d6d6dd;
+      }
+      .metrics {
+        display: flex;
+        gap: 16px;
+        margin-top: 14px;
+        font: 500 12px/1 var(--mono);
+        color: var(--muted);
+      }
+      .metrics b {
+        color: var(--text);
+        font-weight: 500;
+      }
+      .vote {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 22px;
+        border-top: 1px solid var(--line);
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .vote .q {
+        margin-right: 6px;
+        color: var(--text);
+        font-weight: 500;
+      }
+      .vote .note {
+        margin-left: auto;
+        font: 500 12.5px/1 var(--mono);
+        color: var(--faint);
+      }
+      .vote span {
+        height: 36px;
+        padding: 0 16px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font: 500 14px/1 var(--sans);
+        border: 1px solid var(--line2);
+        background: #121219;
+      }
+      .vote span.win {
+        border-color: rgba(167, 139, 250, 0.6);
+        background: rgba(167, 139, 250, 0.14);
+        color: #fff;
+      }
 
-/* ---------- 05 api ---------- */
-#api{--gx:75%; --gy:45%}
-#api .glow{left:560px; top:-160px}
-#api .left{position:absolute; left:56px; top:168px; width:470px; display:flex; flex-direction:column; gap:24px}
-#api .ui{position:absolute; left:580px; top:128px; width:570px}
-.tabs{display:flex; gap:4px; margin-left:8px}
-.tabs span{font:500 12.5px/1 var(--mono); padding:7px 10px; border-radius:7px; color:var(--muted)}
-.tabs span.on{color:var(--text); background:rgba(255,255,255,.06)}
-pre{margin:0; padding:22px 24px; font:400 15px/1.75 var(--mono); color:#C9C9D1; white-space:pre}
-.k{color:#C4B5FD} .s{color:#86EFAC} .c{color:#6B6B76} .f{color:#67E8F9} .n{color:#FBBF24}
-.ids{display:flex; flex-wrap:wrap; gap:8px; padding:16px 22px; border-top:1px solid var(--line)}
-.ids span{font:500 12.5px/1 var(--mono); padding:7px 10px; border-radius:8px; border:1px solid var(--line2); color:#C9C9D1}
-.ids span.on{color:#08080A; background:var(--cyan); border-color:var(--cyan)}
+      /* ---------- 05 api ---------- */
+      #api {
+        --gx: 75%;
+        --gy: 45%;
+      }
+      #api .glow {
+        left: 560px;
+        top: -160px;
+      }
+      #api .left {
+        position: absolute;
+        left: 56px;
+        top: 168px;
+        width: 470px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+      #api .ui {
+        position: absolute;
+        left: 580px;
+        top: 128px;
+        width: 570px;
+      }
+      .tabs {
+        display: flex;
+        gap: 4px;
+        margin-left: 8px;
+      }
+      .tabs span {
+        font: 500 12.5px/1 var(--mono);
+        padding: 7px 10px;
+        border-radius: 7px;
+        color: var(--muted);
+      }
+      .tabs span.on {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.06);
+      }
+      pre {
+        margin: 0;
+        padding: 22px 24px;
+        font: 400 15px/1.75 var(--mono);
+        color: #c9c9d1;
+        white-space: pre;
+      }
+      .k {
+        color: #c4b5fd;
+      }
+      .s {
+        color: #86efac;
+      }
+      .c {
+        color: #6b6b76;
+      }
+      .f {
+        color: #67e8f9;
+      }
+      .n {
+        color: #fbbf24;
+      }
+      .ids {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 16px 22px;
+        border-top: 1px solid var(--line);
+      }
+      .ids span {
+        font: 500 12.5px/1 var(--mono);
+        padding: 7px 10px;
+        border-radius: 8px;
+        border: 1px solid var(--line2);
+        color: #c9c9d1;
+      }
+      .ids span.on {
+        color: #08080a;
+        background: var(--cyan);
+        border-color: var(--cyan);
+      }
 
-/* ---------- 06 telegram ---------- */
-#telegram{--gx:72%; --gy:50%}
-#telegram .glow{left:520px; top:-150px}
-#telegram .glow.cyan{left:700px; top:200px; width:700px; height:600px}
-#telegram .left{position:absolute; left:56px; top:140px; width:520px; display:flex; flex-direction:column; gap:22px}
-.handle{display:inline-flex; align-items:center; gap:10px; align-self:flex-start; height:40px; padding:0 16px 0 6px; border-radius:999px; background:rgba(42,171,238,.1); border:1px solid rgba(42,171,238,.35); font:500 16px/1 var(--mono); color:#BFE6FB}
-.handle i{width:30px; height:30px; border-radius:50%; background:#2AABEE; display:grid; place-items:center}
-.phone{position:absolute; left:700px; top:150px; width:390px; height:640px; border-radius:48px; padding:12px; background:linear-gradient(180deg,#1C1C24,#101015); border:1px solid var(--line3); box-shadow:0 60px 120px -30px rgba(0,0,0,.95), 0 0 0 1px rgba(0,0,0,.6)}
-.screen{position:relative; height:100%; border-radius:37px; overflow:hidden; background:#0E1621}
-.tg-top{height:74px; padding:24px 18px 0; display:flex; align-items:center; gap:12px; background:#17212B; border-bottom:1px solid rgba(0,0,0,.4)}
-.tg-top .pic{width:38px; height:38px; border-radius:50%; background:#050507; display:grid; place-items:center; border:1px solid var(--line2)}
-.tg-top .pic svg{width:22px}
-.tg-top b{display:block; font-size:15.5px; font-weight:600}
-.tg-top small{font-size:12.5px; color:#7F91A4}
-.tg-body{padding:14px 12px; display:flex; flex-direction:column; gap:8px}
-.tg-me{align-self:flex-end; max-width:80%; padding:9px 12px; border-radius:15px 15px 4px 15px; background:#2B5278; font-size:14.5px; line-height:1.4}
-.tg-bot{max-width:90%; padding:10px 12px 8px; border-radius:15px 15px 15px 4px; background:#182533; font-size:14px; line-height:1.45; color:#E4E8EC}
-.tg-bot b{font-weight:600}
-.tg-bot .ft{display:block; margin-top:8px; font-style:italic; color:#7F91A4; font-size:12.5px}
-.tg-btns{display:grid; grid-template-columns:1fr 1fr; gap:5px; max-width:90%}
-.tg-btns span{height:36px; border-radius:9px; background:rgba(24,37,51,.9); display:grid; place-items:center; font-size:13px; font-weight:500; color:#E4E8EC}
-.tg-in{position:absolute; left:10px; right:10px; bottom:12px; height:46px; border-radius:23px; background:#17212B; display:flex; align-items:center; padding:0 16px; color:#6D7F92; font-size:14px}
+      /* ---------- 06 telegram ---------- */
+      #telegram {
+        --gx: 72%;
+        --gy: 50%;
+      }
+      #telegram .glow {
+        left: 520px;
+        top: -150px;
+      }
+      #telegram .glow.cyan {
+        left: 700px;
+        top: 200px;
+        width: 700px;
+        height: 600px;
+      }
+      #telegram .left {
+        position: absolute;
+        left: 56px;
+        top: 140px;
+        width: 520px;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+      }
+      .handle {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        align-self: flex-start;
+        height: 40px;
+        padding: 0 16px 0 6px;
+        border-radius: 999px;
+        background: rgba(42, 171, 238, 0.1);
+        border: 1px solid rgba(42, 171, 238, 0.35);
+        font: 500 16px/1 var(--mono);
+        color: #bfe6fb;
+      }
+      .handle i {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #2aabee;
+        display: grid;
+        place-items: center;
+      }
+      .phone {
+        position: absolute;
+        left: 700px;
+        top: 150px;
+        width: 390px;
+        height: 640px;
+        border-radius: 48px;
+        padding: 12px;
+        background: linear-gradient(180deg, #1c1c24, #101015);
+        border: 1px solid var(--line3);
+        box-shadow:
+          0 60px 120px -30px rgba(0, 0, 0, 0.95),
+          0 0 0 1px rgba(0, 0, 0, 0.6);
+      }
+      .screen {
+        position: relative;
+        height: 100%;
+        border-radius: 37px;
+        overflow: hidden;
+        background: #0e1621;
+      }
+      .tg-top {
+        height: 74px;
+        padding: 24px 18px 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #17212b;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+      }
+      .tg-top .pic {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #050507;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--line2);
+      }
+      .tg-top .pic svg {
+        width: 22px;
+      }
+      .tg-top b {
+        display: block;
+        font-size: 15.5px;
+        font-weight: 600;
+      }
+      .tg-top small {
+        font-size: 12.5px;
+        color: #7f91a4;
+      }
+      .tg-body {
+        padding: 14px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .tg-me {
+        align-self: flex-end;
+        max-width: 80%;
+        padding: 9px 12px;
+        border-radius: 15px 15px 4px 15px;
+        background: #2b5278;
+        font-size: 14.5px;
+        line-height: 1.4;
+      }
+      .tg-bot {
+        max-width: 90%;
+        padding: 10px 12px 8px;
+        border-radius: 15px 15px 15px 4px;
+        background: #182533;
+        font-size: 14px;
+        line-height: 1.45;
+        color: #e4e8ec;
+      }
+      .tg-bot b {
+        font-weight: 600;
+      }
+      .tg-bot .ft {
+        display: block;
+        margin-top: 8px;
+        font-style: italic;
+        color: #7f91a4;
+        font-size: 12.5px;
+      }
+      .tg-btns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 5px;
+        max-width: 90%;
+      }
+      .tg-btns span {
+        height: 36px;
+        border-radius: 9px;
+        background: rgba(24, 37, 51, 0.9);
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+        font-weight: 500;
+        color: #e4e8ec;
+      }
+      .tg-in {
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        bottom: 12px;
+        height: 46px;
+        border-radius: 23px;
+        background: #17212b;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        color: #6d7f92;
+        font-size: 14px;
+      }
 
-/* ---------- 07 token ---------- */
-#token{--gy:30%}
-#token .glow{left:100px; top:-300px}
-#token .glow.pink{left:600px; top:260px; width:800px}
-#token .head{position:absolute; left:0; right:0; top:112px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:16px}
-#token .tick{font-size:112px; letter-spacing:-.06em; font-weight:700; line-height:.95}
-#token .flow{position:absolute; left:56px; right:56px; top:372px; display:grid; grid-template-columns:1fr 36px 1fr 36px 1fr; align-items:center}
-#token .arrow{display:grid; place-items:center; color:var(--faint)}
-#token .tile{min-height:0; height:auto; padding:22px 24px}
-#token .tile h3{font-size:20px}
-#token .tile p{font-size:15.5px}
-.ca{position:absolute; left:50%; bottom:38px; transform:translateX(-50%); display:flex; align-items:center; gap:12px; height:44px; padding:0 8px 0 16px; border-radius:12px; border:1px solid var(--line2); background:rgba(255,255,255,.03); font:500 14.5px/1 var(--mono); color:var(--muted); white-space:nowrap}
-.ca b{color:var(--text); font-weight:500}
-.ca span{padding:7px 10px; border-radius:8px; background:rgba(255,255,255,.07); color:var(--text); font-size:12.5px}
-.fine{position:absolute; left:56px; bottom:48px; font:500 11.5px/1.4 var(--mono); color:#5E5E68; width:260px}
+      /* ---------- 07 token ---------- */
+      #token {
+        --gy: 30%;
+      }
+      #token .glow {
+        left: 100px;
+        top: -300px;
+      }
+      #token .glow.pink {
+        left: 600px;
+        top: 260px;
+        width: 800px;
+      }
+      #token .head {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 112px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+      #token .tick {
+        font-size: 112px;
+        letter-spacing: -0.06em;
+        font-weight: 700;
+        line-height: 0.95;
+      }
+      #token .flow {
+        position: absolute;
+        left: 56px;
+        right: 56px;
+        top: 372px;
+        display: grid;
+        grid-template-columns: 1fr 36px 1fr 36px 1fr;
+        align-items: center;
+      }
+      #token .arrow {
+        display: grid;
+        place-items: center;
+        color: var(--faint);
+      }
+      #token .tile {
+        min-height: 0;
+        height: auto;
+        padding: 22px 24px;
+      }
+      #token .tile h3 {
+        font-size: 20px;
+      }
+      #token .tile p {
+        font-size: 15.5px;
+      }
+      .ca {
+        position: absolute;
+        left: 50%;
+        bottom: 38px;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: 44px;
+        padding: 0 8px 0 16px;
+        border-radius: 12px;
+        border: 1px solid var(--line2);
+        background: rgba(255, 255, 255, 0.03);
+        font: 500 14.5px/1 var(--mono);
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .ca b {
+        color: var(--text);
+        font-weight: 500;
+      }
+      .ca span {
+        padding: 7px 10px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.07);
+        color: var(--text);
+        font-size: 12.5px;
+      }
+      .fine {
+        position: absolute;
+        left: 56px;
+        bottom: 48px;
+        font: 500 11.5px/1.4 var(--mono);
+        color: #5e5e68;
+        width: 260px;
+      }
 
-/* ---------- X header ---------- */
-#header{--gx:50%; --gy:40%}
-#header .glow{left:250px; top:-300px}
-#header .glow.cyan{left:900px; top:120px; width:700px; height:500px}
-#header .center{position:absolute; left:0; right:0; top:128px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:22px}
-#header h1{font-size:84px}
-#header .row{display:flex; gap:10px}
-</style>
-</head>
-<body>
+      /* ---------- X header ---------- */
+      #header {
+        --gx: 50%;
+        --gy: 40%;
+      }
+      #header .glow {
+        left: 250px;
+        top: -300px;
+      }
+      #header .glow.cyan {
+        left: 900px;
+        top: 120px;
+        width: 700px;
+        height: 500px;
+      }
+      #header .center {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 128px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 22px;
+      }
+      #header h1 {
+        font-size: 84px;
+      }
+      #header .row {
+        display: flex;
+        gap: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- shared bits -->
+    <template id="logo"
+      ><svg viewBox="0 0 100 100" aria-hidden="true">
+        <path
+          d="M18 26 L42 50 L18 74"
+          fill="none"
+          stroke="#EDEDEF"
+          stroke-width="10"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <rect x="52" y="56" width="34" height="9" rx="4.5" fill="#67E8F9" />
+        <rect x="52" y="71" width="24" height="9" rx="4.5" fill="#F472B6" /></svg
+    ></template>
 
-<!-- shared bits -->
-<template id="logo"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M18 26 L42 50 L18 74" fill="none" stroke="#EDEDEF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><rect x="52" y="56" width="34" height="9" rx="4.5" fill="#67E8F9"/><rect x="52" y="71" width="24" height="9" rx="4.5" fill="#F472B6"/></svg></template>
-
-<!-- 01 · Introduction -->
-<section class="banner" id="intro">
-  <div class="glow"></div>
-  <div class="brand" data-logo>dualyne</div>
-  <div class="site"><span class="dot"></span>dualyne.com</div>
-  <div class="center">
-    <span class="badge"><b>New</b>Free AI chat · no signup</span>
-    <h1 class="grad">Every AI model.<br>One prompt away.</h1>
-    <p class="lede">Chat with Claude, GPT, Gemini, Llama, DeepSeek and Mistral in one place.<br>Compare answers side by side, then ship the best one with a single key.</p>
-    <div class="ctas"><span class="btn">Start chatting →</span><span class="btn dark">Compare models</span></div>
-  </div>
-  <div class="logos">
-    <p>One catalog for the models teams actually use</p>
-    <div>
-      <img src="../../apps/web/public/providers/mono/anthropic.svg" alt="">
-      <img src="../../apps/web/public/providers/mono/openai.svg" alt="">
-      <img src="../../apps/web/public/providers/mono/google.svg" alt="">
-      <img src="../../apps/web/public/providers/mono/meta.svg" alt="">
-      <img src="../../apps/web/public/providers/mono/deepseek.svg" alt="">
-      <img src="../../apps/web/public/providers/mono/mistral.svg" alt="">
-    </div>
-  </div>
-</section>
-
-<!-- 02 · Features -->
-<section class="banner" id="features">
-  <div class="glow"></div>
-  <div class="brand" data-logo>dualyne</div>
-  <div class="site"><span class="dot"></span>dualyne.com</div>
-  <div class="head">
-    <div class="kick"><i>Product</i>What you get</div>
-    <h2 class="grad">Built for choosing, then shipping.</h2>
-  </div>
-  <div class="grid">
-    <div class="tile"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#67E8F9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4z"/></svg></div><h3>Free AI chat</h3><p>Claude, Llama, DeepSeek and Mistral. No signup, no card.</p></div>
-    <div class="tile"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="8" height="16" rx="2"/><rect x="13" y="4" width="8" height="16" rx="2"/></svg></div><h3>Side-by-side compare</h3><p>One prompt, two models. See speed and quality in the same view.</p></div>
-    <div class="tile"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></div><h3>Community leaderboard</h3><p>Blind votes rank the models by what people actually prefer.</p></div>
-    <div class="tile"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 9l-4 3 4 3M16 9l4 3-4 3M13.5 6l-3 12"/></svg></div><h3>One OpenAI-compatible key</h3><p>Change the base URL. Your app, bot or agent keeps working.</p></div>
-    <div class="tile"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#F472B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M16 12.5h2M3 10h18"/></svg></div><h3>Your wallet is your account</h3><p>No email, no password. Sign once, create keys, revoke any time.</p></div>
-    <div class="tile"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 4.5L2.5 11l6 2.5 2.5 6.5 3.5-4.5 5 3.5z"/></svg></div><h3>Also on Telegram</h3><p>Ask anything, in any language, with @dualynebot.</p></div>
-  </div>
-</section>
-
-<!-- 03 · Chat -->
-<section class="banner" id="chat">
-  <div class="glow"></div>
-  <div class="brand" data-logo>dualyne</div>
-  <div class="site"><span class="dot"></span>dualyne.com/chat</div>
-  <div class="left">
-    <div class="kick"><i>01</i>Chat</div>
-    <h2 class="grad">Ask anything.<br>Free, no signup.</h2>
-    <ul class="list">
-      <li><span><b>Four free models:</b> Claude, Llama, DeepSeek, Mistral</span></li>
-      <li><span><b>Switch models</b> with one tap, mid-conversation</span></li>
-      <li><span><b>Chats stay in your browser.</b> Nothing to sign up for</span></li>
-    </ul>
-  </div>
-  <div class="card ui">
-    <div class="bar"><div class="lights"><span></span><span></span><span></span></div><span class="t">New chat</span><span class="live"><span class="dot"></span>4 models live</span></div>
-    <div class="chips">
-      <span class="chip on"><img src="../../apps/web/public/providers/anthropic.svg" alt="">Claude Swift</span>
-      <span class="chip"><img src="../../apps/web/public/providers/meta.svg" alt="">Llama</span>
-      <span class="chip"><img src="../../apps/web/public/providers/deepseek.svg" alt="">DeepSeek</span>
-      <span class="chip"><img src="../../apps/web/public/providers/mistral.svg" alt="">Mistral</span>
-    </div>
-    <div class="msgs">
-      <div class="me">Explain blockchains in three sentences.</div>
-      <div class="ai">
-        <div class="av"><img src="../../apps/web/public/providers/anthropic.svg" alt=""></div>
-        <div>
-          <div class="who">Claude Swift</div>
-          <p>A blockchain is a shared record of transactions that many computers keep at the same time.</p>
-          <p>New entries are grouped into blocks, and each block is linked to the one before it, so past records are very hard to change.</p>
-          <div class="acts"><span>Copy</span><span>Regenerate</span></div>
+    <!-- 01 · Introduction -->
+    <section class="banner" id="intro">
+      <div class="glow"></div>
+      <div class="brand" data-logo>dualyne</div>
+      <div class="site"><span class="dot"></span>dualyne.com</div>
+      <div class="center">
+        <span class="badge"><b>New</b>Free AI chat · no signup</span>
+        <h1 class="grad">Every AI model.<br />One prompt away.</h1>
+        <p class="lede">
+          Chat with Claude, GPT, Gemini, Llama, DeepSeek and Mistral in one place.<br />Compare answers side
+          by side, then ship the best one with a single key.
+        </p>
+        <div class="ctas">
+          <span class="btn">Start chatting →</span><span class="btn dark">Compare models</span>
         </div>
       </div>
-    </div>
-    <div class="composer">Message Claude Swift…<span class="send"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#08080A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span></div>
-  </div>
-</section>
-
-<!-- 04 · Compare -->
-<section class="banner" id="compare">
-  <div class="glow"></div>
-  <div class="brand" data-logo>dualyne</div>
-  <div class="site"><span class="dot"></span>dualyne.com/#compare</div>
-  <div class="head">
-    <div class="kick"><i>02</i>Compare</div>
-    <h2 class="grad">Two answers. Side by side.<br>You pick the winner.</h2>
-  </div>
-  <div class="card ui">
-    <div class="prompt"><span class="q">PROMPT</span>Write a tagline for a small coffee shop.<span class="live"><span class="tag">BLIND</span></span></div>
-    <div class="cols">
-      <div class="col a">
-        <div class="top"><span class="lab">A</span><span class="nm">Model A</span></div>
-        <p>“Small cups, big mornings.” Warm, short and easy to remember on a sign.</p>
-        <div class="metrics"><span>first word <b>0.4s</b></span><span>total <b>1.9s</b></span><span><b>14</b> words</span></div>
+      <div class="logos">
+        <p>One catalog for the models teams actually use</p>
+        <div>
+          <img src="../../apps/web/public/providers/mono/anthropic.svg" alt="" />
+          <img src="../../apps/web/public/providers/mono/openai.svg" alt="" />
+          <img src="../../apps/web/public/providers/mono/google.svg" alt="" />
+          <img src="../../apps/web/public/providers/mono/meta.svg" alt="" />
+          <img src="../../apps/web/public/providers/mono/deepseek.svg" alt="" />
+          <img src="../../apps/web/public/providers/mono/mistral.svg" alt="" />
+        </div>
       </div>
-      <div class="col b">
-        <div class="top"><span class="lab">B</span><span class="nm">Model B</span></div>
-        <p>“Your neighborhood’s favorite pause.” It sells the break, not just the coffee.</p>
-        <div class="metrics"><span>first word <b>0.6s</b></span><span>total <b>2.3s</b></span><span><b>13</b> words</span></div>
-      </div>
-    </div>
-    <div class="vote"><b class="q">Which is better?</b><span>A is better</span><span>Tie</span><span class="win">B is better ✓</span><em class="note">votes build the leaderboard →</em></div>
-  </div>
-</section>
+    </section>
 
-<!-- 05 · API -->
-<section class="banner" id="api">
-  <div class="glow"></div>
-  <div class="brand" data-logo>dualyne</div>
-  <div class="site"><span class="dot"></span>dualyne.com/docs</div>
-  <div class="left">
-    <div class="kick"><i>03</i>API</div>
-    <h2 class="grad" style="font-size:54px">One key.<br>The whole catalog.</h2>
-    <ul class="list">
-      <li><span><b>OpenAI-compatible:</b> keep your SDKs</span></li>
-      <li><span><b>Switch models</b> by changing one string</span></li>
-      <li><span><b>Streaming, tools, JSON mode</b> included</span></li>
-    </ul>
-  </div>
-  <div class="card ui">
-    <div class="bar"><div class="lights"><span></span><span></span><span></span></div><div class="tabs"><span class="on">python</span><span>node</span><span>curl</span></div><span class="live"><span class="dot"></span>api.dualyne.com</span></div>
-<pre><span class="k">from</span> openai <span class="k">import</span> OpenAI
+    <!-- 02 · Features -->
+    <section class="banner" id="features">
+      <div class="glow"></div>
+      <div class="brand" data-logo>dualyne</div>
+      <div class="site"><span class="dot"></span>dualyne.com</div>
+      <div class="head">
+        <div class="kick"><i>Product</i>What you get</div>
+        <h2 class="grad">Built for choosing, then shipping.</h2>
+      </div>
+      <div class="grid">
+        <div class="tile">
+          <div class="ic">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#67E8F9"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M4 5h16v11H8l-4 4z" />
+            </svg>
+          </div>
+          <h3>Free AI chat</h3>
+          <p>Claude, Llama, DeepSeek and Mistral. No signup, no card.</p>
+        </div>
+        <div class="tile">
+          <div class="ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2" stroke-linecap="round">
+              <rect x="3" y="4" width="8" height="16" rx="2" />
+              <rect x="13" y="4" width="8" height="16" rx="2" />
+            </svg>
+          </div>
+          <h3>Side-by-side compare</h3>
+          <p>One prompt, two models. See speed and quality in the same view.</p>
+        </div>
+        <div class="tile">
+          <div class="ic">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#FBBF24"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z" />
+              <path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3" />
+            </svg>
+          </div>
+          <h3>Community leaderboard</h3>
+          <p>Blind votes rank the models by what people actually prefer.</p>
+        </div>
+        <div class="tile">
+          <div class="ic">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#60A5FA"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M8 9l-4 3 4 3M16 9l4 3-4 3M13.5 6l-3 12" />
+            </svg>
+          </div>
+          <h3>One OpenAI-compatible key</h3>
+          <p>Change the base URL. Your app, bot or agent keeps working.</p>
+        </div>
+        <div class="tile">
+          <div class="ic">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#F472B6"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3" y="6" width="18" height="13" rx="3" />
+              <path d="M16 12.5h2M3 10h18" />
+            </svg>
+          </div>
+          <h3>Your wallet is your account</h3>
+          <p>No email, no password. Sign once, create keys, revoke any time.</p>
+        </div>
+        <div class="tile">
+          <div class="ic">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#4ADE80"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M21.5 4.5L2.5 11l6 2.5 2.5 6.5 3.5-4.5 5 3.5z" />
+            </svg>
+          </div>
+          <h3>Also on Telegram</h3>
+          <p>Ask anything, in any language, with @dualynebot.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 · Chat -->
+    <section class="banner" id="chat">
+      <div class="glow"></div>
+      <div class="brand" data-logo>dualyne</div>
+      <div class="site"><span class="dot"></span>dualyne.com/chat</div>
+      <div class="left">
+        <div class="kick"><i>01</i>Chat</div>
+        <h2 class="grad">Ask anything.<br />Free, no signup.</h2>
+        <ul class="list">
+          <li>
+            <span><b>Four free models:</b> Claude, Llama, DeepSeek, Mistral</span>
+          </li>
+          <li>
+            <span><b>Switch models</b> with one tap, mid-conversation</span>
+          </li>
+          <li>
+            <span><b>Chats stay in your browser.</b> Nothing to sign up for</span>
+          </li>
+        </ul>
+      </div>
+      <div class="card ui">
+        <div class="bar">
+          <div class="lights"><span></span><span></span><span></span></div>
+          <span class="t">New chat</span><span class="live"><span class="dot"></span>4 models live</span>
+        </div>
+        <div class="chips">
+          <span class="chip on"
+            ><img src="../../apps/web/public/providers/anthropic.svg" alt="" />Claude Swift</span
+          >
+          <span class="chip"><img src="../../apps/web/public/providers/meta.svg" alt="" />Llama</span>
+          <span class="chip"><img src="../../apps/web/public/providers/deepseek.svg" alt="" />DeepSeek</span>
+          <span class="chip"><img src="../../apps/web/public/providers/mistral.svg" alt="" />Mistral</span>
+        </div>
+        <div class="msgs">
+          <div class="me">Explain blockchains in three sentences.</div>
+          <div class="ai">
+            <div class="av"><img src="../../apps/web/public/providers/anthropic.svg" alt="" /></div>
+            <div>
+              <div class="who">Claude Swift</div>
+              <p>
+                A blockchain is a shared record of transactions that many computers keep at the same time.
+              </p>
+              <p>
+                New entries are grouped into blocks, and each block is linked to the one before it, so past
+                records are very hard to change.
+              </p>
+              <div class="acts"><span>Copy</span><span>Regenerate</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="composer">
+          Message Claude Swift…<span class="send"
+            ><svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#08080A"
+              stroke-width="2.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 19V5M5 12l7-7 7 7" /></svg
+          ></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 · Compare -->
+    <section class="banner" id="compare">
+      <div class="glow"></div>
+      <div class="brand" data-logo>dualyne</div>
+      <div class="site"><span class="dot"></span>dualyne.com/#compare</div>
+      <div class="head">
+        <div class="kick"><i>02</i>Compare</div>
+        <h2 class="grad">Two answers. Side by side.<br />You pick the winner.</h2>
+      </div>
+      <div class="card ui">
+        <div class="prompt">
+          <span class="q">PROMPT</span>Write a tagline for a small coffee shop.<span class="live"
+            ><span class="tag">BLIND</span></span
+          >
+        </div>
+        <div class="cols">
+          <div class="col a">
+            <div class="top"><span class="lab">A</span><span class="nm">Model A</span></div>
+            <p>“Small cups, big mornings.” Warm, short and easy to remember on a sign.</p>
+            <div class="metrics">
+              <span>first word <b>0.4s</b></span
+              ><span>total <b>1.9s</b></span
+              ><span><b>14</b> words</span>
+            </div>
+          </div>
+          <div class="col b">
+            <div class="top"><span class="lab">B</span><span class="nm">Model B</span></div>
+            <p>“Your neighborhood’s favorite pause.” It sells the break, not just the coffee.</p>
+            <div class="metrics">
+              <span>first word <b>0.6s</b></span
+              ><span>total <b>2.3s</b></span
+              ><span><b>13</b> words</span>
+            </div>
+          </div>
+        </div>
+        <div class="vote">
+          <b class="q">Which is better?</b><span>A is better</span><span>Tie</span
+          ><span class="win">B is better ✓</span><em class="note">votes build the leaderboard →</em>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05 · API -->
+    <section class="banner" id="api">
+      <div class="glow"></div>
+      <div class="brand" data-logo>dualyne</div>
+      <div class="site"><span class="dot"></span>dualyne.com/docs</div>
+      <div class="left">
+        <div class="kick"><i>03</i>API</div>
+        <h2 class="grad" style="font-size: 54px">One key.<br />The whole catalog.</h2>
+        <ul class="list">
+          <li>
+            <span><b>OpenAI-compatible:</b> keep your SDKs</span>
+          </li>
+          <li>
+            <span><b>Switch models</b> by changing one string</span>
+          </li>
+          <li>
+            <span><b>Streaming, tools, JSON mode</b> included</span>
+          </li>
+        </ul>
+      </div>
+      <div class="card ui">
+        <div class="bar">
+          <div class="lights"><span></span><span></span><span></span></div>
+          <div class="tabs"><span class="on">python</span><span>node</span><span>curl</span></div>
+          <span class="live"><span class="dot"></span>api.dualyne.com</span>
+        </div>
+        <pre><span class="k">from</span> openai <span class="k">import</span> OpenAI
 
 client = <span class="f">OpenAI</span>(
     base_url=<span class="s">"https://api.dualyne.com/v1"</span>,
@@ -336,80 +1396,159 @@ reply = client.chat.completions.<span class="f">create</span>(
     model=<span class="s">"claude-swift"</span>,  <span class="c"># swap to any model id</span>
     messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: <span class="s">"Hi!"</span>}],
 )</pre>
-    <div class="ids"><span class="on">claude-swift</span><span>claude-balanced</span><span>claude-deep</span><span>gpt</span><span>gemini</span><span>llama</span><span>deepseek</span><span>mistral</span></div>
-  </div>
-</section>
+        <div class="ids">
+          <span class="on">claude-swift</span><span>claude-balanced</span><span>claude-deep</span
+          ><span>gpt</span><span>gemini</span><span>llama</span><span>deepseek</span><span>mistral</span>
+        </div>
+      </div>
+    </section>
 
-<!-- 06 · Telegram -->
-<section class="banner" id="telegram">
-  <div class="glow"></div><div class="glow cyan"></div>
-  <div class="brand" data-logo>dualyne</div>
-  <div class="site"><span class="dot"></span>t.me/dualynebot</div>
-  <div class="left">
-    <div class="kick"><i>04</i>Telegram</div>
-    <h2 class="grad">Dualyne AI,<br>right in Telegram.</h2>
-    <span class="handle"><i><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M21.5 4.5L2.8 11.6c-1 .4-1 1.2-.2 1.5l4.7 1.5 1.8 5.6c.2.6.4.8.9.8.4 0 .6-.2.9-.5l2.3-2.2 4.7 3.5c.9.5 1.5.2 1.7-.8l3.1-14.5c.3-1.3-.5-1.9-1.4-1.5zM9.4 14.3l8.5-5.4-6.9 6.5-.3 3.2z"/></svg></i>@dualynebot</span>
-    <ul class="list">
-      <li><span><b>Ask in any language</b>, get the answer as it’s written</span></li>
-      <li><span><b>/compare</b> two models blind, then vote</span></li>
-      <li><span><b>Works in groups:</b> /ask or mention the bot</span></li>
-    </ul>
-  </div>
-  <div class="phone"><div class="screen">
-    <div class="tg-top"><span class="pic" data-logo-only></span><div><b>Dualyne AI</b><small>bot</small></div></div>
-    <div class="tg-body">
-      <div class="tg-me">What is an API? Keep it short</div>
-      <div class="tg-bot">An <b>API</b> is a bridge that lets two apps talk to each other.<br><br>• App A sends a request<br>• The API passes it to app B<br>• B sends the answer back<br><span class="ft">Claude Swift</span></div>
-      <div class="tg-btns"><span>🔄 Try again</span><span>🔀 Other model</span><span>⚖️ Compare</span><span>🆕 New chat</span></div>
-      <div class="tg-me" style="margin-top:6px">/compare Best way to learn Python?</div>
-      <div class="tg-bot">🅰️ <b>Answer A</b><br><br>Build small projects from day one: a to-do list, a weather app, a bot…</div>
-    </div>
-    <div class="tg-in">Message</div>
-  </div></div>
-</section>
+    <!-- 06 · Telegram -->
+    <section class="banner" id="telegram">
+      <div class="glow"></div>
+      <div class="glow cyan"></div>
+      <div class="brand" data-logo>dualyne</div>
+      <div class="site"><span class="dot"></span>t.me/dualynebot</div>
+      <div class="left">
+        <div class="kick"><i>04</i>Telegram</div>
+        <h2 class="grad">Dualyne AI,<br />right in Telegram.</h2>
+        <span class="handle"
+          ><i
+            ><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff">
+              <path
+                d="M21.5 4.5L2.8 11.6c-1 .4-1 1.2-.2 1.5l4.7 1.5 1.8 5.6c.2.6.4.8.9.8.4 0 .6-.2.9-.5l2.3-2.2 4.7 3.5c.9.5 1.5.2 1.7-.8l3.1-14.5c.3-1.3-.5-1.9-1.4-1.5zM9.4 14.3l8.5-5.4-6.9 6.5-.3 3.2z"
+              /></svg></i
+          >@dualynebot</span
+        >
+        <ul class="list">
+          <li>
+            <span><b>Ask in any language</b>, get the answer as it’s written</span>
+          </li>
+          <li>
+            <span><b>/compare</b> two models blind, then vote</span>
+          </li>
+          <li>
+            <span><b>Works in groups:</b> /ask or mention the bot</span>
+          </li>
+        </ul>
+      </div>
+      <div class="phone">
+        <div class="screen">
+          <div class="tg-top">
+            <span class="pic" data-logo-only></span>
+            <div><b>Dualyne AI</b><small>bot</small></div>
+          </div>
+          <div class="tg-body">
+            <div class="tg-me">What is an API? Keep it short</div>
+            <div class="tg-bot">
+              An <b>API</b> is a bridge that lets two apps talk to each other.<br /><br />• App A sends a
+              request<br />• The API passes it to app B<br />• B sends the answer back<br /><span class="ft"
+                >Claude Swift</span
+              >
+            </div>
+            <div class="tg-btns">
+              <span>🔄 Try again</span><span>🔀 Other model</span><span>⚖️ Compare</span
+              ><span>🆕 New chat</span>
+            </div>
+            <div class="tg-me" style="margin-top: 6px">/compare Best way to learn Python?</div>
+            <div class="tg-bot">
+              🅰️ <b>Answer A</b><br /><br />Build small projects from day one: a to-do list, a weather app, a
+              bot…
+            </div>
+          </div>
+          <div class="tg-in">Message</div>
+        </div>
+      </div>
+    </section>
 
-<!-- 07 · Token -->
-<section class="banner" id="token">
-  <div class="glow"></div><div class="glow pink"></div>
-  <div class="brand" data-logo>dualyne</div>
-  <div class="site"><span class="dot"></span>dualyne.com/#token</div>
-  <div class="head">
-    <div class="kick"><i>05</i>Token</div>
-    <div class="tick hue">$DLYN</div>
-    <p class="lede" style="font-size:22px;color:#C9C9D1">The token that pays for the compute.</p>
-  </div>
-  <div class="flow">
-    <div class="tile"><h3>Every trade</h3><p>A fee from each trade goes to the inference treasury.</p></div>
-    <div class="arrow"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
-    <div class="tile"><h3>Free AI for everyone</h3><p>The treasury pays for free requests. Every dollar is on a public ledger.</p></div>
-    <div class="arrow"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
-    <div class="tile"><h3>Holders get more</h3><p>Higher limits and every premium model, including GPT and Gemini.</p></div>
-  </div>
-  <div class="ca"><b>CA</b> Coming soon <span>Copy</span></div>
-  <div class="fine">Utility token. Not an investment or a promise of profit.</div>
-</section>
+    <!-- 07 · Token -->
+    <section class="banner" id="token">
+      <div class="glow"></div>
+      <div class="glow pink"></div>
+      <div class="brand" data-logo>dualyne</div>
+      <div class="site"><span class="dot"></span>dualyne.com/#token</div>
+      <div class="head">
+        <div class="kick"><i>05</i>Token</div>
+        <div class="tick hue">$DLYN</div>
+        <p class="lede" style="font-size: 22px; color: #c9c9d1">The token that pays for the compute.</p>
+      </div>
+      <div class="flow">
+        <div class="tile">
+          <h3>Every trade</h3>
+          <p>A fee from each trade goes to the inference treasury.</p>
+        </div>
+        <div class="arrow">
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        </div>
+        <div class="tile">
+          <h3>Free AI for everyone</h3>
+          <p>The treasury pays for free requests. Every dollar is on a public ledger.</p>
+        </div>
+        <div class="arrow">
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        </div>
+        <div class="tile">
+          <h3>Holders get more</h3>
+          <p>Higher limits and every premium model, including GPT and Gemini.</p>
+        </div>
+      </div>
+      <div class="ca"><b>CA</b> Coming soon <span>Copy</span></div>
+      <div class="fine">Utility token. Not an investment or a promise of profit.</div>
+    </section>
 
-<!-- X header (1500×500) -->
-<section class="banner header" id="header">
-  <div class="glow"></div><div class="glow cyan"></div>
-  <div class="center">
-    <h1 class="grad">Every AI model. One prompt away.</h1>
-    <div class="row">
-      <span class="chip"><img src="../../apps/web/public/providers/anthropic.svg" alt="">Claude</span>
-      <span class="chip"><img src="../../apps/web/public/providers/openai.svg" alt="" style="filter:invert(1)">GPT</span>
-      <span class="chip"><img src="../../apps/web/public/providers/gemini.svg" alt="">Gemini</span>
-      <span class="chip"><img src="../../apps/web/public/providers/meta.svg" alt="">Llama</span>
-      <span class="chip"><img src="../../apps/web/public/providers/deepseek.svg" alt="">DeepSeek</span>
-      <span class="chip"><img src="../../apps/web/public/providers/mistral.svg" alt="">Mistral</span>
-    </div>
-  </div>
-  <div class="foot" style="left:560px;right:auto;bottom:44px;gap:28px"><span>Chat free</span><span>·</span><span>Compare</span><span>·</span><span>One API key</span><span>·</span><span style="color:var(--text)">dualyne.com</span></div>
-</section>
+    <!-- X header (1500×500) -->
+    <section class="banner header" id="header">
+      <div class="glow"></div>
+      <div class="glow cyan"></div>
+      <div class="center">
+        <h1 class="grad">Every AI model. One prompt away.</h1>
+        <div class="row">
+          <span class="chip"><img src="../../apps/web/public/providers/anthropic.svg" alt="" />Claude</span>
+          <span class="chip"
+            ><img
+              src="../../apps/web/public/providers/openai.svg"
+              alt=""
+              style="filter: invert(1)"
+            />GPT</span
+          >
+          <span class="chip"><img src="../../apps/web/public/providers/gemini.svg" alt="" />Gemini</span>
+          <span class="chip"><img src="../../apps/web/public/providers/meta.svg" alt="" />Llama</span>
+          <span class="chip"><img src="../../apps/web/public/providers/deepseek.svg" alt="" />DeepSeek</span>
+          <span class="chip"><img src="../../apps/web/public/providers/mistral.svg" alt="" />Mistral</span>
+        </div>
+      </div>
+      <div class="foot" style="left: 560px; right: auto; bottom: 44px; gap: 28px">
+        <span>Chat free</span><span>·</span><span>Compare</span><span>·</span><span>One API key</span
+        ><span>·</span><span style="color: var(--text)">dualyne.com</span>
+      </div>
+    </section>
 
-<script>
-  const logo = document.getElementById("logo").innerHTML;
-  document.querySelectorAll("[data-logo]").forEach((el) => el.insertAdjacentHTML("afterbegin", logo));
-  document.querySelectorAll("[data-logo-only]").forEach((el) => (el.innerHTML = logo));
-</script>
-</body>
+    <script>
+      const logo = document.getElementById("logo").innerHTML;
+      document.querySelectorAll("[data-logo]").forEach((el) => el.insertAdjacentHTML("afterbegin", logo));
+      document.querySelectorAll("[data-logo-only]").forEach((el) => (el.innerHTML = logo));
+    </script>
+  </body>
 </html>
