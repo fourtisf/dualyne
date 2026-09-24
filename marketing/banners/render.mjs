@@ -25,7 +25,6 @@ const names = {
   compare: "04-compare",
   api: "05-api",
   telegram: "06-telegram",
-  token: "07-token",
   header: "x-header-1500x500",
 };
 
