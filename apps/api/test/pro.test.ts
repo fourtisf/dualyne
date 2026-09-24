@@ -19,6 +19,7 @@ beforeEach(async () => {
       STABLECOINS: `USDC:${USDC}`,
       ETH_USD_FEED_ADDRESS: FEED,
       CHAIN_CONFIRMATIONS: "3",
+      PRO_OPEN: "true",
       PRO_PRICE_USD: "19",
       PRO_CHAT_PER_DAY: "3",
       PRO_PREMIUM_PER_DAY: "1",
@@ -236,5 +237,31 @@ describe("Pro in Chat", () => {
       data: { proUntil: new Date(t.now.value.getTime() - 1) },
     });
     expect((await chatAs(cookie, "gpt")).json().error.code).toBe("model_not_allowed");
+  });
+});
+
+describe("Pro coming soon (PRO_OPEN off)", () => {
+  it("shows Pro as closed and refuses payments", async () => {
+    const closed = await createTestContext(
+      { DEPOSIT_ADDRESS: DEPOSIT, STABLECOINS: `USDC:${USDC}`, SYBIL_CHECK: "off" },
+      { chain },
+    );
+    try {
+      const account = newAccount();
+      const { cookie } = await signIn(closed, account);
+      const info = await closed.app.inject({ method: "GET", url: "/me/pro", headers: { cookie } });
+      expect(info.json()).toMatchObject({ open: false, active: false });
+      chain.txs.set(hash(90), tokenTx(USDC, account.address, 19n * E18));
+      const res = await closed.app.inject({
+        method: "POST",
+        url: "/me/pro/payments",
+        headers: { cookie, origin: WEB_ORIGIN },
+        payload: { txHash: hash(90) },
+      });
+      expect(res.statusCode).toBe(404);
+      expect(res.json().error.code).toBe("payments_closed");
+    } finally {
+      await closed.close();
+    }
   });
 });

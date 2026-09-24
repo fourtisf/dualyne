@@ -45,7 +45,7 @@ export function Pricing({ locale }: { locale: Locale }) {
           </div>
           <div className="tier hot">
             <div className="nm">
-              {t.proName} <span className="pop">{t.popular}</span>
+              {t.proName} <span className="pop">{c.proOpen ? t.popular : t.soon}</span>
             </div>
             <div className="pr">
               ${c.proPriceUsd}
@@ -60,7 +60,15 @@ export function Pricing({ locale }: { locale: Locale }) {
                 </li>
               ))}
             </ul>
-            <UpgradeButton className="btn">{t.proCta}</UpgradeButton>
+            {c.proOpen ? (
+              <UpgradeButton className="btn">{t.proCta}</UpgradeButton>
+            ) : brand.social.x ? (
+              <a className="btn" href={brand.social.x} rel="noopener" target="_blank">
+                {t.soon} · {t.notify}
+              </a>
+            ) : (
+              <UpgradeButton className="btn">{t.soon}</UpgradeButton>
+            )}
           </div>
           {brand.tokenEnabled && (
             <div className="tier">

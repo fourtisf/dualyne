@@ -330,6 +330,8 @@ export const en = {
       "Pay with USDC, USDT or ETH",
     ],
     proCta: "Upgrade to Pro",
+    soon: "Coming soon",
+    notify: "Get notified on X",
     popular: "Most popular",
     withTokens: "with 100K tokens",
     holderWho: "For wallets holding the token. Paid for by the treasury.",
@@ -401,7 +403,7 @@ export const en = {
       ],
       [
         "How does Pro work?",
-        "Connect a wallet, pay the Pro price in USDC, USDT or ETH, and Pro turns on as soon as the payment is confirmed on-chain, usually within a minute. It lasts 30 days and doesn't renew on its own: you extend it only if you want to. Nothing is ever taken from your wallet without you sending it.",
+        "Pro is opening soon. Once it's live: connect a wallet, pay the Pro price in USDC, USDT or ETH, and Pro turns on as soon as the payment is confirmed on-chain, usually within a minute. It lasts 30 days and doesn't renew on its own: you extend it only if you want to. Nothing is ever taken from your wallet without you sending it.",
       ],
       [
         "Why do I need a wallet for API keys?",
@@ -601,7 +603,8 @@ export const en = {
     ],
     signIn: "Pro is tied to your wallet, so connect it first. Payment is in crypto on-chain.",
     connect: "Connect wallet",
-    closed: "Pro payments open soon. Follow us on X to hear first.",
+    closed: "Pro is coming soon. Follow us on X to hear the day it opens.",
+    followX: "Follow on X",
     activeUntil: (date: string) => `Pro is active until ${date}. Paying again adds time on top.`,
     period: "Length",
     months: (n: number, days: number) => (n === 1 ? `${days} days` : `${n * days} days`),

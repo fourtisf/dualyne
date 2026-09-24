@@ -7,6 +7,8 @@ export const publicConfig = {
   compareLimitPerHour: Number(process.env.NEXT_PUBLIC_COMPARE_LIMIT_PER_HOUR || 10),
   /** Plans, copied from the API's settings by deploy.sh so the pricing page matches what the API enforces. */
   freeChatPerDay: Number(process.env.NEXT_PUBLIC_CHAT_LIMIT_PER_DAY || 20),
+  /** Pro takes payments. Off: Pro is shown as coming soon. */
+  proOpen: process.env.NEXT_PUBLIC_PRO_OPEN === "true",
   proPriceUsd: Number(process.env.NEXT_PUBLIC_PRO_PRICE_USD || 19),
   proDays: Number(process.env.NEXT_PUBLIC_PRO_DAYS || 30),
   proChatPerDay: Number(process.env.NEXT_PUBLIC_PRO_CHAT_PER_DAY || 300),

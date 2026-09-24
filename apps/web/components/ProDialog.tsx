@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { encodeFunctionData, erc20Abi, parseEther, parseUnits, toHex, type Address } from "viem";
 import type { ProPaymentResponse, ProResponse } from "@dualyne/shared";
+import { brand } from "@dualyne/config";
 import { ApiRequestError, apiFetch } from "@/lib/api";
+import { publicConfig } from "@/lib/config";
 import { shortAddr } from "@/lib/format";
 import { apiErrorText } from "@/lib/i18n";
 import { useT } from "./LocaleProvider";
@@ -77,7 +79,7 @@ export function ProDialog() {
   }, [w.me]);
 
   useEffect(() => {
-    if (open && w.me) void load();
+    if (open && w.me && publicConfig.proOpen) void load();
   }, [open, w.me, load]);
 
   useEffect(() => {
@@ -231,7 +233,28 @@ export function ProDialog() {
           {t.title} <span className="pro-pill">PRO</span>
         </h3>
 
-        {!w.me ? (
+        {!publicConfig.proOpen ? (
+          <>
+            <p>{t.intro(publicConfig.proPriceUsd, publicConfig.proDays)}</p>
+            <ul className="pro-perks">
+              {t.perks(publicConfig.proChatPerDay, publicConfig.proPremiumPerDay).map((x) => (
+                <li key={x}>{x}</li>
+              ))}
+            </ul>
+            <p className="pro-closed">{t.closed}</p>
+            {brand.social.x && (
+              <a
+                className="btn"
+                href={brand.social.x}
+                rel="noopener"
+                target="_blank"
+                style={{ width: "100%" }}
+              >
+                {t.followX}
+              </a>
+            )}
+          </>
+        ) : !w.me ? (
           <>
             <p>{t.signIn}</p>
             <button

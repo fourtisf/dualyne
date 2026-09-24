@@ -35,6 +35,8 @@ const schema = z
     CHAT_LIMIT_PER_DAY: z.coerce.number().int().positive().default(20),
 
     // Pro plan: paid in crypto to DEPOSIT_ADDRESS, unlocks every model in Chat.
+    /** Take Pro payments. Off: the site shows Pro as coming soon (wallets already on Pro keep it). */
+    PRO_OPEN: bool.default("false"),
     PRO_PRICE_USD: z.coerce.number().positive().default(19),
     PRO_DAYS: z.coerce.number().int().positive().default(30),
     /** Pro: chat messages per day, and how many of them may use a premium model. */

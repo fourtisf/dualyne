@@ -375,7 +375,7 @@ Setelah deploy:
 
 Pengunjung bisa chat gratis (`CHAT_LIMIT_PER_DAY` pesan per hari, model gratis saja). **Pro** membuka semua model (GPT-5, Gemini 2.5 Pro, Claude Sonnet dan Opus) untuk wallet yang membayar. Pembayaran dicek otomatis di blockchain lewat hash transaksi: pengirimnya harus wallet yang sedang login, dan satu transaksi hanya bisa dipakai sekali. Pro tidak diperpanjang otomatis.
 
-Isi di `.env` server, lalu jalankan `deploy.sh`:
+Secara default Pro tampil sebagai **Coming soon** (`PRO_OPEN=false`): harga terlihat, tetapi belum bisa dibayar. Untuk membuka pembayaran, isi variabel di bawah, set `PRO_OPEN=true`, lalu jalankan `deploy.sh`:
 
 | Variabel               | Isi                                                                                                  |
 | ---------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -384,13 +384,14 @@ Isi di `.env` server, lalu jalankan `deploy.sh`:
 | `DEPOSIT_ADDRESS`      | Wallet Anda yang menerima pembayaran                                                                 |
 | `STABLECOINS`          | Stablecoin yang diterima, format `SIMBOL:alamat`, dipisah koma. Cek setiap alamat di explorer        |
 | `ETH_USD_FEED_ADDRESS` | Price feed Chainlink ETH/USD di jaringan itu, supaya bisa bayar pakai ETH (kosongkan jika tidak mau) |
+| `PRO_OPEN`             | `true` untuk mulai menerima pembayaran Pro (default `false` = Coming soon)                           |
 | `PRO_PRICE_USD`        | Harga Pro (default `19`)                                                                             |
 | `PRO_DAYS`             | Lama Pro per pembayaran (default `30`)                                                               |
 | `PRO_CHAT_PER_DAY`     | Pesan per hari untuk Pro (default `300`)                                                             |
 | `PRO_PREMIUM_PER_DAY`  | Berapa dari pesan itu boleh memakai model premium (default `30`)                                     |
 | `PRO_FAIR_USE_USD`     | Batas biaya model premium per wallet per `PRO_DAYS` hari, supaya Anda tidak rugi (default `15`)      |
 
-Selama `DEPOSIT_ADDRESS` atau `RPC_URL` kosong, tombol **Upgrade to Pro** tetap tampil tetapi dialognya menulis "Pro payments open soon". Pembayaran kurang dari harga tidak mengaktifkan Pro; jumlahnya dimasukkan ke saldo kredit API wallet itu.
+Selama `PRO_OPEN` bukan `true`, atau `DEPOSIT_ADDRESS`/`RPC_URL` kosong, Pro tidak bisa dibayar. Pembayaran kurang dari harga tidak mengaktifkan Pro; jumlahnya dimasukkan ke saldo kredit API wallet itu.
 
 ## 21. Jika ada kecurangan voting
 

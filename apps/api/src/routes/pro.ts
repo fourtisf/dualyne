@@ -20,7 +20,7 @@ export const proRoutes: FastifyPluginAsync = async (app) => {
   app.get("/me/pro", { config: { rateLimit: { max: 120, timeWindow: 60_000 } } }, async (req, reply) => {
     reply.header("cache-control", "no-store");
     const wallet = await requireWallet(ctx, req);
-    const open = paymentsOpen(ctx);
+    const open = env.PRO_OPEN && paymentsOpen(ctx);
     const [tokens, ethUsd, payments] = await Promise.all([
       Promise.all(
         stablecoins(env).map(async (t) => ({
@@ -69,7 +69,8 @@ export const proRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       requireOwnOrigin(ctx, req);
       const wallet = await requireWallet(ctx, req);
-      if (!paymentsOpen(ctx)) throw new ApiError(404, "payments_closed", "Pro payments are not open yet.");
+      if (!env.PRO_OPEN || !paymentsOpen(ctx))
+        throw new ApiError(404, "payments_closed", "Pro payments are not open yet.");
       const hash = payBody.parse(req.body).txHash.toLowerCase() as Hex;
 
       const done = await ctx.prisma.proPayment.findUnique({ where: { txHash: hash } });
