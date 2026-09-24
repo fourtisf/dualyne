@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { brand } from "@dualyne/config";
+import { publicConfig } from "@/lib/config";
 
 // Drafted to match what the code actually does. Have it reviewed by a lawyer before public launch.
 export const metadata: Metadata = {
@@ -16,16 +17,34 @@ export default function PrivacyPage() {
       <div className="wrap">
         <article className="prose legal">
           <h1 className="grad">Privacy Policy</h1>
-          <p className="upd">Last updated September 23, 2026</p>
+          <p className="upd">Last updated September 24, 2026</p>
           <p>
             This policy explains what {brand.legalName} (&quot;{brand.name}&quot;, &quot;we&quot;) collects
-            when you use {brand.domain}, the Compare tool and the {brand.name} API. The short version: we
-            don&apos;t keep the text of your prompts or the answers unless you choose to share them, we
-            don&apos;t use tracking cookies or ads, and we keep only what we need to run limits, prevent abuse
-            and publish the treasury ledger.
+            when you use {brand.domain}, Chat, the Compare tool, the Telegram bot and the {brand.name} API.
+            The short version: we don&apos;t keep the text of your prompts or the answers unless you choose to
+            share them (the Telegram bot keeps your last few messages for one hour), we don&apos;t use
+            tracking cookies or ads, and we keep only what we need to run limits and prevent abuse
+            {brand.tokenEnabled ? " and publish the treasury ledger" : ""}.
           </p>
 
           <h2>What we collect</h2>
+          <p>
+            <strong>Chat.</strong> Your messages are sent to the model you picked so it can answer. The
+            conversation is saved only in your browser&apos;s local storage; our servers don&apos;t store the
+            text. For each message we record the model, token counts, cost, timing and the same one-way keyed
+            hash of your IP address described below, which runs the hourly limit. So that a shared chat
+            can&apos;t put invented words in a model&apos;s mouth, we also keep a fingerprint of each answer
+            (a one-way hash of the answer and your IP hash, not the text) for 24 hours. If you click{" "}
+            <em>Share</em>, the conversation is saved and anyone with the link can read it, until you remove
+            the link from the same browser.
+          </p>
+          <p>
+            <strong>Telegram bot.</strong> When you message @dualynebot, Telegram delivers your messages to
+            us. So the bot can follow the conversation, we keep your last 10 messages and its answers for one
+            hour (in our cache, not in the database), and delete them sooner if you send /new. We also keep
+            the model you picked for up to 30 days. Usage records store a one-way hash of your Telegram user
+            id, never the id itself, your name or your username.
+          </p>
           <p>
             <strong>Compare tool.</strong> Your prompt is sent to the two models you picked so they can
             answer. The prompt and both answers are held in memory for up to one hour so you can choose to
@@ -61,6 +80,13 @@ export default function PrivacyPage() {
             in your browser.
           </p>
           <p>
+            <strong>Visit statistics.</strong> To know how many people use the site, we count page views,
+            daily unique visitors, the pages visited and the website that sent you (its domain only). A
+            visitor is counted with a hash of the IP address and browser that changes every day and can&apos;t
+            be reversed; we don&apos;t store the IP address, set cookies or use any third-party analytics.
+            Counts are kept for 90 days.
+          </p>
+          <p>
             <strong>Server logs.</strong> Our servers log the method, path, status and timing of requests to
             keep the service running. We configure them not to log IP addresses, keys or request bodies.
           </p>
@@ -73,10 +99,15 @@ export default function PrivacyPage() {
               policies and data retention rules apply to that content.
             </li>
             <li>
-              <strong>Cloudflare</strong> delivers the site, protects it from attacks and runs Turnstile, the
-              bot check on the Compare tool. Cloudflare processes your IP address and browser details for
-              this.
+              <strong>Telegram</strong> delivers messages between you and the bot when you use it.
+              Telegram&apos;s own privacy policy applies to your account and messages there.
             </li>
+            {publicConfig.turnstileSiteKey && (
+              <li>
+                <strong>Cloudflare Turnstile</strong>, the bot check on Chat and Compare, processes your IP
+                address and browser details to tell people from bots.
+              </li>
+            )}
             <li>
               <strong>Our hosting provider</strong> runs the servers and database that hold the records
               described above.
@@ -88,7 +119,9 @@ export default function PrivacyPage() {
           <p>
             Rate-limit counters expire within 48 hours. Sessions end after 30 days or when you disconnect.
             Usage records (models, token counts, cost, timing) are kept for as long as we need them to operate
-            limits, billing and the public ledger. Database backups are deleted after 7 days.
+            limits and billing{brand.tokenEnabled ? " and the public ledger" : ""}. Telegram conversations are
+            forgotten after one hour, visit statistics after 90 days. Database backups are deleted after 14
+            days.
           </p>
 
           <h2>Cookies</h2>

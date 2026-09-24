@@ -56,7 +56,7 @@ export function Footer({ locale }: { locale: Locale }) {
                 <Link href={h("/dashboard")}>{n.dashboard}</Link>
               </li>
               <li>
-                <a href={h("/#api")}>{n.api}</a>
+                <Link href="/docs">{n.api}</Link>
               </li>
               <li>
                 <a href={h("/#faq")}>{n.faq}</a>
@@ -116,6 +116,7 @@ export function Footer({ locale }: { locale: Locale }) {
         <div className="fbot">
           <span>
             © {brand.copyrightYear} {brand.name}
+            <Link href="/about">{t.about}</Link>
             <Link href="/terms">{t.terms}</Link>
             <Link href="/privacy">{t.privacy}</Link>
           </span>

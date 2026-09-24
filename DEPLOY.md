@@ -505,6 +505,10 @@ Bot ini **publik**: siapa pun bisa chat dengan AI gratis langsung di Telegram (m
 
 Perintah admin hanya berlaku di chat Anda (`TELEGRAM_CHAT_ID`) dan tidak tampil di menu orang lain: `/status` (website, API, pemakaian dan biaya hari ini, sisa saldo OpenRouter) dan `/credit`. Tanpa `TELEGRAM_CHAT_ID`, bot tetap jalan untuk publik, hanya tanpa perintah admin dan notifikasi.
 
+`/stats` (juga hanya di chat Anda): pengunjung unik, page view, halaman teratas, situs asal pengunjung, dan jumlah chat, untuk hari ini dan 7 hari terakhir. Penghitungannya tanpa cookie dan tanpa menyimpan IP (hash harian di Redis, disimpan 90 hari); pengunjung dengan "Do Not Track" tidak dihitung.
+
+**Email kontak.** Halaman About, Terms, Privacy dan footer menampilkan `hello@<domain>` (ganti dengan `NEXT_PUBLIC_CONTACT_EMAIL` di `.env`). Pastikan mailbox atau forwarding-nya benar-benar ada, misalnya lewat menu Email di Hostinger (Email Forwarders → `hello@dualyne.com` ke email pribadi Anda), supaya pesan dari pengunjung tidak mental.
+
 **Backup harian dan cek kesehatan tiap 5 menit** (sekali pasang):
 
 ```bash

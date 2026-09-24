@@ -8,6 +8,7 @@ import { secondsUntilUtcMidnight } from "../lib/time";
 import { readEvents, StreamInspector } from "../openrouter/sse";
 import { verifyTurnstile } from "../turnstile";
 import { logUsage } from "../usage/log";
+import { rememberAnswer } from "./chatShares";
 import { alertBudgetOnce, alertOutOfCredits, assertModelsLive, BUSY_RETRY_SECONDS } from "./v1.chat";
 
 const PING_INTERVAL_MS = 15_000;
@@ -125,6 +126,7 @@ export const freeChatRoutes: FastifyPluginAsync = async (app) => {
 
       const startedAt = Date.now();
       const inspector = new StreamInspector();
+      let full = "";
       let status = 200;
       let errorCode: string | null = null;
       let completed = false;
@@ -147,7 +149,10 @@ export const freeChatRoutes: FastifyPluginAsync = async (app) => {
         } else {
           for await (const event of readEvents(res)) {
             inspector.inspect(event, true);
-            if (inspector.lastDelta) await send("delta", { text: inspector.lastDelta });
+            if (inspector.lastDelta) {
+              full += inspector.lastDelta;
+              await send("delta", { text: inspector.lastDelta });
+            }
           }
           if (inspector.errorCode) {
             status = 502;
@@ -177,8 +182,11 @@ export const freeChatRoutes: FastifyPluginAsync = async (app) => {
           : tokensCostMicro(inTok, outTok, Number(model.promptPrice), Number(model.completionPrice));
       const totalMs = Date.now() - startedAt;
 
-      if (completed) await send("done", { outputTokens: outTok, totalMs });
-      else if (status !== 499) await send("error", { code: "upstream_failed" });
+      if (completed) {
+        // A fingerprint (not the text) so this visitor can share the answer later.
+        await rememberAnswer(ctx.redis, ipHash, full);
+        await send("done", { outputTokens: outTok, totalMs });
+      } else if (status !== 499) await send("error", { code: "upstream_failed" });
 
       await ctx.budget.settle(reservation, costMicro);
       await logUsage(ctx.prisma, req.log, {

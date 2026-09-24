@@ -24,7 +24,7 @@ export function HomeEffects() {
     if (reduce || !("IntersectionObserver" in window)) return;
     const targets = Array.from(
       document.querySelectorAll<HTMLElement>(
-        "section.block .head, .logos, .bento .tile, .tiers .tier, .tbl, .wrap.api > *, .faq, .closing .wrap",
+        "section.block .head, .logos, .bento .tile, .tiers .tier, .tbl, .faq, .closing .wrap",
       ),
     );
     const root = document.documentElement;

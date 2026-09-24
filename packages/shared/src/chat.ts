@@ -38,3 +38,37 @@ export interface ChatEvents {
   error: { code: "upstream_failed" };
   end: Record<string, never>;
 }
+
+/** Characters across a shared conversation. */
+export const CHAT_SHARE_TOTAL_MAX = 60000;
+
+/** POST /internal/chat/share: a conversation the visitor chose to publish by link. */
+export const chatShareRequestSchema = z
+  .object({
+    model: z.string().regex(MODEL_ID_RE),
+    title: z.string().trim().min(1).max(120),
+    messages: z
+      .array(chatMessageSchema)
+      .min(2)
+      .max(CHAT_HISTORY_MAX * 2),
+  })
+  .strict()
+  .refine((r) => r.messages.every((m, i) => m.role === (i % 2 === 0 ? "user" : "assistant")), {
+    message: "Messages must take turns, starting with a question",
+  })
+  .refine((r) => r.messages[r.messages.length - 1]?.role === "assistant", {
+    message: "The conversation must end with an answer",
+  })
+  .refine((r) => r.messages.reduce((n, m) => n + m.content.length, 0) <= CHAT_SHARE_TOTAL_MAX, {
+    message: "This chat is too long to share",
+  });
+export type ChatShareRequest = z.infer<typeof chatShareRequestSchema>;
+
+/** GET /internal/chat/share/:id */
+export interface SharedChat {
+  id: string;
+  model: string;
+  title: string;
+  messages: ChatMessage[];
+  createdAt: string;
+}

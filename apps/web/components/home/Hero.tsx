@@ -1,9 +1,8 @@
 import type { CSSProperties } from "react";
 import type { CatalogModel, StatusResponse } from "@dualyne/shared";
 import { getDict, type Locale } from "@/lib/i18n";
-import { CompareConsole } from "../CompareConsole";
-import Link from "next/link";
 import { Check } from "./Check";
+import { HeroAsk } from "./HeroAsk";
 import { LiveStats } from "./LiveStats";
 
 const d = (v: string) => ({ "--d": v }) as CSSProperties;
@@ -11,15 +10,14 @@ const d = (v: string) => ({ "--d": v }) as CSSProperties;
 export function Hero({
   locale,
   models,
-  blindMode,
   status,
 }: {
   locale: Locale;
   models: CatalogModel[];
-  blindMode: "optional" | "always";
   status: StatusResponse | null;
 }) {
-  const t = getDict(locale).hero;
+  const dict = getDict(locale);
+  const t = dict.hero;
   return (
     <section className="hero">
       <div className="aurora" aria-hidden="true">
@@ -29,9 +27,9 @@ export function Hero({
       </div>
       <div className="wrap">
         <div className="hero-text">
-          <a className="badge rise" href="#api" style={d(".05s")}>
+          <a className="badge rise" href="/about" style={d(".05s")}>
             <b>{t.badgeNew}</b>
-            {t.badge}
+            {t.badgeFree}
           </a>
           <h1 className="rise" style={d(".12s")}>
             <span className="metal">{t.h1a}</span>
@@ -41,14 +39,10 @@ export function Hero({
           <p className="lede rise" style={d(".24s")}>
             {t.lede}
           </p>
-          <div className="ctas rise" style={d(".34s")}>
-            <Link className="btn lg" href="/chat">
-              {t.chat}
-            </Link>
-            <a className="btn dark lg" href="#compare">
-              {t.compare}
-            </a>
-          </div>
+          <HeroAsk models={models} />
+          <p className="ask-or rise" style={d(".38s")}>
+            {dict.ask.or} <a href="#compare">{dict.ask.compare} →</a>
+          </p>
           <div className="trust rise" style={d(".42s")}>
             {t.trust.map((x) => (
               <span key={x}>
@@ -59,7 +53,6 @@ export function Hero({
           </div>
           <LiveStats locale={locale} models={models} status={status} />
         </div>
-        <CompareConsole models={models} blindMode={blindMode} />
       </div>
     </section>
   );

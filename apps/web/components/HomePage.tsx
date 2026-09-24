@@ -3,8 +3,8 @@ import type { Locale } from "@/lib/i18n";
 import { getCatalog } from "@/lib/catalog";
 import { getStatus } from "@/lib/status";
 import { getTreasury } from "@/lib/treasury";
-import { ApiSection } from "./home/ApiSection";
 import { Closing } from "./home/Closing";
+import { CompareSection } from "./home/CompareSection";
 import { Faq } from "./home/Faq";
 import { Features } from "./home/Features";
 import { Hero } from "./home/Hero";
@@ -22,11 +22,11 @@ export async function HomePage({ locale }: { locale: Locale }) {
   ]);
   return (
     <main id="top">
-      <Hero locale={locale} models={models} blindMode={settings.blindMode} status={status} />
+      <Hero locale={locale} models={models} status={status} />
       <Logos locale={locale} />
+      <CompareSection locale={locale} models={models} blindMode={settings.blindMode} />
       <Features locale={locale} />
       <ModelsSection models={models} />
-      <ApiSection />
       <Pricing locale={locale} />
       {brand.tokenEnabled && <TokenSection locale={locale} treasury={treasury} />}
       <Faq locale={locale} />

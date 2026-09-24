@@ -250,6 +250,7 @@ export async function resetState(prisma: PrismaClient, redis: Redis): Promise<vo
   await redis.flushdb();
   await prisma.session.deleteMany();
   await prisma.share.deleteMany();
+  await prisma.chatShare.deleteMany();
   await prisma.eloRating.deleteMany();
   await prisma.vote.deleteMany();
   await prisma.deposit.deleteMany();

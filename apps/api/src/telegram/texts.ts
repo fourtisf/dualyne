@@ -1,6 +1,7 @@
 import { brand } from "@dualyne/config";
 import type { Model } from "@prisma/client";
 import type { AppContext } from "../context";
+import { lastDays, summarize } from "../analytics/visits";
 import { esc } from "./format";
 
 /** Everything @dualynebot says that isn't a model's answer. */
@@ -71,6 +72,7 @@ export function helpText(limit: number, owner: boolean): string {
       "<b>Admin (only in this chat)</b>",
       "/status: site, API, usage and spend today",
       "/credit: OpenRouter credit left",
+      "/stats: visitors, pages and chats",
       "Alerts arrive here automatically.",
     );
   }
@@ -156,6 +158,50 @@ export async function statusText(ctx: AppContext): Promise<string> {
     env.OPENROUTER_API_KEY
       ? `💳 OpenRouter credit: ${credit === null ? "unavailable" : `$${Math.max(0, credit).toFixed(2)} left`}`
       : "💳 OpenRouter: no key yet (preview mode)",
+  ].join("\n");
+}
+
+/** Visitors (cookieless counts, see analytics/visits.ts) and usage, today and over 7 days. */
+export async function statsText(ctx: AppContext): Promise<string> {
+  const now = ctx.clock();
+  const week = lastDays(now, 7);
+  const [today, seven] = await Promise.all([
+    summarize(ctx.redis, week.slice(0, 1)),
+    summarize(ctx.redis, week),
+  ]);
+  const since = (days: number) => {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    return new Date(d.getTime() - (days - 1) * 86_400_000);
+  };
+  const count = (source: string[], days: number) =>
+    ctx.prisma.usageLog
+      .count({ where: { source: { in: source }, createdAt: { gte: since(days) } } })
+      .catch(() => 0);
+  const [chatsToday, chatsWeek, cmpToday, cmpWeek] = await Promise.all([
+    count(["chat", "telegram"], 1),
+    count(["chat", "telegram"], 7),
+    count(["compare"], 1),
+    count(["compare"], 7),
+  ]);
+  const n = (v: number) => v.toLocaleString("en-US");
+  const list = (rows: [string, number][]) =>
+    rows.length ? rows.map(([k, v]) => `  ${esc(k)}: ${n(v)}`).join("\n") : "  none yet";
+  return [
+    `<b>${brand.name} stats</b>`,
+    "",
+    `<b>Today (UTC)</b>`,
+    `👤 ${n(today.visitors)} visitors · ${n(today.views)} page views`,
+    `💬 ${n(chatsToday)} chat messages · ⚖️ ${n(cmpToday)} comparison answers`,
+    "",
+    `<b>Last 7 days</b>`,
+    `👤 ${n(seven.visitors)} visitors · ${n(seven.views)} page views`,
+    `💬 ${n(chatsWeek)} chat messages · ⚖️ ${n(cmpWeek)} comparison answers`,
+    "",
+    "<b>Top pages (7 days)</b>",
+    list(seven.pages),
+    "",
+    "<b>Top referrers (7 days)</b>",
+    list(seven.refs),
   ].join("\n");
 }
 

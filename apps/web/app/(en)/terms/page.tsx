@@ -6,7 +6,9 @@ import { brand, tokenTicker } from "@dualyne/config";
 // before public launch.
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: `The rules for using ${brand.name}, its API and the ${tokenTicker} token.`,
+  description: brand.tokenEnabled
+    ? `The rules for using ${brand.name}, its API and the ${tokenTicker} token.`
+    : `The rules for using ${brand.name}: Chat, Compare, the Telegram bot and the API.`,
   alternates: { canonical: "/terms" },
 };
 
@@ -17,11 +19,11 @@ export default function TermsPage() {
       <div className="wrap">
         <article className="prose legal">
           <h1 className="grad">Terms of Service</h1>
-          <p className="upd">Last updated September 23, 2026</p>
+          <p className="upd">Last updated September 24, 2026</p>
           <p>
-            These terms apply to {brand.domain}, the Compare tool and the {brand.name} API (together, the
-            &quot;Service&quot;), run by {brand.legalName}. By using the Service you agree to them. If you
-            don&apos;t agree, don&apos;t use the Service.
+            These terms apply to {brand.domain}, Chat, the Compare tool, the Telegram bot (@dualynebot) and
+            the {brand.name} API (together, the &quot;Service&quot;), run by {brand.legalName}. By using the
+            Service you agree to them. If you don&apos;t agree, don&apos;t use the Service.
           </p>
 
           <h2>Early access</h2>
@@ -66,32 +68,40 @@ export default function TermsPage() {
 
           <h2>Free tiers and paid credits</h2>
           <p>
-            Free access is funded by the treasury and limited by daily allowances and a shared daily budget.
-            When paid credits launch, prices will be shown before you top up. Credits are non-refundable
+            Free access is {brand.tokenEnabled ? "funded by the treasury and " : ""}limited by hourly and
+            daily allowances and a shared daily budget, and can pause until 00:00 UTC when that budget is used
+            up. When paid credits launch, prices will be shown before you top up. Credits are non-refundable
             except where the law requires otherwise.
           </p>
 
-          <h2 id="token">The {tokenTicker} token</h2>
-          <p>
-            {tokenTicker} is a utility token. Holding it can raise your usage limits on the Service. It is not
-            an investment, a share, a loan or a claim on {brand.legalName} or its treasury, and it gives no
-            right to profits, dividends or votes unless we say so in writing.
-          </p>
-          <ul>
-            <li>
-              Its price can go down as well as up, including to zero, and there may be no one to sell it to.
-            </li>
-            <li>
-              The fee split and treasury rules shown on the site are proposals and may change before or after
-              launch.
-            </li>
-            <li>
-              Smart contracts and blockchains can fail or be attacked, and transactions can&apos;t be
-              reversed.
-            </li>
-            <li>Token rules differ by country. You are responsible for following yours and for any taxes.</li>
-          </ul>
-          <p>Nothing on the site is financial advice. Don&apos;t buy more than you can afford to lose.</p>
+          {brand.tokenEnabled && (
+            <>
+              <h2 id="token">The {tokenTicker} token</h2>
+              <p>
+                {tokenTicker} is a utility token. Holding it can raise your usage limits on the Service. It is
+                not an investment, a share, a loan or a claim on {brand.legalName} or its treasury, and it
+                gives no right to profits, dividends or votes unless we say so in writing.
+              </p>
+              <ul>
+                <li>
+                  Its price can go down as well as up, including to zero, and there may be no one to sell it
+                  to.
+                </li>
+                <li>
+                  The fee split and treasury rules shown on the site are proposals and may change before or
+                  after launch.
+                </li>
+                <li>
+                  Smart contracts and blockchains can fail or be attacked, and transactions can&apos;t be
+                  reversed.
+                </li>
+                <li>
+                  Token rules differ by country. You are responsible for following yours and for any taxes.
+                </li>
+              </ul>
+              <p>Nothing on the site is financial advice. Don&apos;t buy more than you can afford to lose.</p>
+            </>
+          )}
 
           <h2>No warranty</h2>
           <p>

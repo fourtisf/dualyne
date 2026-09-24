@@ -223,6 +223,22 @@ model ChainCursor {
 }
 
 /// A comparison someone chose to publish with a link. Only created when they click Share.
+/// A chat conversation someone chose to share (Share button on the Chat page). Every answer in it
+/// was checked against the fingerprints of answers Dualyne itself produced for that visitor.
+model ChatShare {
+  id              String   @id // short public id used in /c/<id>
+  modelId         String
+  title           String
+  /// [{ role: "user" | "assistant", content: string }]
+  messages        Json
+  /// SHA-256 of the delete token returned once to the creator's browser.
+  deleteTokenHash String
+  ipHash          String
+  createdAt       DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 model Share {
   id              String   @id // short public id used in /s/<id>
   compareId       String   @unique

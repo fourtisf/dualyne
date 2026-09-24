@@ -5,7 +5,8 @@ import { ApiError } from "../lib/errors";
 import { sha256Hex } from "../lib/hash";
 
 const ALPHABET = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-const shortId = (len = 10) => Array.from(randomBytes(len), (b) => ALPHABET[b % ALPHABET.length]).join("");
+export const shortId = (len = 10) =>
+  Array.from(randomBytes(len), (b) => ALPHABET[b % ALPHABET.length]).join("");
 
 const createBody = z.object({ compareId: z.string().min(1).max(40) }).strict();
 const idParam = z.object({ id: z.string().regex(/^[A-Za-z0-9]{6,20}$/) });

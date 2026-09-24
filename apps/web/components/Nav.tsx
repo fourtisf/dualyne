@@ -99,7 +99,7 @@ export function Nav() {
         <a href={h("/#models")} onClick={close}>
           {t.models}
         </a>
-        <a href={h("/#api")} onClick={close}>
+        <a href="/docs" onClick={close}>
           {t.api}
         </a>
         <a href={h("/#pricing")} onClick={close}>

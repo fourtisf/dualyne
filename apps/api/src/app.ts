@@ -35,6 +35,8 @@ import { modelsRoutes } from "./routes/v1.models";
 import { compareRoutes } from "./routes/internal.compare";
 import { freeChatRoutes } from "./routes/internal.chat";
 import { catalogRoutes } from "./routes/internal.catalog";
+import { pageViewRoutes } from "./routes/internal.pv";
+import { chatShareRoutes } from "./routes/chatShares";
 import { healthRoutes } from "./routes/health";
 import { statusRoutes } from "./routes/status";
 
@@ -261,6 +263,8 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
   await app.register(chatRoutes, { routeConfig: keyLimit });
   await app.register(compareRoutes);
   await app.register(freeChatRoutes);
+  await app.register(pageViewRoutes);
+  await app.register(chatShareRoutes);
   await app.register(authRoutes);
   await app.register(meRoutes);
   await app.register(treasuryRoutes);

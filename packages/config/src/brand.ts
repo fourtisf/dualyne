@@ -14,6 +14,12 @@ function env(name: "NEXT_PUBLIC_X_URL" | "NEXT_PUBLIC_TELEGRAM_URL"): string {
   return v && /^https:\/\//.test(v) ? v : "";
 }
 
+/** NEXT_PUBLIC_CONTACT_EMAIL when it looks like an address; "" otherwise. */
+function contactEnv(): string {
+  const v = hasEnv ? (process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "").trim() : "";
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? v : "";
+}
+
 /**
  * Whether the $DLYN token is shown anywhere (website, Telegram bot). Off by default: the site
  * presents Dualyne as an AI product; set NEXT_PUBLIC_TOKEN_ENABLED=true to bring back the CA bar,
@@ -52,8 +58,8 @@ export const brand = {
     telegram: env("NEXT_PUBLIC_TELEGRAM_URL"),
     github: "",
   },
-  /** Shown in the footer and on the legal pages. Empty hides the contact link. */
-  contactEmail: "",
+  /** Shown on the About page, in the footer and on the legal pages. NEXT_PUBLIC_CONTACT_EMAIL overrides it. */
+  contactEmail: contactEnv() || `hello@${domain}`,
   /** Legal entity named in the Terms and Privacy pages. */
   legalName: "Dualyne",
   copyrightYear: 2026,

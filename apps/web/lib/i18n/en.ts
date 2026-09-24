@@ -36,12 +36,29 @@ export const en = {
   },
   /** The announcement in the top bar when the token is hidden. */
   topbar: { new: "New", telegram: "Dualyne AI is on Telegram: chat with @dualynebot" },
+  /** The question box on the home page. */
+  ask: {
+    label: "Ask anything",
+    placeholder: "Ask anything…",
+    model: "Model",
+    send: "Ask",
+    tries: [
+      "Explain quantum computing simply",
+      "Write a polite email to my landlord",
+      "Plan a 3-day trip to Tokyo",
+    ],
+    or: "or",
+    compare: "compare two models side by side",
+  },
   hero: {
     badgeNew: "New",
     badge: "OpenAI-compatible API is in early access",
+    /** The badge above the headline on the home page: why it's free (links to About). */
+    badgeFree: "Free, no signup, no card",
     h1a: "Every AI model.",
     h1b: "One prompt away.",
-    lede: "Chat with Claude, Llama, DeepSeek and more in one place. Free, no signup. Compare two answers side by side, then ship the one you like with a single key.",
+    /** The line under the headline, above the question box. */
+    lede: "Ask anything. Claude, Llama, DeepSeek and Mistral answer for free, and you can compare them side by side.",
     start: "Start comparing",
     chat: "Start chatting",
     compare: "Compare models",
@@ -78,6 +95,12 @@ export const en = {
     send: "Send",
     stop: "Stop",
     copyAnswer: "Copy",
+    share: "Share",
+    sharing: "Sharing…",
+    shareCopied: "Link copied",
+    shareOpen: "Open link",
+    shareOld: "Only chats answered in this browser in the last 24 hours can be shared.",
+    shareFailed: "Couldn't create the link. Try again.",
     regenerate: "Regenerate",
     code: "code",
     hint: "Enter to send · Shift+Enter for a new line",
@@ -197,6 +220,11 @@ export const en = {
     ttft: "median first word, last hour",
   },
   logos: { caption: "One catalog for the models teams actually use" },
+  compareSection: {
+    kick: "Compare",
+    h2: "Not sure which AI is best? Ask two at once.",
+    p: "Same prompt, two answers side by side, with the speed of each. Vote for the better one; votes build the public leaderboard.",
+  },
   features: {
     kick: "Product",
     h2: "Built for choosing, then shipping.",
@@ -416,6 +444,7 @@ export const en = {
     telegramBot: "Telegram bot",
     chat: "Chat",
     ledger: "Ledger",
+    about: "About",
     terms: "Terms",
     privacy: "Privacy",
     tagline: "Early access. Every model runs live through the same API you can call.",

@@ -739,3 +739,42 @@ body::after{content:""; position:fixed; inset:0; z-index:100; pointer-events:non
 
 /* section titles: the same silver as the hero */
 section.block .head h2{background:linear-gradient(180deg,#FFFFFF 40%,#A9A9B8); -webkit-background-clip:text; background-clip:text; color:transparent}
+
+/* ===== v9: the question box in the hero ===== */
+.ask{max-width:720px; margin:6px auto 0}
+.ask-box{position:relative; border-radius:22px; padding:16px 16px 12px 20px; text-align:left;
+  background:linear-gradient(180deg,rgba(24,24,34,.92),rgba(13,13,19,.92)); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.12), 0 30px 80px -30px rgba(0,0,0,.9), 0 0 0 6px rgba(139,92,246,.06), 0 20px 70px -25px rgba(139,92,246,.55); transition:box-shadow .2s}
+.ask-box:focus-within{box-shadow:inset 0 0 0 1px rgba(167,139,250,.55), 0 30px 80px -30px rgba(0,0,0,.9), 0 0 0 6px rgba(139,92,246,.12), 0 20px 80px -20px rgba(139,92,246,.75)}
+.ask-box textarea{display:block; width:100%; min-height:28px; max-height:180px; resize:none; border:0; outline:0; background:none; color:var(--text); font:400 17px/1.55 var(--sans); padding:2px 0 0}
+.ask-box textarea::placeholder{color:var(--faint)}
+.ask-bar{display:flex; align-items:center; gap:10px; margin-top:12px}
+.ask-models{display:flex; flex-wrap:wrap; gap:6px; min-width:0}
+.ask-m{display:inline-flex; align-items:center; gap:7px; height:32px; padding:0 11px 0 7px; border-radius:10px; border:0; cursor:pointer; font:500 13px/1 var(--sans); color:var(--muted); background:rgba(255,255,255,.04); box-shadow:inset 0 0 0 1px rgba(255,255,255,.08); transition:color .15s, background .15s, box-shadow .15s}
+.ask-m:hover{color:var(--text)}
+.ask-m.on{color:#fff; background:rgba(103,232,249,.1); box-shadow:inset 0 0 0 1px rgba(103,232,249,.5)}
+.ask-m .pmark{border-radius:5px}
+.ask-send{margin-left:auto; flex:none; width:42px; height:42px; border-radius:13px; border:0; cursor:pointer; display:grid; place-items:center; color:#08080A; background:linear-gradient(180deg,#FFFFFF,#D6D6DE); box-shadow:0 8px 24px -8px rgba(255,255,255,.45); transition:transform .15s, filter .15s}
+.ask-send:hover{filter:brightness(1.06)}
+.ask-send:active{transform:translateY(1px)}
+.ask-tries{display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:14px}
+.ask-tries button{height:32px; padding:0 13px; border-radius:999px; border:0; cursor:pointer; font:400 13px/1 var(--sans); color:var(--muted); background:rgba(255,255,255,.03); box-shadow:inset 0 0 0 1px rgba(255,255,255,.09); transition:color .15s, box-shadow .15s}
+.ask-tries button:hover{color:var(--text); box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.ask-or{margin:18px 0 0; font-size:13.5px; color:var(--faint)}
+.ask-or a{color:var(--muted); text-decoration:none; border-bottom:1px solid rgba(255,255,255,.15)}
+.ask-or a:hover{color:var(--text)}
+.hero .trust{margin-top:22px}
+.compare-block .stage{margin-top:40px}
+@media (max-width:640px){.ask-box{padding:14px 12px 10px 14px; border-radius:18px}.ask-box textarea{font-size:16px}.ask-m{height:30px; font-size:12.5px}.ask-send{width:40px; height:40px}}
+@media (max-width:640px){.hero{padding-top:150px}.hero h1{margin:20px 0 16px}.hero .lede{margin-bottom:22px}}
+
+/* ===== v9: sharing a chat ===== */
+.chat-share{margin-left:auto; display:flex; align-items:center; gap:10px; flex:none}
+.chat-share a{font-size:12.5px; color:var(--ok); text-decoration:none; white-space:nowrap}
+.chat-share a:hover{text-decoration:underline}
+.chat-top .chat-premium + .chat-share{margin-left:12px}
+.shared-chat{max-width:820px}
+.sc-log{border-radius:18px; padding:26px 24px 8px; background:linear-gradient(180deg,#101017,#0A0A0E); box-shadow:inset 0 0 0 1px var(--line2)}
+.sc-note{margin:18px 0 22px; font-size:13px; color:var(--faint)}
+@media (max-width:640px){.chat-share .btn{padding:0 10px}.chat-share a{display:none}}
+.chat-top:has(.chat-share) .chat-premium{display:none}

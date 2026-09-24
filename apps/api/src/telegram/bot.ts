@@ -16,6 +16,7 @@ import {
   helpText,
   NOT_TEXT,
   retryIn,
+  statsText,
   statusText,
   systemPrompt,
   tokenText,
@@ -122,6 +123,7 @@ const OWNER_COMMANDS = [
   ...PUBLIC_COMMANDS,
   { command: "status", description: "Admin: site, API, usage and spend today" },
   { command: "credit", description: "Admin: OpenRouter credit left" },
+  { command: "stats", description: "Admin: visitors, pages and chats" },
 ];
 
 const ANSWER_BUTTONS: Keyboard = [
@@ -411,6 +413,9 @@ export class TelegramBot {
           break;
         case "/credit":
           if (this.isOwner(w.chat)) return { html: await creditText(this.ctx) };
+          break;
+        case "/stats":
+          if (this.isOwner(w.chat)) return { html: await statsText(this.ctx) };
           break;
       }
       return w.isPrivate ? { html: "I don't know that command. Send /help to see what I can do." } : null;

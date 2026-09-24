@@ -104,3 +104,32 @@ export async function getChatQuota(apiUrl: string): Promise<{ limit: number; rem
     return null;
   }
 }
+
+/**
+ * Publish a conversation by link (POST /internal/chat/share). Returns the public id and the delete
+ * token, or throws a ChatError with the API's code (answer_not_verified when an answer is older than
+ * a day or came from another browser).
+ */
+export async function shareChat(
+  apiUrl: string,
+  body: { model: string; title: string; messages: { role: "user" | "assistant"; content: string }[] },
+): Promise<{ id: string; token: string }> {
+  let res: Response;
+  try {
+    res = await fetch(`${apiUrl}/internal/chat/share`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15_000),
+    });
+  } catch {
+    throw new ChatError("network", "");
+  }
+  const j = (await res.json().catch(() => ({}))) as {
+    id?: string;
+    token?: string;
+    error?: { code?: string; message?: string };
+  };
+  if (!res.ok || !j.id || !j.token) throw new ChatError(j.error?.code ?? "failed", j.error?.message ?? "");
+  return { id: j.id, token: j.token };
+}

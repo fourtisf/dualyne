@@ -2,8 +2,8 @@
 
 import { brand } from "@dualyne/config";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { CHAT_HISTORY_MAX, type CatalogModel, type ChatMessage } from "@dualyne/shared";
-import { ChatError, getChatQuota, runChat } from "@/lib/chat-client";
+import { CHAT_HISTORY_MAX, CHAT_MESSAGE_MAX, type CatalogModel, type ChatMessage } from "@dualyne/shared";
+import { ChatError, getChatQuota, runChat, shareChat } from "@/lib/chat-client";
 import { publicConfig } from "@/lib/config";
 import { formatWait } from "@/lib/i18n";
 import { md } from "@/lib/markdown";
@@ -30,6 +30,10 @@ interface Conversation {
 const CHATS_KEY = "dualyne.chats";
 const ACTIVE_KEY = "dualyne.chats.active";
 const MODEL_KEY = "dualyne.chat.model";
+/** chat id → the link it was shared as (and how many messages it held then). */
+const SHARE_OF_KEY = "dualyne.chatShareOf";
+/** share id → delete token; only this browser can remove the link. */
+const SHARE_TOKENS_KEY = "dualyne.chatShares";
 /** The single conversation the first version of this page kept. */
 const OLD_KEY = "dualyne.chat";
 const MAX_CHATS = 30;
@@ -67,6 +71,11 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
   const [listOpen, setListOpen] = useState(false);
   /** Saving starts only after saved chats were read, so it can't overwrite them. */
   const [loaded, setLoaded] = useState(false);
+  /** A question typed on the home page (/chat?q=…&m=…), asked once the chat has loaded. */
+  const [autoAsk, setAutoAsk] = useState<string | null>(null);
+  /** The public link of the open chat after Share, and whether it reached the clipboard. */
+  const [shared, setShared] = useState<{ chatId: string; url: string; copied: boolean } | null>(null);
+  const [sharing, setSharing] = useState(false);
 
   const abort = useRef<AbortController | null>(null);
   const tsSlot = useRef<HTMLDivElement>(null);
@@ -94,10 +103,18 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
       store.set(OLD_KEY, []);
     }
     setChats(saved);
+    const params = new URLSearchParams(window.location.search);
+    const q = (params.get("q") ?? "").trim().slice(0, CHAT_MESSAGE_MAX);
     const last = store.get<string | null>(ACTIVE_KEY, null);
-    setActiveId(saved.some((c) => c.id === last) ? last : null);
-    const m = store.get<string>(MODEL_KEY, "");
+    // A question from the home page starts a new chat.
+    setActiveId(!q && saved.some((c) => c.id === last) ? last : null);
+    const m = params.get("m") || store.get<string>(MODEL_KEY, "");
     if (free.some((x) => x.id === m)) setModel(m);
+    if (q) {
+      setAutoAsk(q);
+      // Drop the question from the address, so a reload doesn't ask it again.
+      window.history.replaceState(null, "", window.location.pathname);
+    }
     setLoaded(true);
     void getChatQuota(publicConfig.apiUrl).then((q) => q && setQuota(q));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- read once on load
@@ -242,6 +259,65 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
     void run(id, [mine], true);
   };
 
+  useEffect(() => {
+    if (!loaded || !autoAsk || busy) return;
+    setAutoAsk(null);
+    send(autoAsk);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, when the saved chats are in
+  }, [loaded, autoAsk]);
+
+  /** Question-and-answer pairs of the open chat that can be published (failed answers left out). */
+  const shareable = (): ChatMessage[] => {
+    const out: ChatMessage[] = [];
+    for (let i = 0; i + 1 < turns.length; i++) {
+      const q = turns[i]!;
+      const a = turns[i + 1]!;
+      if (q.role === "user" && a.role === "assistant" && a.content && !a.failed) {
+        out.push({ role: "user", content: q.content }, { role: "assistant", content: a.content });
+        i++;
+      }
+    }
+    return out.slice(-CHAT_HISTORY_MAX * 2);
+  };
+
+  const shareNow = async () => {
+    if (!active || busy || sharing) return;
+    const messages = shareable();
+    if (!messages.length) return;
+    const last = [...turns].reverse().find((m) => m.role === "assistant" && m.content && !m.failed);
+    const links = store.get<Record<string, { id: string; n: number }>>(SHARE_OF_KEY, {});
+    setSharing(true);
+    setError("");
+    try {
+      let id = links[active.id]?.n === messages.length ? links[active.id]!.id : "";
+      if (!id) {
+        const res = await shareChat(publicConfig.apiUrl, {
+          model: last?.model ?? model,
+          title: active.title.slice(0, 120),
+          messages,
+        });
+        id = res.id;
+        store.set(SHARE_OF_KEY, { ...links, [active.id]: { id, n: messages.length } });
+        store.set(SHARE_TOKENS_KEY, {
+          ...store.get<Record<string, string>>(SHARE_TOKENS_KEY, {}),
+          [id]: res.token,
+        });
+      }
+      const url = `${window.location.origin}/c/${id}`;
+      let copied = true;
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        copied = false;
+      }
+      setShared({ chatId: active.id, url, copied });
+    } catch (e) {
+      setError(e instanceof ChatError && e.code === "answer_not_verified" ? t.shareOld : t.shareFailed);
+    } finally {
+      setSharing(false);
+    }
+  };
+
   const regenerate = () => {
     if (!active || busy) return;
     const history = active.turns.slice(0, -1);
@@ -371,6 +447,28 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
             >
               {t.premium(premium.length)}
             </a>
+          )}
+          {active && !busy && turns.some((m) => m.role === "assistant" && m.content && !m.failed) && (
+            <div className="chat-share">
+              {shared?.chatId === active.id && (
+                <a href={shared.url} target="_blank" rel="noopener">
+                  {shared.copied ? t.shareCopied : t.shareOpen}
+                </a>
+              )}
+              <button className="btn dark sm" type="button" disabled={sharing} onClick={shareNow}>
+                <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                {sharing ? t.sharing : t.share}
+              </button>
+            </div>
           )}
         </div>
 
