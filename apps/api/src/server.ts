@@ -1,11 +1,21 @@
 import { buildApp } from "./app";
 import { loadEnv } from "./env";
 import { startScheduler } from "./jobs/scheduler";
+import { TelegramBot } from "./telegram/bot";
 
 async function main() {
   const env = loadEnv();
   const app = await buildApp({ env });
   const stopJobs = env.JOBS_ENABLED ? startScheduler(app) : () => undefined;
+  // One API instance answers the Telegram bot (JOBS_ENABLED marks the instance that runs jobs).
+  const bot =
+    env.JOBS_ENABLED && env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID
+      ? new TelegramBot(app.ctx, app.log, {
+          token: env.TELEGRAM_BOT_TOKEN,
+          ownerChatId: env.TELEGRAM_CHAT_ID,
+          apiUrl: env.TELEGRAM_API_URL,
+        })
+      : null;
 
   let closing = false;
   const shutdown = async (signal: string) => {
@@ -13,6 +23,7 @@ async function main() {
     closing = true;
     app.log.info({ signal }, "shutting down");
     stopJobs();
+    bot?.stop();
     try {
       await app.close();
       process.exit(0);
@@ -30,6 +41,7 @@ async function main() {
     );
   }
   await app.listen({ host: env.HOST, port: env.API_PORT });
+  bot?.start();
 }
 
 main().catch((err) => {

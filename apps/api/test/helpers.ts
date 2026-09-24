@@ -31,8 +31,10 @@ export interface FakeUpstream {
   /** GET /v1/credits and /v1/key answers; null = that endpoint returns 404. */
   credits: { total_credits: number; total_usage: number } | null;
   keyInfo: { limit_remaining: number | null } | null;
-  /** Messages sent to the Telegram stand-in (POST /bot<token>/sendMessage). */
-  telegram: { token: string; body: Record<string, unknown> }[];
+  /** Calls to the Telegram stand-in (POST /bot<token>/<method>). */
+  telegram: { token: string; method: string; body: Record<string, unknown> }[];
+  /** What the Telegram stand-in's getUpdates returns next (then it is emptied). */
+  telegramUpdates: unknown[];
   close(): Promise<void>;
 }
 
@@ -57,6 +59,7 @@ export async function startFakeUpstream(): Promise<FakeUpstream> {
     credits: null,
     keyInfo: null,
     telegram: [],
+    telegramUpdates: [],
     close: async () => undefined,
   };
 
@@ -79,11 +82,12 @@ export async function startFakeUpstream(): Promise<FakeUpstream> {
       );
       return;
     }
-    const tg = /^\/bot([^/]+)\/sendMessage$/.exec(path);
+    const tg = /^\/bot([^/]+)\/(\w+)$/.exec(path);
     if (tg) {
-      state.telegram.push({ token: tg[1]!, body: JSON.parse(raw || "{}") });
+      state.telegram.push({ token: tg[1]!, method: tg[2]!, body: JSON.parse(raw || "{}") });
+      const result = tg[2] === "getUpdates" ? state.telegramUpdates.splice(0) : true;
       res.setHeader("content-type", "application/json");
-      res.end(JSON.stringify({ ok: true }));
+      res.end(JSON.stringify({ ok: true, result }));
       return;
     }
     if (path === "/v1/credits" || path === "/v1/key") {
@@ -210,6 +214,7 @@ export async function createTestContext(
       upstream.credits = null;
       upstream.keyInfo = null;
       upstream.telegram.length = 0;
+      upstream.telegramUpdates.length = 0;
     },
     close: async () => {
       await app.close();

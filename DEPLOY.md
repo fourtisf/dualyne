@@ -494,6 +494,8 @@ cd /var/www/dualyne && bash deploy/pm2/ops.sh telegram && bash deploy/pm2/deploy
 
 Script menanyakan token bot (buat lewat **@BotFather** di Telegram → `/newbot`), lalu meminta Anda mengirim pesan apa saja ke bot itu. Chat id terisi otomatis dan pesan tes dikirim. `deploy.sh` membuat API ikut memakai notifikasi ini. Batas saldo diatur dengan `OPENROUTER_LOW_BALANCE_USD` di `.env` (default 2 USD, `0` = mati).
 
+Bot juga menjawab perintah. Di chat Anda: `/status` (website, API, pemakaian dan biaya hari ini, sisa saldo OpenRouter), `/credit`, dan `/help`. Orang lain yang membuka bot mendapat sambutan singkat dengan link ke Chat, Compare dan Docs; perintah admin hanya untuk chat Anda.
+
 **Backup harian dan cek kesehatan tiap 5 menit** (sekali pasang):
 
 ```bash

@@ -16,7 +16,8 @@ const creditCheck = () =>
   defaultJobs(t.app)
     .find((j) => j.name === "credit-check")!
     .run();
-const messages = () => t.upstream.telegram.map((m) => String(m.body.text));
+const messages = () =>
+  t.upstream.telegram.filter((m) => m.method === "sendMessage").map((m) => String(m.body.text));
 
 describe("alerts to Telegram", () => {
   it("sends to the configured chat with the bot token", async () => {
