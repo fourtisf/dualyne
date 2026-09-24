@@ -3,6 +3,7 @@ import type { FastifyPluginAsync, FastifyReply } from "fastify";
 import { z } from "zod";
 import type { AppContext } from "../context";
 import { isRefusal } from "../budget";
+import { alertOnce } from "../lib/alert";
 import { ApiError } from "../lib/errors";
 import { plainHeaders, SSE_HEADERS, writeRaw } from "../lib/http";
 import { estimateTokens, tokensCostMicro, usdToMicro } from "../lib/money";
@@ -221,7 +222,7 @@ export const chatRoutes: FastifyPluginAsync<RouteOpts> = async (app, opts) => {
         const upstreamMessage = parseUpstreamError(text);
         req.log.warn({ status: res.status, model: model.id, upstreamMessage }, "upstream returned an error");
         if (res.status === 402) {
-          void ctx.alert("OpenRouter returned 402: the OpenRouter account is out of credits.");
+          void alertOutOfCredits(ctx);
         }
         const clientError = res.status === 400 || res.status === 422;
         await logUsage(ctx.prisma, req.log, {
@@ -357,10 +358,22 @@ function parseUpstreamError(text: string): string | null {
 /** Send one alert per UTC day when the budget cap first refuses a request. */
 export async function alertBudgetOnce(app: { ctx: AppContext }): Promise<void> {
   const { ctx } = app;
-  const key = `alert:budget:${ctx.clock().toISOString().slice(0, 10)}`;
-  const first = await ctx.redis.set(key, "1", "EX", 172_800, "NX");
-  if (first)
-    void ctx.alert(
-      `Daily budget cap of $${ctx.env.DAILY_BUDGET_USD} reached. Free tiers now get 429 until 00:00 UTC.`,
-    );
+  await alertOnce(
+    ctx.redis,
+    ctx.alert,
+    `budget:${ctx.clock().toISOString().slice(0, 10)}`,
+    172_800,
+    `Daily budget cap of $${ctx.env.DAILY_BUDGET_USD} reached. Free chat and comparisons pause until 00:00 UTC.`,
+  );
+}
+
+/** OpenRouter answered 402: tell the owner, at most once an hour. */
+export async function alertOutOfCredits(ctx: AppContext): Promise<void> {
+  await alertOnce(
+    ctx.redis,
+    ctx.alert,
+    "openrouter-402",
+    3600,
+    "OpenRouter is out of credits: every model call fails. Top up at https://openrouter.ai/settings/credits",
+  );
 }

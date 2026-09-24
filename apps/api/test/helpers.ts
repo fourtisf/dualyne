@@ -28,6 +28,11 @@ export interface FakeUpstream {
     context_length: number;
     pricing: { prompt: string; completion: string };
   }[];
+  /** GET /v1/credits and /v1/key answers; null = that endpoint returns 404. */
+  credits: { total_credits: number; total_usage: number } | null;
+  keyInfo: { limit_remaining: number | null } | null;
+  /** Messages sent to the Telegram stand-in (POST /bot<token>/sendMessage). */
+  telegram: { token: string; body: Record<string, unknown> }[];
   close(): Promise<void>;
 }
 
@@ -49,6 +54,9 @@ export async function startFakeUpstream(): Promise<FakeUpstream> {
     requests: [],
     aborted: 0,
     catalog: [],
+    credits: null,
+    keyInfo: null,
+    telegram: [],
     close: async () => undefined,
   };
 
@@ -69,6 +77,20 @@ export async function startFakeUpstream(): Promise<FakeUpstream> {
           action,
         }),
       );
+      return;
+    }
+    const tg = /^\/bot([^/]+)\/sendMessage$/.exec(path);
+    if (tg) {
+      state.telegram.push({ token: tg[1]!, body: JSON.parse(raw || "{}") });
+      res.setHeader("content-type", "application/json");
+      res.end(JSON.stringify({ ok: true }));
+      return;
+    }
+    if (path === "/v1/credits" || path === "/v1/key") {
+      const data = path === "/v1/credits" ? state.credits : state.keyInfo;
+      res.statusCode = data ? 200 : 404;
+      res.setHeader("content-type", "application/json");
+      res.end(JSON.stringify(data ? { data } : { error: { message: "not found" } }));
       return;
     }
     if (path === "/v1/models") {
@@ -163,6 +185,7 @@ export async function createTestContext(
     OPENROUTER_BASE_URL: `${upstream.url}/v1`,
     TURNSTILE_SECRET_KEY: "test-secret",
     TURNSTILE_VERIFY_URL: `${upstream.url}/turnstile`,
+    TELEGRAM_API_URL: upstream.url,
     WEB_ORIGINS: "http://localhost:3000",
     IP_HASH_SECRET: "test-ip-secret-test-ip-secret-test-ip",
     JOBS_ENABLED: "false",
@@ -184,6 +207,9 @@ export async function createTestContext(
       upstream.requests.length = 0;
       upstream.aborted = 0;
       upstream.catalog = [];
+      upstream.credits = null;
+      upstream.keyInfo = null;
+      upstream.telegram.length = 0;
     },
     close: async () => {
       await app.close();

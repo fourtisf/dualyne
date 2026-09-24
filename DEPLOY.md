@@ -483,3 +483,36 @@ Cek model OpenRouter (seperti langkah 11):
 ```bash
 cd /var/www/dualyne/apps/api && set -a && . ../../.env && set +a && ../../.runtime/node/bin/node dist/resolve-models.js
 ```
+
+### 22.9 Notifikasi Telegram, backup, dan pemantauan
+
+**Notifikasi ke Telegram** (website mati/pulih, saldo OpenRouter menipis atau habis, budget harian terpakai):
+
+```bash
+cd /var/www/dualyne && bash deploy/pm2/ops.sh telegram && bash deploy/pm2/deploy.sh
+```
+
+Script menanyakan token bot (buat lewat **@BotFather** di Telegram → `/newbot`), lalu meminta Anda mengirim pesan apa saja ke bot itu. Chat id terisi otomatis dan pesan tes dikirim. `deploy.sh` membuat API ikut memakai notifikasi ini. Batas saldo diatur dengan `OPENROUTER_LOW_BALANCE_USD` di `.env` (default 2 USD, `0` = mati).
+
+**Backup harian dan cek kesehatan tiap 5 menit** (sekali pasang):
+
+```bash
+cd /var/www/dualyne && bash deploy/pm2/ops.sh install
+```
+
+- Backup database setiap hari pukul 03:30 (waktu server) ke `/var/backups/dualyne/`, 14 hari terakhir disimpan.
+- Setiap 5 menit website dan API dicek. Telegram hanya dikirimi pesan saat ada perubahan (mati, lalu pulih). Aplikasi yang dua kali berturut-turut tidak menjawab di-restart otomatis.
+- Log: `/var/log/dualyne-ops.log`. Backup manual: `bash deploy/pm2/ops.sh backup`.
+
+**Memulihkan backup** (menimpa isi database, jalankan hanya jika memang perlu):
+
+```bash
+cd /var/www/dualyne && set -a && . ./.env && set +a
+pm2 stop dualyne-api
+ls -1t /var/backups/dualyne/ | head          # pilih file
+runuser -u postgres -- dropdb dualyne && runuser -u postgres -- createdb -O dualyne dualyne
+zcat /var/backups/dualyne/NAMA-FILE.sql.gz | psql -q "$DATABASE_URL"
+pm2 start dualyne-api
+```
+
+Untuk tahu jika **seluruh server** mati (bukan hanya aplikasinya), tambahkan juga pemantau dari luar yang gratis, misalnya UptimeRobot, yang mengecek `https://domainanda.com/` dan `https://api.domainanda.com/health`.

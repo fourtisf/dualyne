@@ -3,6 +3,7 @@ import { treasuryConfig } from "../routes/treasury";
 import { syncTreasury } from "../treasury";
 import { recomputeElo } from "../elo";
 import { blindOnly, LEADERBOARD_CACHE_KEY } from "../routes/votes";
+import { alertOnce } from "../lib/alert";
 import { verifyModels } from "./verifyModels";
 
 const TICK_MS = 5 * 60 * 1000; // look every 5 minutes for jobs that are due
@@ -28,6 +29,25 @@ export function defaultJobs(app: FastifyInstance): Job[] {
         // Nothing was checked: fail the run so the next tick (5 minutes) tries again, not tomorrow.
         if (r.error) throw new Error(`model check could not reach OpenRouter: ${r.error}`);
         app.log.info({ job: "verify-models", ...r }, "model check finished");
+      },
+    },
+    {
+      name: "credit-check",
+      everyMs: HOUR,
+      run: async () => {
+        const threshold = ctx.env.OPENROUTER_LOW_BALANCE_USD;
+        if (!ctx.env.OPENROUTER_API_KEY || threshold <= 0) return;
+        const left = await ctx.openrouter.creditsLeft();
+        app.log.info({ job: "credit-check", creditsLeftUsd: left }, "OpenRouter credit checked");
+        if (left !== null && left < threshold) {
+          await alertOnce(
+            ctx.redis,
+            ctx.alert,
+            `low-credit:${ctx.clock().toISOString().slice(0, 10)}`,
+            172_800,
+            `OpenRouter credit is low: $${Math.max(0, left).toFixed(2)} left. Top up at https://openrouter.ai/settings/credits`,
+          );
+        }
       },
     },
     {

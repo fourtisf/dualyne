@@ -9,7 +9,7 @@ import { secondsUntilUtcMidnight } from "../lib/time";
 import { readEvents, StreamInspector } from "../openrouter/sse";
 import { verifyTurnstile } from "../turnstile";
 import { logUsage } from "../usage/log";
-import { alertBudgetOnce, assertModelsLive, BUSY_RETRY_SECONDS } from "./v1.chat";
+import { alertBudgetOnce, alertOutOfCredits, assertModelsLive, BUSY_RETRY_SECONDS } from "./v1.chat";
 import { pickTwo } from "./votes";
 
 const PING_INTERVAL_MS = 15_000;
@@ -174,8 +174,7 @@ export const compareRoutes: FastifyPluginAsync = async (app) => {
           );
           if (!res.ok) {
             await res.text().catch(() => "");
-            if (res.status === 402)
-              void ctx.alert("OpenRouter returned 402: the OpenRouter account is out of credits.");
+            if (res.status === 402) void alertOutOfCredits(ctx);
             status = 502;
             errorCode = `upstream_${res.status}`;
           } else {

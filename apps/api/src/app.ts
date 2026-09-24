@@ -128,7 +128,13 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
     tiers: tierPolicies(env),
     compareLimiter: new SlidingWindowLimiter(redis, "cmp", env.COMPARE_LIMIT_PER_HOUR, 3_600_000, clock),
     chatLimiter: new SlidingWindowLimiter(redis, "chat", env.CHAT_LIMIT_PER_HOUR, 3_600_000, clock),
-    alert: createAlerter(app.log, env.ALERT_WEBHOOK_URL),
+    alert: createAlerter(app.log, {
+      webhookUrl: env.ALERT_WEBHOOK_URL,
+      telegram:
+        env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID
+          ? { token: env.TELEGRAM_BOT_TOKEN, chatId: env.TELEGRAM_CHAT_ID, apiUrl: env.TELEGRAM_API_URL }
+          : undefined,
+    }),
     ipHash: (ip) => hashIp(env.IP_HASH_SECRET, ip),
     chain,
     sessions: new Sessions(prisma, env.SESSION_SECRET, clock),

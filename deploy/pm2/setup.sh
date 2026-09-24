@@ -183,7 +183,12 @@ COMPARE_LIMIT_PER_HOUR=10
 COMPARE_MAX_TOKENS=1000
 CHAT_LIMIT_PER_HOUR=30
 JOBS_ENABLED=true
-# Optional: Slack/Discord webhook for budget alerts.
+# Alerts (site down, low OpenRouter credit, daily budget used up). Easiest: Telegram, set up with
+#   bash deploy/pm2/ops.sh telegram
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
+OPENROUTER_LOW_BALANCE_USD=2
+# Optional: Slack/Discord webhook for the same alerts.
 ALERT_WEBHOOK_URL=
 
 # ── Token (fill in at launch; empty = the site shows "coming soon") ──
@@ -296,6 +301,8 @@ say "Setup done"
 cat <<EOF
 Next:
   bash $APP_DIR/deploy/pm2/deploy.sh
+  bash $APP_DIR/deploy/pm2/ops.sh telegram   # alerts on your phone (optional)
+  bash $APP_DIR/deploy/pm2/ops.sh install    # daily backups + health checks
 Without OPENROUTER_API_KEY in $ENV_FILE the site runs in preview (comparisons say
 "opening soon"). Add it later and run deploy.sh again.
 EOF

@@ -621,7 +621,7 @@ td a.mname:hover{text-decoration:underline; text-underline-offset:3px; text-deco
 .chat-premium{flex:none; margin-left:auto; color:var(--muted); font-size:12.5px; text-decoration:none; white-space:nowrap}
 .chat-premium:hover{color:var(--text)}
 .chat-log{flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:26px 26px 8px}
-.chat-empty{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; min-height:100%; text-align:center; padding:12px 0}
+.chat-empty{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; min-height:100%; box-sizing:border-box; text-align:center; padding:12px 0}
 .chat-empty h2{font:600 24px/1.2 var(--sans); letter-spacing:-.02em; margin:4px 0 0}
 .chat-empty p{margin:0 0 8px; color:var(--muted); font-size:14.5px}
 .chat-sugg{display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; max-width:620px}

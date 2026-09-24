@@ -47,4 +47,29 @@ export class OpenRouter {
     if (!Array.isArray(json.data)) throw new Error("OpenRouter /models returned no data array");
     return json.data;
   }
+
+  /**
+   * USD left to spend: the account balance (GET /credits) and, if the key has its own credit
+   * limit, what is left of that (GET /key); the smaller of the two. Null when neither answers.
+   */
+  async creditsLeft(): Promise<number | null> {
+    const read = async (path: string) => {
+      try {
+        const res = await fetch(`${this.opts.baseUrl}${path}`, {
+          headers: this.headers(),
+          signal: AbortSignal.timeout(15_000),
+        });
+        return res.ok ? ((await res.json()) as { data?: Record<string, unknown> }).data : undefined;
+      } catch {
+        return undefined;
+      }
+    };
+    const [credits, key] = await Promise.all([read("/credits"), read("/key")]);
+    const left: number[] = [];
+    if (typeof credits?.total_credits === "number" && typeof credits.total_usage === "number") {
+      left.push(credits.total_credits - credits.total_usage);
+    }
+    if (typeof key?.limit_remaining === "number") left.push(key.limit_remaining);
+    return left.length ? Math.min(...left) : null;
+  }
 }

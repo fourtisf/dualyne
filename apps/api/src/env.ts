@@ -45,6 +45,20 @@ const schema = z
       .url()
       .optional()
       .or(z.literal("").transform(() => undefined)),
+    /** Telegram alerts: a bot token from @BotFather and the chat that should receive them. */
+    TELEGRAM_BOT_TOKEN: z
+      .string()
+      .regex(/^\d{5,}:[\w-]{30,}$/, "must look like 123456:ABC… (from @BotFather)")
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+    TELEGRAM_CHAT_ID: z
+      .string()
+      .regex(/^(-?\d{1,20}|@\w{4,})$/, "must be a numeric chat id or @channel")
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+    TELEGRAM_API_URL: z.string().url().default("https://api.telegram.org"),
+    /** Alert when OpenRouter credit falls below this many USD (0 turns the check off). */
+    OPENROUTER_LOW_BALANCE_USD: z.coerce.number().min(0).default(2),
     JOBS_ENABLED: bool.default("true"),
 
     // Wallet sign-in (SIWE) and on-chain reads
