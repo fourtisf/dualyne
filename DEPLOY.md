@@ -494,7 +494,14 @@ cd /var/www/dualyne && bash deploy/pm2/ops.sh telegram && bash deploy/pm2/deploy
 
 Script menanyakan token bot (buat lewat **@BotFather** di Telegram → `/newbot`), lalu meminta Anda mengirim pesan apa saja ke bot itu. Chat id terisi otomatis dan pesan tes dikirim. `deploy.sh` membuat API ikut memakai notifikasi ini. Batas saldo diatur dengan `OPENROUTER_LOW_BALANCE_USD` di `.env` (default 2 USD, `0` = mati).
 
-Bot ini **publik**: siapa pun bisa chat dengan AI gratis langsung di Telegram (model explorer: Claude Swift, Llama, DeepSeek, Mistral), dengan batas yang sama seperti halaman Chat (`CHAT_LIMIT_PER_HOUR` per orang per jam, budget harian, jawaban maks. `COMPARE_MAX_TOKENS`). Perintah: `/start`, `/model` (pilih model lewat tombol), `/new` (mulai percakapan baru), `/ask` (di grup), `/help`, `/about`. Di grup, bot menjawab `/ask`, mention `@bot`, dan balasan ke pesannya. Bot mengingat 10 pesan terakhir per chat selama 1 jam (di Redis), lalu lupa. Pemakaian tercatat dengan sumber `telegram`.
+Bot ini **publik**: siapa pun bisa chat dengan AI gratis langsung di Telegram (model explorer: Claude Swift, Llama, DeepSeek, Mistral), dengan batas yang sama seperti halaman Chat (`CHAT_LIMIT_PER_HOUR` per orang per jam, budget harian, jawaban maks. `COMPARE_MAX_TOKENS`).
+
+- Jawaban muncul bertahap saat ditulis (pesan diperbarui), dalam bahasa si penanya. Tiap jawaban punya tombol 🔄 Try again · 🔀 Other model · ⚖️ Compare · 🆕 New chat.
+- `/compare pertanyaan`: dua model acak menjawab tanpa nama; penanya vote, lalu nama model terungkap. Vote masuk leaderboard (sama seperti vote di website). Satu perbandingan = 2 pesan dari jatah per jam.
+- Perintah lain: `/start` (dengan tombol **Open Dualyne** yang membuka website di dalam Telegram), `/model`, `/new`, `/ask` (di grup), `/token` (CA dari `DLYN_TOKEN_ADDRESS` dengan tombol copy; kosong = "coming soon"), `/help`, `/about`.
+- Di grup, bot menjawab `/ask`, mention `@bot`, dan balasan ke pesannya. Foto/voice di chat pribadi dijawab "text only".
+- Bot mengingat 10 pesan terakhir per chat selama 1 jam (di Redis), lalu lupa. Pemakaian tercatat dengan sumber `telegram`.
+- Tampilan bot di @BotFather (sekali saja): `/setuserpic` untuk foto profil, `/setname` misalnya "Dualyne AI".
 
 Perintah admin hanya berlaku di chat Anda (`TELEGRAM_CHAT_ID`) dan tidak tampil di menu orang lain: `/status` (website, API, pemakaian dan biaya hari ini, sisa saldo OpenRouter) dan `/credit`. Tanpa `TELEGRAM_CHAT_ID`, bot tetap jalan untuk publik, hanya tanpa perintah admin dan notifikasi.
 

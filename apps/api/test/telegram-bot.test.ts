@@ -10,126 +10,171 @@ let cfg: BotConfig;
 
 beforeEach(async () => {
   if (!t) {
-    t = await createTestContext({ OPENROUTER_LOW_BALANCE_USD: "2", CHAT_LIMIT_PER_HOUR: "3" });
+    t = await createTestContext({ OPENROUTER_LOW_BALANCE_USD: "2", CHAT_LIMIT_PER_HOUR: "5" });
     cfg = { token: TOKEN, ownerChatId: "42", apiUrl: t.upstream.url };
     bot = new TelegramBot(t.app.ctx, t.app.log, cfg);
     await bot.setUpProfile(); // learns its username (@dualynebot) for group mentions
   }
   await t.reset();
-  t.upstream.mode = "json";
+  t.upstream.mode = "stream";
 });
 afterAll(async () => t?.close());
 
+type Body = Record<string, unknown> & {
+  text?: string;
+  reply_markup?: {
+    inline_keyboard: { text: string; callback_data?: string; web_app?: unknown; url?: string }[][];
+  };
+};
+
 let nextId = 1;
-const msg = (chat: number, text: string, extra: Record<string, unknown> = {}) => ({
+const msg = (chat: number, text: string | undefined, extra: Record<string, unknown> = {}) => ({
   update_id: nextId++,
   message: { message_id: nextId, chat: { id: chat, type: "private" }, from: { id: chat }, text, ...extra },
 });
 const group = (text: string, from = 5, extra: Record<string, unknown> = {}) =>
   msg(-100, text, { chat: { id: -100, type: "supergroup" }, from: { id: from }, ...extra });
-const sent = () => t.upstream.telegram.filter((m) => m.method === "sendMessage");
-const texts = () => sent().map((m) => String(m.body.text));
+const press = (chat: number, data: string, from = chat, messageId = 777) => ({
+  update_id: nextId++,
+  callback_query: {
+    id: `cb${nextId}`,
+    from: { id: from },
+    data,
+    message: { message_id: messageId, chat: { id: chat, type: chat < 0 ? "group" : "private" } },
+  },
+});
+const calls = (method: string) =>
+  t.upstream.telegram.filter((m) => m.method === method).map((m) => m.body as Body);
+const sent = () => calls("sendMessage");
+const texts = () => sent().map((m) => String(m.text));
+const toasts = () => calls("answerCallbackQuery").map((b) => b.text);
+const buttons = (b: Body | undefined) =>
+  b?.reply_markup?.inline_keyboard.flat().map((x) => x.callback_data ?? x.text);
+const asked = () =>
+  t.upstream.requests.map((r) => (r.body.messages as { role: string; content: string }[]).slice(1));
 /** Send one message as a fresh update (skips the one-reply-a-second guard). */
 async function say(update: ReturnType<typeof msg>) {
   await t.redis.del(`tgbot:gap:${update.message.chat.id}`);
   await bot.handle(update);
 }
 
-describe("Telegram bot: public chat", () => {
-  it("welcomes people on /start with how to use it", async () => {
+describe("Telegram bot: chat", () => {
+  it("welcomes people on /start, with a button that opens the app inside Telegram", async () => {
     await say(msg(7, "/start"));
-    const [welcome] = texts();
-    expect(welcome).toContain("<b>Welcome to Dualyne</b>");
-    expect(welcome).toContain("Claude Swift, Llama, DeepSeek, Mistral");
-    expect(welcome).toContain("Free: 3 messages an hour");
-    expect(sent()[0]!.body).toMatchObject({ chat_id: 7, parse_mode: "HTML" });
+    const [welcome] = sent();
+    expect(welcome!.text).toContain("<b>Welcome to Dualyne</b>");
+    expect(welcome!.text).toContain("Claude Swift, Llama, DeepSeek, Mistral");
+    expect(welcome!.text).toContain("/compare");
+    expect(welcome!.reply_markup!.inline_keyboard[0]![0]).toEqual({
+      text: "🌐 Open Dualyne",
+      web_app: { url: "https://dualyne.com/chat" },
+    });
   });
 
-  it("answers a question with the default free model and logs the usage", async () => {
+  it("answers with the default model, a system prompt, the model name and buttons", async () => {
     await say(msg(7, "What is an API?"));
     const [req] = t.upstream.requests;
-    expect(req!.path).toBe("/v1/chat/completions");
-    expect(req!.body).toMatchObject({
-      model: "anthropic/claude-haiku-4.5",
-      messages: [{ role: "user", content: "What is an API?" }],
-      max_tokens: 1000,
-    });
-    expect(req!.body.stream).toBeUndefined();
-    expect(texts()[0]).toBe("Hello\n\n<i>Claude Swift</i> · <i>2 free messages left this hour</i>");
-    expect(t.upstream.telegram.some((m) => m.method === "sendChatAction")).toBe(true);
+    expect(req!.body).toMatchObject({ model: "anthropic/claude-haiku-4.5", max_tokens: 1000, stream: true });
+    const [system, user] = req!.body.messages as { role: string; content: string }[];
+    expect(system!.role).toBe("system");
+    expect(system!.content).toContain("Reply in the language of the user's latest message");
+    expect(system!.content).toContain("this answer comes from Claude Swift");
+    expect(system!.content).toContain("isn't professional advice");
+    expect(user).toEqual({ role: "user", content: "What is an API?" });
+
+    const [answer] = sent();
+    expect(answer!.text).toBe("Hello ✓\n\n<i>Claude Swift</i> · <i>4 free messages left this hour</i>");
+    expect(buttons(answer)).toEqual(["act:retry", "act:other", "act:compare", "act:new"]);
+    expect(calls("sendChatAction")[0]).toMatchObject({ chat_id: 7, action: "typing" });
 
     const row = await t.prisma.usageLog.findFirstOrThrow();
-    expect(row).toMatchObject({ source: "telegram", modelId: "claude-swift", status: 200, stream: false });
-    expect(row.costMicroUsd).toBe(500n);
+    expect(row).toMatchObject({ source: "telegram", modelId: "claude-swift", status: 200, stream: true });
+    expect(row.costMicroUsd).toBe(1230n);
     expect(row.ipHash).toMatch(/^[0-9a-f]{32}$/); // a hash, never the Telegram user id
+  });
+
+  it("shows the answer while it is being written, then the final text in the same message", async () => {
+    const live = new TelegramBot(t.app.ctx, t.app.log, cfg, { firstUpdateMs: 0, updateEveryMs: 0 });
+    await live.handle(msg(7, "Hi"));
+    const [partial] = sent();
+    expect(partial!.text).toMatch(/ ▍$/);
+    const edits = calls("editMessageText");
+    const final = edits.at(-1)!;
+    // The stand-in numbers messages 1000 + its call count.
+    const partialId = 1001 + t.upstream.telegram.findIndex((m) => m.method === "sendMessage");
+    expect(final).toMatchObject({ chat_id: 7, message_id: partialId });
+    expect(final.text).toBe("Hello ✓\n\n<i>Claude Swift</i> · <i>4 free messages left this hour</i>");
+    expect(buttons(final)).toEqual(["act:retry", "act:other", "act:compare", "act:new"]);
+    expect(sent()).toHaveLength(1);
   });
 
   it("remembers the conversation until /new", async () => {
     await say(msg(7, "My name is Ana."));
     await say(msg(7, "What is my name?"));
-    expect(t.upstream.requests[1]!.body.messages).toEqual([
+    expect(asked()[1]).toEqual([
       { role: "user", content: "My name is Ana." },
-      { role: "assistant", content: "Hello" },
+      { role: "assistant", content: "Hello ✓" },
       { role: "user", content: "What is my name?" },
     ]);
     await say(msg(7, "/new"));
     expect(texts().at(-1)).toMatch(/^Started a new conversation/);
     await say(msg(7, "Hi again"));
-    expect(t.upstream.requests[2]!.body.messages).toEqual([{ role: "user", content: "Hi again" }]);
+    expect(asked()[2]).toEqual([{ role: "user", content: "Hi again" }]);
   });
 
-  it("lets people pick a free model with buttons", async () => {
-    await say(msg(7, "/model"));
-    const picker = sent()[0]!.body as {
-      text: string;
-      reply_markup: { inline_keyboard: { callback_data: string }[][] };
-    };
-    expect(picker.text).toContain("✅ <b>Claude Swift</b>");
-    expect(picker.reply_markup.inline_keyboard.flat().map((b) => b.callback_data)).toEqual([
-      "model:claude-swift",
-      "model:llama",
-      "model:deepseek",
-      "model:mistral",
-    ]);
+  it("answer buttons: try again, ask another model, new chat", async () => {
+    await say(msg(7, "Tell me a joke"));
+    await bot.handle(press(7, "act:retry"));
+    // Same question again, without the first answer in the history.
+    expect(asked()[1]).toEqual([{ role: "user", content: "Tell me a joke" }]);
+    expect(toasts()).toContain("Trying again…");
 
-    await bot.handle({
-      update_id: nextId++,
-      callback_query: { id: "cb1", data: "model:llama", message: { message_id: 3, chat: { id: 7 } } },
-    });
-    const answered = t.upstream.telegram.find((m) => m.method === "answerCallbackQuery")!;
-    expect(answered.body).toMatchObject({
-      callback_query_id: "cb1",
-      text: "Now answering with Llama. Send your question.",
-    });
-    const edited = t.upstream.telegram.find((m) => m.method === "editMessageText")!;
-    expect(String(edited.body.text)).toContain("✅ <b>Llama</b>");
+    await bot.handle(press(7, "act:other"));
+    const picker = sent().at(-1)!;
+    expect(picker.text).toContain("<b>Ask another model</b>");
+    expect(buttons(picker)).toEqual(["alt:llama", "alt:deepseek", "alt:mistral"]);
 
-    await say(msg(7, "Hi"));
-    expect(t.upstream.requests[0]!.body.model).toBe("meta-llama/llama-3.3-70b-instruct");
+    await bot.handle(press(7, "alt:llama"));
+    expect(t.upstream.requests[2]!.body.model).toBe("meta-llama/llama-3.3-70b-instruct");
+    expect(asked()[2]).toEqual([{ role: "user", content: "Tell me a joke" }]);
     expect(texts().at(-1)).toContain("<i>Llama</i>");
+    expect(await t.redis.get("tgbot:model:7")).toBe("llama");
+
+    await bot.handle(press(7, "act:new"));
+    expect(await t.redis.get("tgbot:hist:7")).toBeNull();
+    await bot.handle(press(7, "act:retry"));
+    expect(toasts().at(-1)).toBe("This conversation has expired. Send your question again.");
+    expect(t.upstream.requests).toHaveLength(3);
   });
 
-  it("refuses premium models and unknown names", async () => {
+  it("/model picks a free model with buttons and refuses the rest", async () => {
+    await say(msg(7, "/model"));
+    const picker = sent()[0]!;
+    expect(picker.text).toContain("✅ <b>Claude Swift</b>");
+    expect(buttons(picker)).toEqual(["model:claude-swift", "model:llama", "model:deepseek", "model:mistral"]);
+
+    await bot.handle(press(7, "model:mistral"));
+    expect(toasts()).toContain("Now answering with Mistral.");
+    expect(calls("editMessageText").at(-1)!.text).toContain("✅ <b>Mistral</b>");
+
     await say(msg(7, "/model gpt"));
-    expect(texts()[0]).toMatch(/There's no free model called "gpt"/);
-    await bot.handle({
-      update_id: nextId++,
-      callback_query: { id: "cb2", data: "model:gpt", message: { message_id: 3, chat: { id: 7 } } },
-    });
-    expect(await t.redis.get("tgbot:model:7")).toBeNull();
+    expect(texts().at(-1)).toMatch(/There's no free model called "gpt"/);
+    await bot.handle(press(7, "model:gpt"));
+    expect(await t.redis.get("tgbot:model:7")).toBe("mistral");
   });
 
   it("stops at the hourly limit per person, and a failed answer doesn't count", async () => {
     t.upstream.mode = "error";
     await say(msg(8, "one"));
     expect(texts()[0]).toMatch(/Claude Swift didn't answer this time/);
-    t.upstream.mode = "json";
-    for (const q of ["two", "three", "four"]) await say(msg(8, q));
-    await say(msg(8, "five"));
+    expect(buttons(sent()[0])).toEqual(["act:retry", "act:other"]);
+    t.upstream.mode = "stream";
+    for (const q of ["two", "three", "four", "five", "six"]) await say(msg(8, q));
+    await say(msg(8, "seven"));
     expect(texts().at(-1)).toMatch(
-      /You've used your 3 free messages for this hour\. Try again in 60 minutes\./,
+      /You've used your 5 free messages for this hour\. Try again in 60 minutes\./,
     );
-    expect(t.upstream.requests).toHaveLength(4);
+    expect(t.upstream.requests).toHaveLength(6);
   });
 
   it("pauses when the daily budget is used up", async () => {
@@ -152,6 +197,13 @@ describe("Telegram bot: public chat", () => {
     }
   });
 
+  it("explains that it reads text only when it gets a photo or voice note", async () => {
+    await say(msg(7, undefined, { photo: [{ file_id: "x" }] }));
+    expect(texts()[0]).toMatch(/^I can read text messages only for now/);
+    await say(group(undefined as unknown as string, 5, { voice: { file_id: "y" } }));
+    expect(sent()).toHaveLength(1); // groups: quiet
+  });
+
   it("in groups, answers /ask, mentions and replies to itself, and ignores the rest", async () => {
     await say(group("just chatting among ourselves"));
     await say(group("/start@otherbot"));
@@ -162,30 +214,124 @@ describe("Telegram bot: public chat", () => {
     await say(
       group("and Zig?", 5, { reply_to_message: { from: { id: 1, is_bot: true, username: "dualynebot" } } }),
     );
-    expect(
-      t.upstream.requests.map((r) => (r.body.messages as { content: string }[]).at(-1)!.content),
-    ).toEqual(["What is Rust?", "and Go?", "and Zig?"]);
-    expect(sent()[0]!.body).toMatchObject({ reply_parameters: { allow_sending_without_reply: true } });
+    expect(asked().map((m) => m.at(-1)!.content)).toEqual(["What is Rust?", "and Go?", "and Zig?"]);
+    expect(sent()[0]).toMatchObject({ reply_parameters: { allow_sending_without_reply: true } });
+    // No Mini App buttons in groups: a normal link instead.
+    await say(group("/start"));
+    expect(sent().at(-1)!.reply_markup!.inline_keyboard[0]![0]).toMatchObject({
+      url: "https://dualyne.com/chat",
+    });
+  });
+
+  it("/token shows the contract address when set, with a copy button", async () => {
+    await say(msg(7, "/token"));
+    expect(texts()[0]).toContain("Contract address: <b>coming soon</b>");
+    expect(sent()[0]!.reply_markup).toBeUndefined();
+
+    const env = t.app.ctx.env as { DLYN_TOKEN_ADDRESS?: string };
+    const address = `0x${"ab".repeat(20)}`;
+    env.DLYN_TOKEN_ADDRESS = address;
+    try {
+      await say(msg(7, "/ca"));
+      expect(texts()[1]).toContain(`<code>${address}</code>`);
+      expect(sent()[1]!.reply_markup!.inline_keyboard[0]![0]).toEqual({
+        text: "📋 Copy address",
+        copy_text: { text: address },
+      });
+    } finally {
+      delete env.DLYN_TOKEN_ADDRESS;
+    }
   });
 
   it("sends plain text when Telegram refuses the formatting", async () => {
     t.upstream.telegramRejectHtml = true;
     await say(msg(7, "/help"));
     const [first, second] = sent();
-    expect(first!.body.parse_mode).toBe("HTML");
-    expect(second!.body.parse_mode).toBeUndefined();
-    expect(String(second!.body.text)).toMatch(/^Dualyne bot\n\nChat\n/);
+    expect(first!.parse_mode).toBe("HTML");
+    expect(second!.parse_mode).toBeUndefined();
+    expect(String(second!.text)).toMatch(/^Dualyne AI\n\nChat\n/);
   });
 
-  it("replies at most once a second per chat", async () => {
+  it("replies at most once a second per chat, and answers one question at a time", async () => {
     await bot.handle(msg(9, "/start"));
     await bot.handle(msg(9, "/start"));
     expect(sent()).toHaveLength(1);
+
+    await t.redis.set("tgbot:busy:9", "1");
+    await say(msg(9, "Hi"));
+    expect(texts().at(-1)).toBe("I'm still answering your last message. One moment, please.");
+    expect(t.upstream.requests).toHaveLength(0);
   });
 
   it("answers an unknown command with a pointer to /help", async () => {
     await say(msg(7, "/status"));
     expect(texts()[0]).toBe("I don't know that command. Send /help to see what I can do.");
+  });
+});
+
+describe("Telegram bot: compare and vote", () => {
+  it("two models answer blind; the asker votes, then sees the names", async () => {
+    await say(msg(7, "/compare Explain inflation"));
+    expect(t.upstream.requests).toHaveLength(2);
+    const models = t.upstream.requests.map((r) => r.body.model);
+    expect(new Set(models).size).toBe(2);
+    for (const r of t.upstream.requests) {
+      const [system, user] = r.body.messages as { content: string }[];
+      expect(system!.content).toContain("blind comparison");
+      expect(system!.content).not.toMatch(/Claude Swift|Llama|DeepSeek|Mistral/);
+      expect(user!.content).toBe("Explain inflation");
+    }
+    const [a, b, vote] = sent();
+    expect(a!.text).toBe("🅰️ <b>Answer A</b>\n\nHello ✓");
+    expect(b!.text).toBe("🅱️ <b>Answer B</b>\n\nHello ✓");
+    expect(vote!.text).toContain("Which answer is better?");
+    const run = await t.prisma.compareRun.findFirstOrThrow();
+    expect(run).toMatchObject({ blind: true, completedA: true, completedB: true });
+    expect(buttons(vote)).toEqual([`vote:${run.id}:a`, `vote:${run.id}:b`, `vote:${run.id}:tie`]);
+    expect(await t.prisma.usageLog.count({ where: { compareId: run.id, source: "telegram" } })).toBe(2);
+    // Two messages from the hourly allowance.
+    expect(await t.app.ctx.chatLimiter.remaining("tg:7")).toBe(3);
+
+    await bot.handle(press(7, `vote:${run.id}:b`, 99));
+    expect(toasts().at(-1)).toBe("Only the person who asked can vote on this comparison.");
+    expect(await t.prisma.vote.count()).toBe(0);
+
+    await bot.handle(press(7, `vote:${run.id}:b`));
+    expect(toasts().at(-1)).toBe("Thanks! Your vote counts toward the leaderboard.");
+    expect(await t.prisma.vote.findFirstOrThrow()).toMatchObject({
+      compareId: run.id,
+      modelA: run.modelA,
+      modelB: run.modelB,
+      winner: "b",
+      blind: true,
+    });
+    const reveal = calls("editMessageText").at(-1)!;
+    expect(reveal.text).toMatch(/You voted: <b>Answer B is better<\/b>[\s\S]*🅰️ was <b>\w[\w ]*<\/b>/);
+    expect(reveal.reply_markup!.inline_keyboard[0]![0]).toMatchObject({ url: "https://dualyne.com/#models" });
+  });
+
+  it("the Compare button compares the last question", async () => {
+    await say(msg(7, "Best pizza topping?"));
+    await bot.handle(press(7, "act:compare"));
+    expect(
+      asked()
+        .slice(1)
+        .map((m) => m.at(-1)!.content),
+    ).toEqual(["Best pizza topping?", "Best pizza topping?"]);
+    expect(texts().at(-1)).toContain("Which answer is better?");
+  });
+
+  it("needs two messages left in the hour", async () => {
+    for (const q of ["1", "2", "3", "4"]) await say(msg(7, q));
+    await say(msg(7, "/compare Hi"));
+    expect(texts().at(-1)).toMatch(/^A comparison uses two messages, and you have one left/);
+    expect(t.upstream.requests).toHaveLength(4);
+    expect(await t.app.ctx.chatLimiter.remaining("tg:7")).toBe(1);
+  });
+
+  it("/compare without a question explains how", async () => {
+    await say(msg(7, "/compare"));
+    expect(texts()[0]).toMatch(/^Add your question after \/compare/);
   });
 });
 
@@ -216,26 +362,25 @@ describe("Telegram bot: owner", () => {
 
   it("sets its menus and profile: public commands for all, admin ones only in the owner chat", async () => {
     await bot.setUpProfile();
-    const calls = t.upstream.telegram.map((m) => m.method);
-    expect(calls).toEqual([
+    const methods = t.upstream.telegram.map((m) => m.method);
+    expect(methods).toEqual([
       "getMe",
       "setMyCommands",
       "setMyCommands",
       "setMyShortDescription",
       "setMyDescription",
     ]);
-    const [pub, own] = t.upstream.telegram.filter((m) => m.method === "setMyCommands");
-    const names = (c: typeof pub) => (c!.body.commands as { command: string }[]).map((x) => x.command);
-    expect(names(pub)).toEqual(["start", "model", "new", "ask", "help", "about"]);
-    expect(names(pub)).not.toContain("status");
-    expect(own!.body).toMatchObject({ scope: { type: "chat", chat_id: "42" } });
+    const [pub, own] = calls("setMyCommands");
+    const names = (c: Body | undefined) => (c!.commands as { command: string }[]).map((x) => x.command);
+    expect(names(pub)).toEqual(["start", "compare", "model", "new", "ask", "token", "help", "about"]);
+    expect(own).toMatchObject({ scope: { type: "chat", chat_id: "42" } });
     expect(names(own)).toContain("status");
   });
 
   it("without an owner chat, no admin menu is set", async () => {
     const b = new TelegramBot(t.app.ctx, t.app.log, { ...cfg, ownerChatId: "" });
     await b.setUpProfile();
-    expect(t.upstream.telegram.filter((m) => m.method === "setMyCommands")).toHaveLength(1);
+    expect(calls("setMyCommands")).toHaveLength(1);
   });
 
   it("polls for messages and answers them", async () => {
@@ -244,9 +389,8 @@ describe("Telegram bot: owner", () => {
     polling.start();
     for (let i = 0; i < 50 && !sent().length; i++) await new Promise((r) => setTimeout(r, 20));
     polling.stop();
-    expect(sent()[0]!.body).toMatchObject({ chat_id: 11 });
-    const polls = t.upstream.telegram.filter((m) => m.method === "getUpdates");
-    expect(polls[0]!.body).toMatchObject({
+    expect(sent()[0]).toMatchObject({ chat_id: 11 });
+    expect(calls("getUpdates")[0]).toMatchObject({
       offset: 0,
       timeout: 25,
       allowed_updates: ["message", "callback_query"],

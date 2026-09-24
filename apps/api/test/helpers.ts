@@ -104,7 +104,9 @@ export async function startFakeUpstream(): Promise<FakeUpstream> {
           ? state.telegramUpdates.splice(0)
           : call.method === "getMe"
             ? { id: 1, is_bot: true, username: "dualynebot" }
-            : true;
+            : call.method === "sendMessage"
+              ? { message_id: 1000 + state.telegram.length, chat: { id: call.body.chat_id } }
+              : true;
       res.end(JSON.stringify({ ok: true, result }));
       return;
     }
