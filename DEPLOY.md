@@ -494,7 +494,9 @@ cd /var/www/dualyne && bash deploy/pm2/ops.sh telegram && bash deploy/pm2/deploy
 
 Script menanyakan token bot (buat lewat **@BotFather** di Telegram → `/newbot`), lalu meminta Anda mengirim pesan apa saja ke bot itu. Chat id terisi otomatis dan pesan tes dikirim. `deploy.sh` membuat API ikut memakai notifikasi ini. Batas saldo diatur dengan `OPENROUTER_LOW_BALANCE_USD` di `.env` (default 2 USD, `0` = mati).
 
-Bot juga menjawab perintah. Di chat Anda: `/status` (website, API, pemakaian dan biaya hari ini, sisa saldo OpenRouter), `/credit`, dan `/help`. Orang lain yang membuka bot mendapat sambutan singkat dengan link ke Chat, Compare dan Docs; perintah admin hanya untuk chat Anda.
+Bot ini **publik**: siapa pun bisa chat dengan AI gratis langsung di Telegram (model explorer: Claude Swift, Llama, DeepSeek, Mistral), dengan batas yang sama seperti halaman Chat (`CHAT_LIMIT_PER_HOUR` per orang per jam, budget harian, jawaban maks. `COMPARE_MAX_TOKENS`). Perintah: `/start`, `/model` (pilih model lewat tombol), `/new` (mulai percakapan baru), `/ask` (di grup), `/help`, `/about`. Di grup, bot menjawab `/ask`, mention `@bot`, dan balasan ke pesannya. Bot mengingat 10 pesan terakhir per chat selama 1 jam (di Redis), lalu lupa. Pemakaian tercatat dengan sumber `telegram`.
+
+Perintah admin hanya berlaku di chat Anda (`TELEGRAM_CHAT_ID`) dan tidak tampil di menu orang lain: `/status` (website, API, pemakaian dan biaya hari ini, sisa saldo OpenRouter) dan `/credit`. Tanpa `TELEGRAM_CHAT_ID`, bot tetap jalan untuk publik, hanya tanpa perintah admin dan notifikasi.
 
 **Backup harian dan cek kesehatan tiap 5 menit** (sekali pasang):
 

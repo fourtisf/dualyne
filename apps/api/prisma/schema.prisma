@@ -88,7 +88,7 @@ model ApiKey {
 model UsageLog {
   id              BigInt   @id @default(autoincrement())
   createdAt       DateTime @default(now())
-  source          String // "api" | "compare"
+  source          String // "api" | "compare" | "chat" | "telegram"
   apiKeyId        String?
   apiKey          ApiKey?  @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
   walletId        String?

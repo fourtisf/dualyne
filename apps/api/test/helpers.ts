@@ -35,6 +35,8 @@ export interface FakeUpstream {
   telegram: { token: string; method: string; body: Record<string, unknown> }[];
   /** What the Telegram stand-in's getUpdates returns next (then it is emptied). */
   telegramUpdates: unknown[];
+  /** When true, the Telegram stand-in refuses sendMessage with parse_mode (400), like bad HTML. */
+  telegramRejectHtml: boolean;
   close(): Promise<void>;
 }
 
@@ -60,6 +62,7 @@ export async function startFakeUpstream(): Promise<FakeUpstream> {
     keyInfo: null,
     telegram: [],
     telegramUpdates: [],
+    telegramRejectHtml: false,
     close: async () => undefined,
   };
 
@@ -84,9 +87,24 @@ export async function startFakeUpstream(): Promise<FakeUpstream> {
     }
     const tg = /^\/bot([^/]+)\/(\w+)$/.exec(path);
     if (tg) {
-      state.telegram.push({ token: tg[1]!, method: tg[2]!, body: JSON.parse(raw || "{}") });
-      const result = tg[2] === "getUpdates" ? state.telegramUpdates.splice(0) : true;
+      const call = {
+        token: tg[1]!,
+        method: tg[2]!,
+        body: JSON.parse(raw || "{}") as Record<string, unknown>,
+      };
+      state.telegram.push(call);
       res.setHeader("content-type", "application/json");
+      if (state.telegramRejectHtml && call.method === "sendMessage" && call.body.parse_mode) {
+        res.statusCode = 400;
+        res.end(JSON.stringify({ ok: false, description: "Bad Request: can't parse entities" }));
+        return;
+      }
+      const result =
+        call.method === "getUpdates"
+          ? state.telegramUpdates.splice(0)
+          : call.method === "getMe"
+            ? { id: 1, is_bot: true, username: "dualynebot" }
+            : true;
       res.end(JSON.stringify({ ok: true, result }));
       return;
     }
@@ -215,6 +233,7 @@ export async function createTestContext(
       upstream.keyInfo = null;
       upstream.telegram.length = 0;
       upstream.telegramUpdates.length = 0;
+      upstream.telegramRejectHtml = false;
     },
     close: async () => {
       await app.close();

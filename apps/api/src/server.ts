@@ -8,11 +8,12 @@ async function main() {
   const app = await buildApp({ env });
   const stopJobs = env.JOBS_ENABLED ? startScheduler(app) : () => undefined;
   // One API instance answers the Telegram bot (JOBS_ENABLED marks the instance that runs jobs).
+  // The owner chat is optional: without it the bot is public only (no admin commands).
   const bot =
-    env.JOBS_ENABLED && env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID
+    env.JOBS_ENABLED && env.TELEGRAM_BOT_TOKEN
       ? new TelegramBot(app.ctx, app.log, {
           token: env.TELEGRAM_BOT_TOKEN,
-          ownerChatId: env.TELEGRAM_CHAT_ID,
+          ownerChatId: env.TELEGRAM_CHAT_ID ?? "",
           apiUrl: env.TELEGRAM_API_URL,
         })
       : null;
