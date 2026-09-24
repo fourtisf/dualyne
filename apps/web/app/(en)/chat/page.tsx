@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default async function Page() {
   const { models } = await getCatalog();
   return (
-    <main className="view">
+    <main className="chat-page">
       <div className="wrap">
         <ChatView models={models} />
       </div>

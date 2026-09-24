@@ -60,6 +60,14 @@ describe("POST /internal/chat", () => {
     expect(t.upstream.requests).toHaveLength(0);
   });
 
+  it("reports the free messages left without using one", async () => {
+    const quota = () => t.app.inject({ method: "GET", url: "/internal/chat/quota" });
+    expect((await quota()).json()).toEqual({ limit: 2, remaining: 2 });
+    expect((await quota()).json()).toEqual({ limit: 2, remaining: 2 });
+    await send(good);
+    expect((await quota()).json()).toEqual({ limit: 2, remaining: 1 });
+  });
+
   it("limits each IP per hour", async () => {
     expect((await send(good)).statusCode).toBe(200);
     expect((await send(good)).statusCode).toBe(200);

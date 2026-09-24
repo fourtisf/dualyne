@@ -22,6 +22,12 @@ export const freeChatRoutes: FastifyPluginAsync = async (app) => {
   const { ctx } = app;
   const { env } = ctx;
 
+  /** Free messages left this hour for the caller's IP, without using one. */
+  app.get("/internal/chat/quota", { config: { rateLimit: { max: 60, timeWindow: 60_000 } } }, async (req) => {
+    const remaining = await ctx.chatLimiter.remaining(ctx.ipHash(req.ip));
+    return { limit: env.CHAT_LIMIT_PER_HOUR, remaining };
+  });
+
   app.post(
     "/internal/chat",
     { config: { rateLimit: { max: 30, timeWindow: 60_000 } }, bodyLimit: 128 * 1024 },

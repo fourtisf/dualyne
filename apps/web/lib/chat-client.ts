@@ -90,3 +90,17 @@ export async function runChat(
   }
   return { remaining, completed };
 }
+
+/** Free messages left this hour for this visitor, or null if the API can't be reached. */
+export async function getChatQuota(apiUrl: string): Promise<{ limit: number; remaining: number } | null> {
+  try {
+    const res = await fetch(`${apiUrl}/internal/chat/quota`, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return null;
+    const j = (await res.json()) as { limit?: unknown; remaining?: unknown };
+    return typeof j.limit === "number" && typeof j.remaining === "number"
+      ? { limit: j.limit, remaining: j.remaining }
+      : null;
+  } catch {
+    return null;
+  }
+}
