@@ -37,6 +37,9 @@ export function Nav() {
           </Link>
           <ul>
             <li>
+              <a href={h("/#compare")}>{t.compare}</a>
+            </li>
+            <li>
               <a href={h("/#features")}>{t.product}</a>
             </li>
             <li>
