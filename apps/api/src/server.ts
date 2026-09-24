@@ -24,6 +24,11 @@ async function main() {
   process.on("SIGTERM", () => void shutdown("SIGTERM"));
   process.on("SIGINT", () => void shutdown("SIGINT"));
 
+  if (env.NODE_ENV === "production" && env.OPENROUTER_API_KEY && !env.TURNSTILE_SECRET_KEY) {
+    app.log.warn(
+      "TURNSTILE_SECRET_KEY is empty: free comparisons have no bot check, only the per-IP limit and DAILY_BUDGET_USD",
+    );
+  }
   await app.listen({ host: env.HOST, port: env.API_PORT });
 }
 

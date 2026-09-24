@@ -198,6 +198,7 @@ export const chatRoutes: FastifyPluginAsync<RouteOpts> = async (app, opts) => {
         const cancelled = ac.signal.aborted && reply.raw.destroyed;
         req.log.warn({ err, model: model.id }, "upstream request failed");
         await logUsage(ctx.prisma, req.log, {
+          createdAt: ctx.clock(),
           ...base,
           inputTokens: 0,
           outputTokens: 0,
@@ -224,6 +225,7 @@ export const chatRoutes: FastifyPluginAsync<RouteOpts> = async (app, opts) => {
         }
         const clientError = res.status === 400 || res.status === 422;
         await logUsage(ctx.prisma, req.log, {
+          createdAt: ctx.clock(),
           ...base,
           inputTokens: 0,
           outputTokens: 0,
@@ -259,6 +261,7 @@ export const chatRoutes: FastifyPluginAsync<RouteOpts> = async (app, opts) => {
         await ctx.budget.settle(reservation, costMicro);
         const chargedMicro = await settleCredits(costMicro);
         await logUsage(ctx.prisma, req.log, {
+          createdAt: ctx.clock(),
           ...base,
           chargedMicroUsd: chargedMicro,
           generationId,

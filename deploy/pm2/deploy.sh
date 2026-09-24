@@ -32,12 +32,10 @@ set +a
 unset NODE_ENV # install needs dev dependencies (build tools); PM2 sets production at run time
 if [[ -z "${OPENROUTER_API_KEY:-}" ]]; then
   warn "OPENROUTER_API_KEY is empty: the site goes live in preview. Comparisons and the API say
-   \"opening soon\" until you add the key (and the two Turnstile keys) and run this again."
-else
-  for key in NEXT_PUBLIC_TURNSTILE_SITE_KEY TURNSTILE_SECRET_KEY; do
-    [[ -n "${!key:-}" ]] || die "$key is empty in $ENV_FILE. With OPENROUTER_API_KEY set, both Turnstile
-   keys are needed: they keep bots from spending your OpenRouter credit. Fill it in, then run this again."
-  done
+   \"opening soon\" until you add the key and run this again."
+elif [[ -z "${TURNSTILE_SECRET_KEY:-}" ]]; then
+  warn "No Turnstile keys: free comparisons have no bot check. Spending is still capped by the per-IP
+   limit and DAILY_BUDGET_USD (${DAILY_BUDGET_USD:-20} USD/day); keep that low."
 fi
 # Website copies of API settings, so each value is written once in .env.
 export NEXT_PUBLIC_SITE_DOMAIN="${NEXT_PUBLIC_SITE_DOMAIN:-$SITE_DOMAIN}"

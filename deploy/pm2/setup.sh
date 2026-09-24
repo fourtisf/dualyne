@@ -142,10 +142,10 @@ if [[ ! -f "$ENV_FILE" ]]; then
   cat >"$ENV_FILE" <<EOF
 # Dualyne production settings. Server only, never commit. Created by deploy/pm2/setup.sh.
 
-# ── Model access. Empty = the site runs in preview ("opening soon") until you fill these ──
-# OpenRouter key (openrouter.ai → Keys). Secret. With it set, both Turnstile keys are required.
+# ── Model access. Empty = the site runs in preview ("opening soon") until you fill it ──
+# OpenRouter key (openrouter.ai → Keys). Secret.
 OPENROUTER_API_KEY=
-# Cloudflare Turnstile (dash.cloudflare.com → Turnstile → Add widget, domain ${DOMAIN}). Free.
+# Optional bot check for free comparisons: Cloudflare Turnstile (dash.cloudflare.com → Turnstile).
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=
 TURNSTILE_SECRET_KEY=
 
@@ -295,6 +295,6 @@ say "Setup done"
 cat <<EOF
 Next:
   bash $APP_DIR/deploy/pm2/deploy.sh
-Without OPENROUTER_API_KEY and the two Turnstile keys in $ENV_FILE the site runs in preview
-(comparisons say "opening soon"). Add them later and run deploy.sh again.
+Without OPENROUTER_API_KEY in $ENV_FILE the site runs in preview (comparisons say
+"opening soon"). Add it later and run deploy.sh again.
 EOF

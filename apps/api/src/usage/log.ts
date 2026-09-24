@@ -21,6 +21,8 @@ export interface UsageRow {
   stream: boolean;
   ipHash?: string | null;
   compareId?: string | null;
+  /** The app clock's time, so rows line up with day windows computed from the same clock. */
+  createdAt?: Date;
 }
 
 /** Write one usage row. Never throws: logging must not break a response that already succeeded. */

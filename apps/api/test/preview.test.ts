@@ -19,15 +19,9 @@ describe("production settings", () => {
     expect(() => loadEnv(prodEnv({}))).not.toThrow();
   });
 
-  it("require the Turnstile secret once an OpenRouter key is set", () => {
-    expect(() => loadEnv(prodEnv({ OPENROUTER_API_KEY: "sk-or-v1-abcdef123456" }))).toThrow(
-      /TURNSTILE_SECRET_KEY/,
-    );
-    expect(() =>
-      loadEnv(
-        prodEnv({ OPENROUTER_API_KEY: "sk-or-v1-abcdef123456", TURNSTILE_SECRET_KEY: "0x4AAAAAAAtest" }),
-      ),
-    ).not.toThrow();
+  it("start with an OpenRouter key and no Turnstile (bot check is optional)", () => {
+    expect(() => loadEnv(prodEnv({ OPENROUTER_API_KEY: "sk-or-v1-abcdef123456" }))).not.toThrow();
+    expect(() => loadEnv(prodEnv({ OPENROUTER_API_KEY: "short" }))).toThrow(/OPENROUTER_API_KEY/);
   });
 });
 

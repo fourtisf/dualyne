@@ -69,7 +69,7 @@ Server memakai token ini untuk membuat dan memperpanjang sertifikat HTTPS secara
 3. Di bagian _Zone Resources_, pilih **Include → Specific zone → domainanda.com**.
 4. Klik **Continue to summary → Create Token**, lalu salin tokennya dan simpan di tempat aman. Token hanya ditampilkan sekali.
 
-## 6. Buat Cloudflare Turnstile (anti-bot untuk Compare)
+## 6. Buat Cloudflare Turnstile (anti-bot untuk Compare, opsional)
 
 1. Buka dashboard Cloudflare → **Turnstile → Add widget**.
 2. Isi nama `Dualyne`, lalu tambahkan hostname `domainanda.com` dan `www.domainanda.com`.
@@ -444,7 +444,7 @@ Jika port 3100/4100 sudah dipakai, script berhenti dan memberi tahu. Pilih port 
 Tanpa kunci ini website tetap online dalam mode _preview_: semua halaman tampil, tetapi tombol Compare dan API menjawab "segera dibuka". Kunci bisa diisi kapan saja, lalu jalankan `deploy.sh` lagi.
 
 - `OPENROUTER_API_KEY`: dari openrouter.ai → Keys (langkah 7).
-- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` dan `TURNSTILE_SECRET_KEY`: dari dash.cloudflare.com → Turnstile → Add widget, domain `domainanda.com` (gratis; DNS **tidak** perlu dipindah ke Cloudflare). Wajib begitu `OPENROUTER_API_KEY` diisi, supaya bot tidak menghabiskan saldo OpenRouter.
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` dan `TURNSTILE_SECRET_KEY`: dari dash.cloudflare.com → Turnstile → Add widget, domain `domainanda.com` (gratis; DNS **tidak** perlu dipindah ke Cloudflare). **Opsional**: tanpa Turnstile, Compare gratis hanya dilindungi batas per IP (10/jam) dan `DAILY_BUDGET_USD`, jadi pasang angka budget yang kecil.
 - Opsional: `NEXT_PUBLIC_X_URL` dan `NEXT_PUBLIC_TELEGRAM_URL`.
 
 Mengisi tanpa editor (terminal menanyakan kunci satu per satu, dan kunci tidak masuk history):

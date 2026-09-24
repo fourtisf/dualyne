@@ -226,6 +226,7 @@ export const compareRoutes: FastifyPluginAsync = async (app) => {
 
         await ctx.budget.settle(reservation, costMicro);
         await logUsage(ctx.prisma, req.log, {
+          createdAt: ctx.clock(),
           source: "compare",
           modelId: model.id,
           openrouterId: model.openrouterId,
