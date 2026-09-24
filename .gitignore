@@ -14,3 +14,4 @@ coverage/
 
 # PM2 deploy: private Node/pnpm installed by deploy/pm2/setup.sh
 .runtime/
+.release/

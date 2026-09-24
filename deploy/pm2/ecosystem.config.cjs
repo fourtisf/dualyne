@@ -37,8 +37,8 @@ module.exports = {
     },
     {
       name: "dualyne-web",
-      // Next.js standalone output; static files are copied in by deploy.sh.
-      cwd: path.join(root, "apps/web/.next/standalone"),
+      // The live copy of the Next.js standalone build (with its static files), made by deploy.sh.
+      cwd: path.join(root, ".release/web/current"),
       script: "apps/web/server.js",
       interpreter: node,
       env: {

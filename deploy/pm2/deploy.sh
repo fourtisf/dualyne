@@ -62,12 +62,26 @@ say "Database migrations and model catalog"
 
 say "Building the website (1–3 minutes)"
 pnpm --filter @dualyne/web build
-standalone=apps/web/.next/standalone/apps/web
-rm -rf "$standalone/.next/static"
-cp -r apps/web/.next/static "$standalone/.next/static"
-[[ -d apps/web/public ]] && cp -r apps/web/public "$standalone/public"
+
+# The live site runs from its own copy of each build (.release/web/<time>), never from
+# apps/web/.next: a build wipes that folder, which would leave the running site without its
+# styles and scripts. "current" switches to the new copy in one step.
+releases="$APP_DIR/.release/web"
+release="$releases/$(date +%Y%m%d-%H%M%S)"
+mkdir -p "$releases"
+cp -a apps/web/.next/standalone "$release"
+cp -a apps/web/.next/static "$release/apps/web/.next/static"
+[[ -d apps/web/public ]] && cp -a apps/web/public "$release/apps/web/public"
+previous="$(readlink "$releases/current" 2>/dev/null || true)"
+switch_to() { ln -sfn "$1" "$releases/current.new" && mv -Tf "$releases/current.new" "$releases/current"; }
+switch_to "$release"
 
 say "Starting with PM2"
+# Before .release existed, dualyne-web ran from apps/web/.next/standalone: start it fresh once.
+web_cwd="$(pm2 jlist 2>/dev/null | node -e 'let s="";process.stdin.on("data",(d)=>(s+=d)).on("end",()=>{try{const a=JSON.parse(s).find((x)=>x.name==="dualyne-web");process.stdout.write(a?a.pm2_env.pm_cwd:"")}catch{}})')"
+if [[ -n "$web_cwd" && "$web_cwd" != "$releases"/* ]]; then
+  pm2 delete dualyne-web >/dev/null
+fi
 pm2 startOrReload deploy/pm2/ecosystem.config.cjs --update-env
 # Remember the running apps (yours and Dualyne's) for "pm2 resurrect" after a reboot.
 pm2 save >/dev/null
@@ -83,7 +97,14 @@ done
 pm2 list
 if ((ok)); then
   echo "API: ${api:-no answer}   website: HTTP ${web:-no answer}"
+  if [[ -n "$previous" && -d "$previous" && "$web" != 200 ]]; then
+    switch_to "$previous"
+    pm2 reload dualyne-web --update-env >/dev/null
+    warn "The new website did not start; the previous version is live again."
+  fi
   die "Not healthy yet. Look at the logs:  pm2 logs dualyne-api --lines 50   pm2 logs dualyne-web --lines 50"
 fi
+# Keep the three newest copies (the live one and two to fall back to).
+find "$releases" -mindepth 1 -maxdepth 1 -type d -name '20*' | sort -r | tail -n +4 | xargs -r rm -rf
 echo "API ok, website ok."
 echo "Live at https://${SITE_DOMAIN} and https://api.${SITE_DOMAIN}/v1/models"
