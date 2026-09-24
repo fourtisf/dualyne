@@ -1,9 +1,10 @@
 import type { CSSProperties } from "react";
-import type { CatalogModel } from "@dualyne/shared";
+import type { CatalogModel, StatusResponse } from "@dualyne/shared";
 import { getDict, type Locale } from "@/lib/i18n";
 import { CompareConsole } from "../CompareConsole";
 import Link from "next/link";
 import { Check } from "./Check";
+import { LiveStats } from "./LiveStats";
 
 const d = (v: string) => ({ "--d": v }) as CSSProperties;
 
@@ -11,24 +12,31 @@ export function Hero({
   locale,
   models,
   blindMode,
+  status,
 }: {
   locale: Locale;
   models: CatalogModel[];
   blindMode: "optional" | "always";
+  status: StatusResponse | null;
 }) {
   const t = getDict(locale).hero;
   return (
     <section className="hero">
+      <div className="aurora" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+      </div>
       <div className="wrap">
         <div className="hero-text">
           <a className="badge rise" href="#api" style={d(".05s")}>
             <b>{t.badgeNew}</b>
             {t.badge}
           </a>
-          <h1 className="grad rise" style={d(".12s")}>
-            {t.h1a}
+          <h1 className="rise" style={d(".12s")}>
+            <span className="metal">{t.h1a}</span>
             <br />
-            {t.h1b}
+            <span className="accent">{t.h1b}</span>
           </h1>
           <p className="lede rise" style={d(".24s")}>
             {t.lede}
@@ -49,6 +57,7 @@ export function Hero({
               </span>
             ))}
           </div>
+          <LiveStats locale={locale} models={models} status={status} />
         </div>
         <CompareConsole models={models} blindMode={blindMode} />
       </div>

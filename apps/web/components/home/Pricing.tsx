@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { brand } from "@dualyne/config";
 import { getDict, type Locale } from "@/lib/i18n";
 import { OpenWalletButton } from "../WalletProvider";
 import { Check } from "./Check";
@@ -20,6 +22,26 @@ export function Pricing({ locale }: { locale: Locale }) {
           <p>{t.p}</p>
         </div>
         <div className="tiers">
+          {!brand.tokenEnabled && (
+            <div className="tier hot">
+              <div className="nm">
+                {t.chatName} <span className="pop">{t.startHere}</span>
+              </div>
+              <div className="pr">$0</div>
+              <p className="who">{t.chatWho}</p>
+              <ul>
+                {t.chatItems.map((x) => (
+                  <li key={x}>
+                    <Tick hot />
+                    {x}
+                  </li>
+                ))}
+              </ul>
+              <Link className="btn" href="/chat">
+                {t.chatCta}
+              </Link>
+            </div>
+          )}
           <div className="tier">
             <div className="nm">Explorer</div>
             <div className="pr">$0</div>
@@ -34,24 +56,26 @@ export function Pricing({ locale }: { locale: Locale }) {
             </ul>
             <OpenWalletButton className="btn dark">{t.explorerCta}</OpenWalletButton>
           </div>
-          <div className="tier hot">
-            <div className="nm">
-              Holder <span className="pop">{t.popular}</span>
+          {brand.tokenEnabled && (
+            <div className="tier hot">
+              <div className="nm">
+                Holder <span className="pop">{t.popular}</span>
+              </div>
+              <div className="pr">
+                $0<small>{t.withTokens}</small>
+              </div>
+              <p className="who">{t.holderWho}</p>
+              <ul>
+                {t.holderItems.map((x) => (
+                  <li key={x}>
+                    <Tick hot />
+                    {x}
+                  </li>
+                ))}
+              </ul>
+              <OpenWalletButton className="btn">{t.holderCta}</OpenWalletButton>
             </div>
-            <div className="pr">
-              $0<small>{t.withTokens}</small>
-            </div>
-            <p className="who">{t.holderWho}</p>
-            <ul>
-              {t.holderItems.map((x) => (
-                <li key={x}>
-                  <Tick hot />
-                  {x}
-                </li>
-              ))}
-            </ul>
-            <OpenWalletButton className="btn">{t.holderCta}</OpenWalletButton>
-          </div>
+          )}
           <div className="tier">
             <div className="nm">Builder</div>
             <div className="pr">

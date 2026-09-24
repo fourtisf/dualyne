@@ -153,6 +153,7 @@ TURNSTILE_SECRET_KEY=
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=
 
 # ── Community links (https://…). Empty = shown as "coming soon". ──
+NEXT_PUBLIC_TOKEN_ENABLED=false
 NEXT_PUBLIC_X_URL=
 NEXT_PUBLIC_TELEGRAM_URL=
 

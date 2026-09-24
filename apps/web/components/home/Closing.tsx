@@ -7,7 +7,10 @@ export function Closing({ locale }: { locale: Locale }) {
   return (
     <section className="closing">
       <div className="wrap">
-        <h2 className="grad">{t.closing.h2}</h2>
+        <h2>
+          <span className="metal">{t.closing.h2.replace(t.closing.h2Accent, "")}</span>
+          <span className="accent">{t.closing.h2Accent}</span>
+        </h2>
         <p>{t.closing.p}</p>
         <div className="ctas">
           <Link className="btn lg" href="/chat">

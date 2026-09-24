@@ -144,7 +144,7 @@ print(reply.choices[0].message.content)`}</code>
           <p>
             <span className="meth get">GET</span>
             <code>/v1/models</code> returns every model your key can use. Explorer wallets see fast models;
-            Holder and Builder see the full catalog.
+            {brand.tokenEnabled ? " Holder and Builder see" : " Builder sees"} the full catalog.
           </p>
           <div className="tblw" tabIndex={0}>
             <table>
@@ -164,7 +164,11 @@ print(reply.choices[0].message.content)`}</code>
                     </td>
                     <td>{m.provider}</td>
                     <td>{m.upstreamName}</td>
-                    <td>{TIER_DEFAULTS[m.minTier].label}</td>
+                    <td>
+                      {brand.tokenEnabled || m.minTier === "explorer"
+                        ? TIER_DEFAULTS[m.minTier].label
+                        : TIER_DEFAULTS.builder.label}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -222,13 +226,15 @@ print(reply.choices[0].message.content)`}</code>
                   <td>{ex.maxKeys}</td>
                   <td>Free</td>
                 </tr>
-                <tr>
-                  <td>Holder</td>
-                  <td>{ho.dailyRequests}</td>
-                  <td>{ho.maxTokens?.toLocaleString("en-US")} tokens</td>
-                  <td>{ho.maxKeys}</td>
-                  <td>Free, funded by the treasury</td>
-                </tr>
+                {brand.tokenEnabled && (
+                  <tr>
+                    <td>Holder</td>
+                    <td>{ho.dailyRequests}</td>
+                    <td>{ho.maxTokens?.toLocaleString("en-US")} tokens</td>
+                    <td>{ho.maxKeys}</td>
+                    <td>Free, funded by the treasury</td>
+                  </tr>
+                )}
                 <tr>
                   <td>Builder</td>
                   <td>No cap</td>
@@ -240,10 +246,10 @@ print(reply.choices[0].message.content)`}</code>
             </table>
           </div>
           <p>
-            Allowances reset at 00:00 UTC. Explorer and Holder responses include{" "}
-            <code>x-dualyne-remaining</code> so your app can see how many requests are left today. A larger{" "}
-            <code>max_tokens</code> than your tier allows is lowered to the cap. Each key can send up to 120
-            requests a minute.
+            Allowances reset at 00:00 UTC. {brand.tokenEnabled ? "Explorer and Holder" : "Explorer"} responses
+            include <code>x-dualyne-remaining</code> so your app can see how many requests are left today. A
+            larger <code>max_tokens</code> than your tier allows is lowered to the cap. Each key can send up
+            to 120 requests a minute.
           </p>
           <p>
             Builder wallets top up with USDG or ETH from the dashboard. Each request reserves its worst-case
@@ -251,8 +257,9 @@ print(reply.choices[0].message.content)`}</code>
             your balance. The dashboard lists every top-up and what each key spent.
           </p>
           <p>
-            Free tiers share a daily budget paid for by the treasury. On the rare day it runs out, free
-            requests return <code>429</code> until 00:00 UTC; Builder requests keep working.
+            Free tiers share a daily budget{brand.tokenEnabled ? " paid for by the treasury" : ""}. On the
+            rare day it runs out, free requests return <code>429</code> until 00:00 UTC; Builder requests keep
+            working.
           </p>
 
           <h2 id="d-errors">Errors</h2>

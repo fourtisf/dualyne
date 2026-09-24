@@ -1,4 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { brand } from "@dualyne/config";
 import { TelegramBot, type BotConfig } from "../src/telegram/bot";
 import { splitMarkdown, toTelegramHtml } from "../src/telegram/format";
 import { createTestContext, type TestContext } from "./helpers";
@@ -223,7 +224,25 @@ describe("Telegram bot: chat", () => {
     });
   });
 
-  it("/token shows the contract address when set, with a copy button", async () => {
+  it("/token stays quiet while the token is hidden (the default)", async () => {
+    expect(brand.tokenEnabled).toBe(false);
+    await say(msg(7, "/token"));
+    expect(texts()[0]).toBe("I don't know that command. Send /help to see what I can do.");
+    await say(msg(7, "/help"));
+    expect(texts()[1]).not.toContain("/token");
+  });
+
+  it("/token shows the contract address when set, with a copy button (token shown)", async () => {
+    const flags = brand as { tokenEnabled: boolean };
+    flags.tokenEnabled = true;
+    try {
+      await tokenCommand();
+    } finally {
+      flags.tokenEnabled = false;
+    }
+  });
+
+  async function tokenCommand() {
     await say(msg(7, "/token"));
     expect(texts()[0]).toContain("Contract address: <b>coming soon</b>");
     expect(sent()[0]!.reply_markup).toBeUndefined();
@@ -241,7 +260,7 @@ describe("Telegram bot: chat", () => {
     } finally {
       delete env.DLYN_TOKEN_ADDRESS;
     }
-  });
+  }
 
   it("sends plain text when Telegram refuses the formatting", async () => {
     t.upstream.telegramRejectHtml = true;
@@ -372,7 +391,7 @@ describe("Telegram bot: owner", () => {
     ]);
     const [pub, own] = calls("setMyCommands");
     const names = (c: Body | undefined) => (c!.commands as { command: string }[]).map((x) => x.command);
-    expect(names(pub)).toEqual(["start", "compare", "model", "new", "ask", "token", "help", "about"]);
+    expect(names(pub)).toEqual(["start", "compare", "model", "new", "ask", "help", "about"]);
     expect(own).toMatchObject({ scope: { type: "chat", chat_id: "42" } });
     expect(names(own)).toContain("status");
   });

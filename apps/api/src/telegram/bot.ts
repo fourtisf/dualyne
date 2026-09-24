@@ -111,7 +111,10 @@ const PUBLIC_COMMANDS = [
   { command: "model", description: "Choose the AI model" },
   { command: "new", description: "Start a new conversation" },
   { command: "ask", description: "Ask a question (in groups)" },
-  { command: "token", description: `$${brand.tokenSymbol} token and contract address` },
+  // The token command only when the token is shown (NEXT_PUBLIC_TOKEN_ENABLED), like the website.
+  ...(brand.tokenEnabled
+    ? [{ command: "token", description: `$${brand.tokenSymbol} token and contract address` }]
+    : []),
   { command: "help", description: "How it works, limits and privacy" },
   { command: "about", description: "Website and links" },
 ];
@@ -369,6 +372,7 @@ export class TelegramBot {
         }
         case "/token":
         case "/ca": {
+          if (!brand.tokenEnabled) break;
           const address = this.ctx.env.DLYN_TOKEN_ADDRESS;
           return {
             html: tokenText(address),

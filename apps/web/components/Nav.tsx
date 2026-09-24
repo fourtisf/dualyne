@@ -51,9 +51,11 @@ export function Nav() {
             <li>
               <a href={h("/#pricing")}>{t.pricing}</a>
             </li>
-            <li>
-              <a href={h("/#token")}>{t.token}</a>
-            </li>
+            {brand.tokenEnabled && (
+              <li>
+                <a href={h("/#token")}>{t.token}</a>
+              </li>
+            )}
             <li>
               <Link href="/docs">{t.docs}</Link>
             </li>
@@ -62,10 +64,13 @@ export function Nav() {
             <Link className="navlink" href={h("/dashboard")}>
               {t.dashboard}
             </Link>
-            <button className="btn dark sm" id="walletBtn" type="button" onClick={openModal}>
+            <button className="btn dark sm nav-wallet" id="walletBtn" type="button" onClick={openModal}>
               <span className={addr ? "dot on" : "dot"} id="walletDot" />
               <span id="walletLabel">{addr ? shortAddr(addr) : t.connect}</span>
             </button>
+            <Link className="btn sm nav-cta" href="/chat">
+              {t.start}
+            </Link>
             <button
               className="menu-btn"
               id="menuBtn"
@@ -100,9 +105,11 @@ export function Nav() {
         <a href={h("/#pricing")} onClick={close}>
           {t.pricing}
         </a>
-        <a href={h("/#token")} onClick={close}>
-          {t.token}
-        </a>
+        {brand.tokenEnabled && (
+          <a href={h("/#token")} onClick={close}>
+            {t.token}
+          </a>
+        )}
         <a href={h("/#faq")} onClick={close}>
           {t.faq}
         </a>
@@ -112,6 +119,9 @@ export function Nav() {
         <Link href={h("/dashboard")} onClick={close}>
           {t.dashboard}
         </Link>
+        <button type="button" className="mnav-wallet" onClick={() => (close(), openModal())}>
+          {addr ? shortAddr(addr) : t.connect}
+        </button>
       </nav>
     </>
   );

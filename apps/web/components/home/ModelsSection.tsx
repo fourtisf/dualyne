@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { TIER_DEFAULTS, type CatalogModel, type LeaderboardResponse } from "@dualyne/shared";
+import { brand } from "@dualyne/config";
 import { publicConfig } from "@/lib/config";
 import { formatContext, formatPerMTok } from "@/lib/format";
 import { store } from "@/lib/storage";
@@ -238,7 +239,7 @@ export function ModelsSection({ models }: { models: CatalogModel[] }) {
                         ? "—"
                         : `${formatPerMTok(m.inputPerMTok)} / ${formatPerMTok(m.outputPerMTok)}`}
                     </td>
-                    <td>{TIER_DEFAULTS[m.minTier].label}</td>
+                    <td>{brand.tokenEnabled ? TIER_DEFAULTS[m.minTier].label : t.tierLabel[m.minTier]}</td>
                     <td>
                       {m.live ? (
                         <span className="st live">{t.live}</span>

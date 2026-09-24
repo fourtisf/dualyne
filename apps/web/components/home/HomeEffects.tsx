@@ -17,6 +17,40 @@ export function HomeEffects() {
     else if (h === "#/dashboard") router.replace("/dashboard");
   }, [router]);
 
+  // Sections fade in as they scroll into view. The .rv class goes on <html> only here, so without
+  // JavaScript (or with reduced motion) everything is simply visible.
+  useEffect(() => {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce || !("IntersectionObserver" in window)) return;
+    const targets = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        "section.block .head, .logos, .bento .tile, .tiers .tier, .tbl, .wrap.api > *, .faq, .closing .wrap",
+      ),
+    );
+    const root = document.documentElement;
+    targets.forEach((el) => {
+      el.classList.add("rv-t");
+      // Siblings in a grid come in one after another.
+      const i = el.parentElement ? Array.from(el.parentElement.children).indexOf(el) : 0;
+      el.style.setProperty("--rd", `${Math.min(i, 5) * 70}ms`);
+    });
+    root.classList.add("rv");
+    const io = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((en) => {
+          if (!en.isIntersecting) return;
+          en.target.classList.add("rv-in");
+          io.unobserve(en.target);
+        }),
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+    );
+    targets.forEach((el) => io.observe(el));
+    return () => {
+      io.disconnect();
+      root.classList.remove("rv");
+    };
+  }, []);
+
   useEffect(() => {
     const tiles = Array.from(document.querySelectorAll<HTMLElement>(".tile"));
     const onMove = (e: PointerEvent) => {

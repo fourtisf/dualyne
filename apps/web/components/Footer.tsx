@@ -35,9 +35,15 @@ export function Footer({ locale }: { locale: Locale }) {
               <li>
                 <a href={h("/#models")}>{t.leaderboard}</a>
               </li>
-              <li>
-                <a href={h("/#token")}>{t.treasury}</a>
-              </li>
+              {brand.tokenEnabled ? (
+                <li>
+                  <a href={h("/#token")}>{t.treasury}</a>
+                </li>
+              ) : (
+                <li>
+                  <Link href="/chat">{t.chat}</Link>
+                </li>
+              )}
             </ul>
           </div>
           <div>
@@ -65,20 +71,47 @@ export function Footer({ locale }: { locale: Locale }) {
               )}
             </ul>
           </div>
-          <div>
-            <h2>{t.token}</h2>
-            <ul>
-              <li>
-                <a href={h("/#token")}>{tokenTicker}</a>
-              </li>
-              <li>
-                <a href={h("/#token")}>{t.feeSplit}</a>
-              </li>
-              <li>
-                <a href={h("/#token")}>{t.ledger}</a>
-              </li>
-            </ul>
-          </div>
+          {brand.tokenEnabled ? (
+            <div>
+              <h2>{t.token}</h2>
+              <ul>
+                <li>
+                  <a href={h("/#token")}>{tokenTicker}</a>
+                </li>
+                <li>
+                  <a href={h("/#token")}>{t.feeSplit}</a>
+                </li>
+                <li>
+                  <a href={h("/#token")}>{t.ledger}</a>
+                </li>
+              </ul>
+            </div>
+          ) : (
+            <div>
+              <h2>{t.community}</h2>
+              <ul>
+                {brand.social.x && (
+                  <li>
+                    <a href={brand.social.x} target="_blank" rel="noopener">
+                      X
+                    </a>
+                  </li>
+                )}
+                <li>
+                  <a href="https://t.me/dualynebot" target="_blank" rel="noopener">
+                    {t.telegramBot}
+                  </a>
+                </li>
+                {brand.social.telegram && (
+                  <li>
+                    <a href={brand.social.telegram} target="_blank" rel="noopener">
+                      Telegram
+                    </a>
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
         </div>
         <div className="fbot">
           <span>

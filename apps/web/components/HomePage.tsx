@@ -1,5 +1,7 @@
+import { brand } from "@dualyne/config";
 import type { Locale } from "@/lib/i18n";
 import { getCatalog } from "@/lib/catalog";
+import { getStatus } from "@/lib/status";
 import { getTreasury } from "@/lib/treasury";
 import { ApiSection } from "./home/ApiSection";
 import { Closing } from "./home/Closing";
@@ -13,16 +15,20 @@ import { Pricing } from "./home/Pricing";
 import { TokenSection } from "./home/TokenSection";
 
 export async function HomePage({ locale }: { locale: Locale }) {
-  const [{ models, settings }, treasury] = await Promise.all([getCatalog(), getTreasury()]);
+  const [{ models, settings }, treasury, status] = await Promise.all([
+    getCatalog(),
+    brand.tokenEnabled ? getTreasury() : Promise.resolve(null),
+    getStatus({ revalidate: 60 }),
+  ]);
   return (
     <main id="top">
-      <Hero locale={locale} models={models} blindMode={settings.blindMode} />
+      <Hero locale={locale} models={models} blindMode={settings.blindMode} status={status} />
       <Logos locale={locale} />
       <Features locale={locale} />
       <ModelsSection models={models} />
       <ApiSection />
       <Pricing locale={locale} />
-      <TokenSection locale={locale} treasury={treasury} />
+      {brand.tokenEnabled && <TokenSection locale={locale} treasury={treasury} />}
       <Faq locale={locale} />
       <Closing locale={locale} />
       <HomeEffects />

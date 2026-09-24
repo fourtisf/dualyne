@@ -1,5 +1,6 @@
 "use client";
 
+import { brand } from "@dualyne/config";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { CHAT_HISTORY_MAX, type CatalogModel, type ChatMessage } from "@dualyne/shared";
 import { ChatError, getChatQuota, runChat } from "@/lib/chat-client";
@@ -313,7 +314,11 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
           <p className="side-empty">{t.noChats}</p>
         )}
         {premium.length > 0 && (
-          <a className="side-premium" href="/#token" title={premium.map((m) => m.name).join(", ")}>
+          <a
+            className="side-premium"
+            href={brand.tokenEnabled ? "/#token" : "/#pricing"}
+            title={premium.map((m) => m.name).join(", ")}
+          >
             {t.premium(premium.length)}
           </a>
         )}
@@ -359,7 +364,11 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
             ))}
           </div>
           {premium.length > 0 && (
-            <a className="chat-premium" href="/#token" title={premium.map((m) => m.name).join(", ")}>
+            <a
+              className="chat-premium"
+              href={brand.tokenEnabled ? "/#token" : "/#pricing"}
+              title={premium.map((m) => m.name).join(", ")}
+            >
               {t.premium(premium.length)}
             </a>
           )}

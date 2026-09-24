@@ -1,5 +1,8 @@
 import { brand, tokenTicker } from "@dualyne/config";
 
+/** With the token hidden (the default), token and treasury wording gives way to plain product copy. */
+const T = brand.tokenEnabled;
+
 /** English copy, exactly as the site shows it. */
 export const en = {
   locale: "en" as const,
@@ -25,11 +28,14 @@ export const en = {
     api: "API",
     faq: "FAQ",
     connect: "Connect wallet",
+    start: "Start chatting",
     openMenu: "Open menu",
     closeMenu: "Close menu",
     mobile: "Mobile",
     /** The link to the other language. */
   },
+  /** The announcement in the top bar when the token is hidden. */
+  topbar: { new: "New", telegram: "Dualyne AI is on Telegram: chat with @dualynebot" },
   hero: {
     badgeNew: "New",
     badge: "OpenAI-compatible API is in early access",
@@ -40,7 +46,12 @@ export const en = {
     chat: "Start chatting",
     compare: "Compare models",
     getKey: "Get an API key",
-    trust: ["No signup to try", "OpenAI-compatible", "Keys revocable instantly", "Public treasury ledger"],
+    trust: [
+      "No signup to try",
+      "OpenAI-compatible",
+      "Keys revocable instantly",
+      T ? "Public treasury ledger" : "Also on Telegram",
+    ],
   },
   chat: {
     title: "Chat with any AI",
@@ -54,7 +65,8 @@ export const en = {
     deleteChat: (title: string) => `Delete "${title}"`,
     pick: "Choose an AI",
     free: "Free",
-    premium: (n: number) => `+${n} premium models for $DLYN holders`,
+    premium: (n: number) =>
+      T ? `+${n} premium models for $DLYN holders` : `+${n} premium models through the API`,
     empty: "What can I help you with?",
     suggestions: [
       "Explain Bitcoin in three simple sentences",
@@ -93,25 +105,23 @@ export const en = {
     placeholderEmpty: "Type a prompt first, or pick one of the examples below.",
     chips: [
       {
-        label: "Explain an AMM",
-        prompt:
-          "Explain how an automated market maker sets a token's price, in five sentences a beginner can follow.",
+        label: "Explain a concept",
+        prompt: "Explain how vaccines train the immune system, in five sentences a 12-year-old can follow.",
       },
       {
-        label: "Draft launch tweets",
+        label: "Write an email",
         prompt:
-          "Write three short launch tweets for a new AI tool that lets people compare model answers side by side. Keep each under 200 characters.",
+          "Write a short, polite email asking my landlord to fix a leaking kitchen tap this week. Keep it under 120 words.",
       },
       {
-        label: "Review token risks",
+        label: "Fix my code",
         prompt:
-          "What are the three most common security mistakes in ERC-20 token contracts, and how do you avoid each one?",
+          "This JavaScript crashes on an empty list: `const avg = (xs) => xs.reduce((a, b) => a + b) / xs.length`. Fix it and explain the bug in two sentences.",
       },
     ],
-    exPrompt:
-      "Explain how an automated market maker sets a token's price, in five sentences a beginner can follow.",
-    exA: "An AMM is a pool holding two tokens, say ETH and USDC.\n\nThe price is simply the **ratio** between them: if the pool holds 10 ETH and 30,000 USDC, one ETH costs about 3,000 USDC.\n\nWhen you buy ETH, you add USDC and remove ETH, so ETH becomes scarcer in the pool and its price rises.\n\nThe pool keeps `x × y = k` constant, which is why big trades move the price more.\n\nArbitrage traders keep this price in line with other markets.",
-    exB: "### The short version\nAn automated market maker replaces the order book with a **pool of two tokens** and a formula.\n\n1. The pool holds reserves of both tokens, for example ETH and USDC.\n2. The price is the ratio of those reserves, not a match between buyers and sellers.\n3. Every trade changes the reserves, so every trade changes the price.\n4. The rule `x × y = k` keeps the product of reserves fixed, which makes larger trades cost more per unit (slippage).\n5. When the pool drifts from the wider market, arbitrageurs trade it back and pocket the gap.\n\nThe result: prices update continuously, with no one quoting them.",
+    exPrompt: "Explain how vaccines train the immune system, in five sentences a 12-year-old can follow.",
+    exA: "A vaccine shows your body a harmless **copy or piece** of a germ, like a wanted poster.\n\nYour immune system studies it and builds **antibodies**, tiny tools that grab onto that exact germ.\n\nIt also keeps **memory cells**, which remember the germ for years.\n\nIf the real germ ever shows up, those cells recognise it fast and make antibodies right away.\n\nSo your body fights it off before it can make you really sick.",
+    exB: "### Think of it as a practice drill\nA vaccine lets your body **practise** against a germ without the danger.\n\n1. The vaccine carries a weakened germ, a dead one, or just a piece of it.\n2. Your immune system spots it as an intruder and sounds the alarm.\n3. It makes **antibodies** shaped to fit that germ, like keys cut for one lock.\n4. Some cells become **memory cells** that stay on guard for years.\n5. When the real germ arrives, your body already knows what to do and reacts much faster.\n\nThat's why vaccinated people often don't get sick at all, or only mildly.",
     stop: "Stop",
     run: "Run comparison",
     running: "Running…",
@@ -174,6 +184,18 @@ export const en = {
     minutes: (n: number) => `${n} minutes`,
     hours: (n: number) => `${n} hours`,
   },
+  /** The live numbers under the hero (all from the catalog and /status). */
+  stats: {
+    state: {
+      operational: "All systems operational",
+      degraded: "Some models degraded",
+      down: "Service disruption",
+    },
+    models: "models live",
+    providers: "providers",
+    free: "free, no signup",
+    ttft: "median first word, last hour",
+  },
   logos: { caption: "One catalog for the models teams actually use" },
   features: {
     kick: "Product",
@@ -188,6 +210,9 @@ export const en = {
     walletText: "No email, no card. Sign once, create keys, revoke them any time.",
     migrateTitle: "A one-line migration",
     migrateText: `${brand.name} uses the OpenAI format. Change the base URL and your app, bot or agent keeps working.`,
+    telegramTitle: "Also on Telegram",
+    telegramText:
+      "Ask anything in any language with @dualynebot, or compare two models blind, right in the chat.",
     treasuryTitle: "Free access, paid for in public",
     treasuryText:
       "Trading fees fill a treasury that covers everyone's free requests. Every dollar in and out is on the ledger.",
@@ -212,7 +237,11 @@ export const en = {
     live: "Live",
     unavailable: "Unavailable",
     speedAria: (n: number) => `Speed ${n} of 4`,
-    fine: "Prices are what the provider charges per million input / output tokens. Explorer and Holder requests are free, paid for by the treasury; Builder pays cost + 15%.",
+    fine: T
+      ? "Prices are what the provider charges per million input / output tokens. Explorer and Holder requests are free, paid for by the treasury; Builder pays cost + 15%."
+      : "Prices are what the provider charges per million input / output tokens. The free models cost you nothing; Builder pays cost + 15%.",
+    /** Tier column labels when the token is hidden (no Holder tier to speak of). */
+    tierLabel: { explorer: "Free", holder: "Premium", builder: "Premium" } as Record<string, string>,
     /** "Best for" text by model id; English uses the catalog's own text. */
     bestFor: {} as Record<string, string>,
     lb: {
@@ -248,7 +277,14 @@ export const en = {
   pricing: {
     kick: "Pricing",
     h2: "Pricing that grows with you.",
-    p: "Every wallet gets a daily allowance. Holding the token raises it. Past that, pay only for what you use.",
+    p: T
+      ? "Every wallet gets a daily allowance. Holding the token raises it. Past that, pay only for what you use."
+      : "Chat and compare for free, no signup. Build on the free API allowance, then pay only for what you use.",
+    chatName: "Chat",
+    chatWho: "For anyone. No signup, no wallet.",
+    chatItems: ["Claude, Llama, DeepSeek and Mistral", "Side-by-side Compare", "Also on Telegram"],
+    chatCta: "Start chatting",
+    startHere: "Start here",
     explorerWho: "For anyone with a wallet who wants to try the API.",
     explorerItems: ["20 requests a day", "Fast models", "1 API key"],
     explorerCta: "Connect wallet",
@@ -266,7 +302,9 @@ export const en = {
       "Usage reports per key",
     ],
     builderCta: "Top up credits",
-    fine: "Limits shown are the launch proposal and may change before the token goes live.",
+    fine: T
+      ? "Limits shown are the launch proposal and may change before the token goes live."
+      : "API limits shown are the launch plan and may change.",
   },
   token: {
     kick: "Token",
@@ -317,11 +355,15 @@ export const en = {
     items: [
       [
         `Is ${brand.name} really free?`,
-        "Yes. Comparing models in the browser is free with no account. Wallets get a daily allowance through the API, paid for by the treasury.",
+        T
+          ? "Yes. Comparing models in the browser is free with no account. Wallets get a daily allowance through the API, paid for by the treasury."
+          : "Yes. Chatting with and comparing the free models, in the browser or on Telegram, needs no account. Wallets also get a free daily allowance through the API.",
       ],
       [
         "Why do I need a wallet for API keys?",
-        "Your wallet works as your account, so there's no email or password to leak. It also lets us raise your limits automatically when you hold the token.",
+        T
+          ? "Your wallet works as your account, so there's no email or password to leak. It also lets us raise your limits automatically when you hold the token."
+          : "Your wallet works as your account, so there's no email or password to leak. You sign one message to prove it's yours; nothing is sent from the wallet.",
       ],
       [
         "Which models can I use?",
@@ -336,13 +378,17 @@ export const en = {
         "What happens when my daily allowance runs out?",
         "Your requests pause until the next day, or you can top up credits in USDG or ETH and keep going at model cost plus 15%.",
       ],
-      [
-        "Where does the treasury money come from?",
-        "A 1% fee on every token trade goes to a public treasury wallet. The ledger shows what comes in and what is spent on inference, every day.",
-      ],
+      ...(T
+        ? [
+            [
+              "Where does the treasury money come from?",
+              "A 1% fee on every token trade goes to a public treasury wallet. The ledger shows what comes in and what is spent on inference, every day.",
+            ] as [string, string],
+          ]
+        : []),
       [
         "Why not call OpenRouter or the providers directly?",
-        `You can, and for heavy paid use it's cheaper. ${brand.name} adds what they don't: a free daily allowance paid for by the treasury, a side-by-side Compare tool, and keys tied to a wallet instead of an email and a card.`,
+        `You can, and for heavy paid use it's cheaper. ${brand.name} adds what they don't: ${T ? "a free daily allowance paid for by the treasury" : "free chat and a free daily API allowance"}, a side-by-side Compare tool, and keys tied to a wallet instead of an email and a card.`,
       ],
       [
         `Can I use ${brand.name} with my existing code?`,
@@ -352,6 +398,8 @@ export const en = {
   },
   closing: {
     h2: "Find your model in one prompt.",
+    /** The part of h2 drawn in colour. */
+    h2Accent: "one prompt.",
     p: "Free to try. No signup.",
   },
   footer: {
@@ -364,6 +412,9 @@ export const en = {
     documentation: "Documentation",
     contact: "Contact",
     feeSplit: "Fee split",
+    community: "Community",
+    telegramBot: "Telegram bot",
+    chat: "Chat",
     ledger: "Ledger",
     terms: "Terms",
     privacy: "Privacy",
@@ -396,7 +447,9 @@ export const en = {
     keys: "API keys",
     createKey: "Create key",
     creating: "Creating…",
-    explorerOneKey: "Explorer wallets get one key. Hold the token for five.",
+    explorerOneKey: T
+      ? "Explorer wallets get one key. Hold the token for five."
+      : "Explorer wallets get one key. Builder wallets can have more.",
     tierKeys: (tier: string, n: number | null) => `${tier} wallets can have ${n} keys.`,
     fresh: "Copy this key now. You won't see it again.",
     copyKey: "Copy key",
@@ -435,7 +488,10 @@ export const en = {
     tierOverride: "Set by the team",
     tierCredits: "Paid from your prepaid credits",
     tierToken: `Holding ${brand.tokenSymbol}. Paid for by the treasury.`,
-    tierHold: (min: string) => `Hold ${min} ${brand.tokenSymbol} to unlock Holder`,
+    tierHold: (min: string) =>
+      T
+        ? `Hold ${min} ${brand.tokenSymbol} to unlock Holder`
+        : "Free tier. Top up credits to use every model.",
     keys: "Active keys",
     keysSome: "Revoke any key from Manage keys",
     keysNone: "Create a key to call the API",
@@ -498,7 +554,9 @@ export const en = {
     compare: (name: string) => `Compare ${name}`,
     docs: "Read the API docs",
     freeNote: "Free to compare in the browser. No signup.",
-    keyNote: "Available through the API with a Holder or Builder key.",
+    keyNote: T
+      ? "Available through the API with a Holder or Builder key."
+      : "Available through the API with a Builder key.",
     speed: "Speed",
     speedValue: (n: number) => `${n} of 4`,
     speedNote: ["", "Slow, for hard problems", "Moderate", "Fast", "Fastest in the catalog"],
@@ -507,16 +565,19 @@ export const en = {
     contextNote: "How much text fits in one request",
     input: "Input, per 1M tokens",
     output: "Output, per 1M tokens",
-    priceNote: "What the provider charges. Explorer and Holder pay nothing.",
+    priceNote: T
+      ? "What the provider charges. Explorer and Holder pay nothing."
+      : "What the provider charges. The free models cost you nothing.",
     builderNote: "Builder pays this + 15% from prepaid credits.",
     access: "Who can use it",
-    accessValue: { explorer: "Every wallet", holder: "Holder and Builder", builder: "Builder" } as Record<
-      string,
-      string
-    >,
+    accessValue: {
+      explorer: "Every wallet",
+      holder: T ? "Holder and Builder" : "Builder",
+      builder: "Builder",
+    } as Record<string, string>,
     accessNote: {
       explorer: "Free: 20 API requests a day with a wallet",
-      holder: "Hold 100K tokens, or top up credits",
+      holder: T ? "Hold 100K tokens, or top up credits" : "Top up credits in USDG or ETH",
       builder: "Top up credits in USDG or ETH",
     } as Record<string, string>,
     ranking: "Community ranking",
@@ -552,7 +613,7 @@ export const en = {
     down: "Down",
     available: "Available",
     paused: (time: string) => `Paused until ${time} UTC`,
-    pausedNote: "Today's treasury budget is used up. API keys on paid credit keep working.",
+    pausedNote: "Today's free budget is used up. API keys on paid credit keep working.",
     models: "Models",
     th: {
       model: "Model",

@@ -14,6 +14,14 @@ function env(name: "NEXT_PUBLIC_X_URL" | "NEXT_PUBLIC_TELEGRAM_URL"): string {
   return v && /^https:\/\//.test(v) ? v : "";
 }
 
+/**
+ * Whether the $DLYN token is shown anywhere (website, Telegram bot). Off by default: the site
+ * presents Dualyne as an AI product; set NEXT_PUBLIC_TOKEN_ENABLED=true to bring back the CA bar,
+ * the Token and Treasury sections, the Holder tier and the token FAQ.
+ */
+const tokenEnabled =
+  hasEnv && /^(1|true|yes|on)$/i.test((process.env.NEXT_PUBLIC_TOKEN_ENABLED ?? "").trim());
+
 // NEXT_PUBLIC_ is inlined into the browser bundle by Next.js; the API reads SITE_DOMAIN.
 const domain =
   (typeof process !== "undefined" && (process.env.NEXT_PUBLIC_SITE_DOMAIN || process.env.SITE_DOMAIN)) ||
@@ -24,6 +32,8 @@ export const brand = {
   /** Token symbol without the "$". Rendered as "$DLYN" or "100,000 DLYN". */
   tokenSymbol: "DLYN",
   tokenName: "Dualyne access token",
+  /** See tokenEnabled above. */
+  tokenEnabled,
   domain,
   siteUrl: `https://${domain}`,
   apiOrigin: `https://api.${domain}`,

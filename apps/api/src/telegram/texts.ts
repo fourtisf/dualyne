@@ -56,7 +56,7 @@ export function helpText(limit: number, owner: boolean): string {
     "/model: choose the AI model",
     "/new: forget this conversation and start fresh",
     "/ask <i>question</i>: ask in a group (or mention the bot, or reply to it)",
-    `/token: $${brand.tokenSymbol} token and contract address`,
+    ...(brand.tokenEnabled ? [`/token: $${brand.tokenSymbol} token and contract address`] : []),
     "/about: website and links",
     "",
     "<b>Limits</b>",

@@ -66,7 +66,7 @@ export function Features({ locale }: { locale: Locale }) {
                 <div className="k">{brand.keyPrefix}8c3f…a91e</div>
                 <div className="w">
                   <span>0x71C4…9A2f</span>
-                  <span>Holder</span>
+                  <span>{brand.tokenEnabled ? "Holder" : "Explorer"}</span>
                 </div>
               </div>
             </div>
@@ -89,37 +89,61 @@ export function Features({ locale }: { locale: Locale }) {
               <p>{t.migrateText}</p>
             </div>
           </div>
-          <div className="tile w3">
-            <div className="viz">
-              <svg className="spark" viewBox="0 0 400 130" preserveAspectRatio="none" aria-hidden="true">
-                <defs>
-                  <linearGradient id="sf" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0" stopColor="#8B5CF6" stopOpacity=".35" />
-                    <stop offset="1" stopColor="#8B5CF6" stopOpacity="0" />
-                  </linearGradient>
-                  <linearGradient id="ss" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0" stopColor="#67E8F9" />
-                    <stop offset="1" stopColor="#A78BFA" />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M0 110 C40 104 60 96 90 90 S150 70 180 74 240 52 270 46 330 36 360 26 390 18 400 16 L400 130 L0 130Z"
-                  fill="url(#sf)"
-                />
-                <path
-                  d="M0 110 C40 104 60 96 90 90 S150 70 180 74 240 52 270 46 330 36 360 26 390 18 400 16"
-                  fill="none"
-                  stroke="url(#ss)"
-                  strokeWidth="2"
-                />
-                <circle cx="400" cy="16" r="4" fill="#A78BFA" />
-              </svg>
+          {brand.tokenEnabled ? (
+            <div className="tile w3">
+              <div className="viz">
+                <svg className="spark" viewBox="0 0 400 130" preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="sf" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stopColor="#8B5CF6" stopOpacity=".35" />
+                      <stop offset="1" stopColor="#8B5CF6" stopOpacity="0" />
+                    </linearGradient>
+                    <linearGradient id="ss" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0" stopColor="#67E8F9" />
+                      <stop offset="1" stopColor="#A78BFA" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d="M0 110 C40 104 60 96 90 90 S150 70 180 74 240 52 270 46 330 36 360 26 390 18 400 16 L400 130 L0 130Z"
+                    fill="url(#sf)"
+                  />
+                  <path
+                    d="M0 110 C40 104 60 96 90 90 S150 70 180 74 240 52 270 46 330 36 360 26 390 18 400 16"
+                    fill="none"
+                    stroke="url(#ss)"
+                    strokeWidth="2"
+                  />
+                  <circle cx="400" cy="16" r="4" fill="#A78BFA" />
+                </svg>
+              </div>
+              <div className="txt">
+                <h3>{t.treasuryTitle}</h3>
+                <p>{t.treasuryText}</p>
+              </div>
             </div>
-            <div className="txt">
-              <h3>{t.treasuryTitle}</h3>
-              <p>{t.treasuryText}</p>
+          ) : (
+            <div className="tile w3">
+              <div className="viz">
+                <div className="tgmini" aria-hidden="true">
+                  <div className="me">What is an API? Keep it short</div>
+                  <div className="bot">
+                    An <b>API</b> is a bridge that lets two apps talk to each other.
+                    <small>Claude Swift</small>
+                  </div>
+                  <div className="btns">
+                    <span>Try again</span>
+                    <span>Other model</span>
+                    <span>Compare</span>
+                    <span>New chat</span>
+                  </div>
+                </div>
+              </div>
+              <div className="txt">
+                <h3>{t.telegramTitle}</h3>
+                <p>{t.telegramText}</p>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </section>

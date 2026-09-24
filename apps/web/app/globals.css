@@ -674,3 +674,68 @@ td a.mname:hover{text-decoration:underline; text-underline-offset:3px; text-deco
   .chat-foot .hint{display:none}
 }
 @media (prefers-reduced-motion:reduce){.chat-side{transition:none}}
+
+/* ===== v8: premium pass (matches the marketing banners) ===== */
+/* film grain over the whole site, very light */
+body::after{content:""; position:fixed; inset:0; z-index:100; pointer-events:none; opacity:.035; mix-blend-mode:overlay;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* headline: silver first line, colour second line */
+.metal{background:linear-gradient(180deg,#FFFFFF 35%,#B4B4C2 80%,#8E8E9C); -webkit-background-clip:text; background-clip:text; color:transparent}
+.accent{background:linear-gradient(92deg,#8BF3FF 0%,#B79CFF 45%,#FF8FCB 100%); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 0 30px rgba(167,139,250,.28))}
+.hero h1 .accent{padding-bottom:.06em}
+.lede,.head p,.closing p,.head h2{text-wrap:balance}
+
+/* aurora behind the hero */
+.hero .aurora{position:absolute; inset:-220px 0 auto; height:1100px; z-index:-1; pointer-events:none; overflow:hidden}
+.hero .aurora i{position:absolute; border-radius:50%; filter:blur(90px); opacity:.55; will-change:transform}
+.hero .aurora i:nth-child(1){left:calc(50% - 560px); top:120px; width:620px; height:420px; background:#4C1D95; animation:drift1 18s ease-in-out infinite alternate}
+.hero .aurora i:nth-child(2){left:calc(50% + 40px); top:60px; width:560px; height:400px; background:#1E3A8A; opacity:.5; animation:drift2 22s ease-in-out infinite alternate}
+.hero .aurora i:nth-child(3){left:calc(50% - 160px); top:420px; width:520px; height:320px; background:#831843; opacity:.28; animation:drift1 26s ease-in-out infinite alternate-reverse}
+@keyframes drift1{to{transform:translate3d(60px,30px,0) scale(1.08)}}
+@keyframes drift2{to{transform:translate3d(-70px,40px,0) scale(1.05)}}
+@media (prefers-reduced-motion:reduce){.hero .aurora i{animation:none}}
+@media (max-width:700px){.hero .aurora i{filter:blur(60px); opacity:.4}}
+
+/* live numbers under the hero */
+.livestats{display:inline-flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:6px 0; margin-top:26px; padding:6px 8px; border-radius:999px; text-decoration:none; color:var(--muted); font-size:13px;
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02)); box-shadow:inset 0 0 0 1px rgba(255,255,255,.1), 0 12px 40px -20px rgba(139,92,246,.6); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); transition:box-shadow .2s}
+.livestats:hover{box-shadow:inset 0 0 0 1px rgba(255,255,255,.2), 0 12px 40px -20px rgba(139,92,246,.8)}
+.livestats > span{display:inline-flex; align-items:center; gap:6px; padding:3px 12px; border-left:1px solid rgba(255,255,255,.08); white-space:nowrap}
+.livestats > span:first-child{border-left:0}
+.livestats b{color:var(--text); font:600 13px/1 var(--mono)}
+.ls-state{color:var(--text)}
+.ls-state i{width:7px; height:7px; border-radius:50%; background:var(--ok); box-shadow:0 0 0 3px rgba(74,222,128,.15), 0 0 10px var(--ok)}
+.ls-state.degraded i{background:var(--amber); box-shadow:0 0 10px var(--amber)}
+.ls-state.down i{background:var(--err); box-shadow:0 0 10px var(--err)}
+@media (max-width:640px){.livestats{border-radius:18px}.livestats > span{border-left:0; padding:3px 9px}}
+
+/* announcement in the top bar (token hidden) */
+.tb-news{display:inline-flex; align-items:center; gap:10px; min-width:0; text-decoration:none; color:var(--muted); font-size:12.5px; transition:color .15s}
+.tb-news b{flex:none; font:600 10px/1 var(--mono); letter-spacing:.08em; text-transform:uppercase; padding:4px 7px; border-radius:6px; color:#fff; background:linear-gradient(90deg,var(--violet),var(--blue))}
+.tb-news span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.tb-news .arr{flex:none; transition:transform .2s}
+.tb-news:hover{color:var(--text)}
+.tb-news:hover .arr{transform:translateX(3px)}
+
+/* one clear call to action in the header */
+.nav .right{display:flex; align-items:center; gap:8px}
+.nav-cta{box-shadow:inset 0 0 0 1px rgba(255,255,255,.4), 0 8px 24px -8px rgba(255,255,255,.35)}
+@media (max-width:640px){.nav-wallet{display:none}}
+.mnav-wallet{display:block; width:100%; margin-top:6px; padding:13px 14px; border:0; border-radius:10px; text-align:left; font:500 15px/1.2 var(--sans); color:var(--text); background:rgba(255,255,255,.06); cursor:pointer}
+
+/* Telegram tile in Features */
+.tgmini{width:100%; max-width:360px; display:flex; flex-direction:column; gap:7px; padding:14px; border-radius:16px; background:#0E1621; box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.tgmini .me{align-self:flex-end; padding:7px 11px; border-radius:13px 13px 4px 13px; background:#2B5278; font-size:13px; color:#fff}
+.tgmini .bot{padding:8px 11px; border-radius:13px 13px 13px 4px; background:#182533; font-size:13px; line-height:1.45; color:#E4E8EC}
+.tgmini .bot small{display:block; margin-top:4px; font-style:italic; color:#7F91A4; font-size:11.5px}
+.tgmini .btns{display:grid; grid-template-columns:1fr 1fr; gap:4px}
+.tgmini .btns span{height:28px; border-radius:8px; display:grid; place-items:center; background:rgba(24,37,51,.95); font-size:11.5px; color:#E4E8EC}
+
+/* sections fade in as they scroll into view (only when JS runs; see HomeEffects) */
+.rv .rv-t{opacity:0; transform:translateY(18px); transition:opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1); transition-delay:var(--rd,0s)}
+.rv .rv-t.rv-in{opacity:1; transform:none}
+@media (prefers-reduced-motion:reduce){.rv .rv-t{opacity:1; transform:none; transition:none}}
+
+/* section titles: the same silver as the hero */
+section.block .head h2{background:linear-gradient(180deg,#FFFFFF 40%,#A9A9B8); -webkit-background-clip:text; background-clip:text; color:transparent}
