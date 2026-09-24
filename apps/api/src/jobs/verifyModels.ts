@@ -7,6 +7,8 @@ export interface VerifyResult {
   missing: string[];
   updated: string[];
   newer: { id: string; current: string; newest: string }[];
+  /** Set when OpenRouter could not be reached, so nothing was checked. */
+  error?: string;
 }
 
 /** "Anthropic: Claude Haiku 4.5" → "Claude Haiku 4.5" */
@@ -42,7 +44,7 @@ export async function verifyModels(
     const message = err instanceof Error ? err.message : String(err);
     await prisma.modelCheck.create({ data: { ok: false, missing: [], details: { error: message } } });
     await alert(`Model check could not reach OpenRouter: ${message}`);
-    return { ok: false, missing: [], updated: [], newer: [] };
+    return { ok: false, missing: [], updated: [], newer: [], error: message };
   }
   const byId = new Map(catalog.map((m) => [m.id, m]));
   const models = await prisma.model.findMany();

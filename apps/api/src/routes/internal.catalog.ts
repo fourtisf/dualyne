@@ -1,10 +1,5 @@
-import type { CatalogModel } from "@dualyne/shared";
+import { perMTok, type CatalogModel } from "@dualyne/shared";
 import type { FastifyPluginAsync } from "fastify";
-
-const perMTok = (price: unknown): number | null => {
-  const n = Number(price);
-  return Number.isFinite(n) && n >= 0 ? Math.round(n * 1_000_000 * 10_000) / 10_000 : null;
-};
 
 /** Public catalog for the website: names, tiers, prices and context length. No key needed. */
 export const catalogRoutes: FastifyPluginAsync = async (app) => {

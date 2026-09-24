@@ -25,6 +25,8 @@ export function defaultJobs(app: FastifyInstance): Job[] {
       everyMs: DAY,
       run: async () => {
         const r = await verifyModels(ctx.prisma, ctx.openrouter, ctx.alert);
+        // Nothing was checked: fail the run so the next tick (5 minutes) tries again, not tomorrow.
+        if (r.error) throw new Error(`model check could not reach OpenRouter: ${r.error}`);
         app.log.info({ job: "verify-models", ...r }, "model check finished");
       },
     },

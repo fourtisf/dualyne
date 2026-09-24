@@ -41,6 +41,21 @@ describe("scheduler", () => {
     expect(calls).toBe(2);
   });
 
+  it("retries the model check at the next tick when OpenRouter can't be reached", async () => {
+    const verify = defaultJobs(t.app).find((j) => j.name === "verify-models")!;
+    const openrouter = t.app.ctx.openrouter;
+    const models = openrouter.models;
+    openrouter.models = async () => {
+      throw new Error("offline");
+    };
+    try {
+      await expect(verify.run()).rejects.toThrow(/could not reach OpenRouter/);
+    } finally {
+      openrouter.models = models;
+    }
+    await expect(verify.run()).resolves.toBeUndefined();
+  });
+
   it("purges expired sessions", async () => {
     const wallet = await t.prisma.wallet.create({ data: { address: `0x${"e".repeat(40)}` } });
     await t.prisma.session.create({

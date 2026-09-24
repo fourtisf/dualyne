@@ -1,6 +1,29 @@
+import type { CSSProperties } from "react";
 import { getDict, type Locale } from "@/lib/i18n";
 
-const NAMES = ["Anthropic", "OpenAI", "Google", "Meta", "Mistral", "DeepSeek", "Qwen", "xAI", "Cohere"];
+/** Model makers with their monochrome logo in public/providers/mono (from @lobehub/icons, MIT). */
+const MAKERS: [name: string, logo: string][] = [
+  ["Anthropic", "anthropic"],
+  ["OpenAI", "openai"],
+  ["Google", "google"],
+  ["Meta", "meta"],
+  ["Mistral", "mistral"],
+  ["DeepSeek", "deepseek"],
+  ["Qwen", "qwen"],
+  ["xAI", "xai"],
+  ["Cohere", "cohere"],
+];
+
+const Maker = ({ name, logo }: { name: string; logo: string }) => (
+  <li>
+    <span
+      className="lmark"
+      style={{ "--m": `url(/providers/mono/${logo}.svg)` } as CSSProperties}
+      aria-hidden="true"
+    />
+    {name}
+  </li>
+);
 
 export function Logos({ locale }: { locale: Locale }) {
   return (
@@ -10,13 +33,13 @@ export function Logos({ locale }: { locale: Locale }) {
         <div className="marquee">
           <div className="track">
             <ul>
-              {NAMES.map((n) => (
-                <li key={n}>{n}</li>
+              {MAKERS.map(([n, l]) => (
+                <Maker key={n} name={n} logo={l} />
               ))}
             </ul>
             <ul aria-hidden="true">
-              {NAMES.map((n) => (
-                <li key={n}>{n}</li>
+              {MAKERS.map(([n, l]) => (
+                <Maker key={n} name={n} logo={l} />
               ))}
             </ul>
           </div>

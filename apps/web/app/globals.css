@@ -310,7 +310,6 @@ dialog::backdrop{background:rgba(0,0,0,.6); backdrop-filter:blur(6px)}
 .models td:first-child{font-weight:500; color:var(--text)}
 .models td{color:#BDBDC6}
 .prov{display:flex; align-items:center; gap:10px}
-.prov i{width:22px; height:22px; border-radius:6px; flex:none; background:var(--c); opacity:.9; box-shadow:0 0 14px -2px var(--c)}
 .spd{display:inline-flex; gap:3px}
 .spd b{width:14px; height:5px; border-radius:2px; background:rgba(255,255,255,.1)}
 .spd b.on{background:linear-gradient(90deg,var(--cyan),var(--violet))}
@@ -519,7 +518,6 @@ a.ca-addr:hover{text-decoration:underline}
 .mp .kick a:hover{color:var(--text)}
 .mp-title{display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:12px}
 .mp-title h1{font:600 clamp(38px,5vw,56px)/1.05 var(--sans); letter-spacing:-.045em; margin:0}
-.mp-dot{width:34px; height:34px; border-radius:10px; background:var(--c); box-shadow:0 0 24px -4px var(--c); flex:none}
 .mp-ctas{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:-20px 0 44px}
 .mp-note{color:var(--muted); font-size:14px; margin-left:4px}
 .mp-grid .v{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
@@ -531,7 +529,6 @@ a.ca-addr:hover{text-decoration:underline}
 .mp-others ul{list-style:none; margin:16px 0 0; padding:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px}
 .mp-others a{display:flex; align-items:center; gap:12px; padding:14px 16px; border:1px solid var(--line); border-radius:14px; text-decoration:none; color:var(--text); background:rgba(255,255,255,.015)}
 .mp-others a:hover{border-color:var(--line2); background:rgba(255,255,255,.03)}
-.mp-others i{width:22px; height:22px; border-radius:6px; background:var(--c); flex:none}
 .mp-others span{display:flex; flex-direction:column; font-weight:500}
 .mp-others small{color:var(--muted); font-weight:400; font-size:12.5px}
 td a.mname{color:inherit; text-decoration:none}
@@ -585,3 +582,10 @@ td a.mname:hover{text-decoration:underline; text-underline-offset:3px; text-deco
 .opts.more .opt .ic{width:28px; height:28px; border-radius:8px}
 .opts.more .opt small{font-size:12px}
 @media (max-width:420px){.opts.more{grid-template-columns:1fr}}
+
+/* Model makers: logo tiles (tables, model pages) and monochrome logos (logo strip) */
+.pmark{width:var(--s); height:var(--s); border-radius:calc(var(--s) * .28); background:#F4F4F5; display:inline-grid; place-items:center; flex:none; box-shadow:0 0 0 1px rgba(255,255,255,.1)}
+.pmark img{width:68%; height:68%; display:block}
+.pmark.none{background:var(--c)}
+.logos li{display:inline-flex; align-items:center; gap:10px}
+.lmark{width:22px; height:22px; flex:none; background:currentColor; -webkit-mask:var(--m) center/contain no-repeat; mask:var(--m) center/contain no-repeat}

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import { TIER_DEFAULTS, type CatalogModel, type LeaderboardResponse } from "@dualyne/shared";
 import { publicConfig } from "@/lib/config";
 import { formatContext, formatPerMTok } from "@/lib/format";
 import { store } from "@/lib/storage";
 import { href } from "@/lib/i18n";
 import { useLocale, useT } from "../LocaleProvider";
+import { ProviderMark } from "../ProviderMark";
 import { useWallet } from "../WalletProvider";
 
 interface Match {
@@ -219,7 +220,7 @@ export function ModelsSection({ models }: { models: CatalogModel[] }) {
                     </td>
                     <td>
                       <span className="prov">
-                        <i style={{ "--c": m.providerColor } as CSSProperties} />
+                        <ProviderMark provider={m.provider} color={m.providerColor} />
                         {m.provider}
                       </span>
                     </td>

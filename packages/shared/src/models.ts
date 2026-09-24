@@ -188,7 +188,17 @@ export interface CatalogModel {
   live: boolean;
 }
 
-/** Static fallback used by the website if the API cannot be reached (for example during `next build`). */
+/** USD per token (OpenRouter's format, e.g. "0.000001") → USD per 1M tokens, or null. */
+export const perMTok = (price: unknown): number | null => {
+  const n = Number(price);
+  return Number.isFinite(n) && n >= 0 ? Math.round(n * 1_000_000 * 10_000) / 10_000 : null;
+};
+
+/**
+ * Fallback used by the website if the API cannot be reached (for example during `next build`).
+ * Prices and context come from the same snapshot the database is first filled with; the API
+ * serves the values OpenRouter reports once it is up.
+ */
 export const STATIC_CATALOG: CatalogModel[] = MODEL_DEFS.map((m) => ({
   id: m.id,
   name: m.name,
@@ -199,9 +209,9 @@ export const STATIC_CATALOG: CatalogModel[] = MODEL_DEFS.map((m) => ({
   speed: m.speed,
   minTier: m.minTier,
   upstreamName: m.upstreamName,
-  inputPerMTok: null,
-  outputPerMTok: null,
-  contextLength: null,
+  inputPerMTok: perMTok(m.promptPrice),
+  outputPerMTok: perMTok(m.completionPrice),
+  contextLength: m.contextLength,
   live: true,
 }));
 

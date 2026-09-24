@@ -1,9 +1,9 @@
 import Link from "next/link";
-import type { CSSProperties } from "react";
 import { brand } from "@dualyne/config";
 import { TIER_DEFAULTS, type CatalogModel, type LeaderboardResponse } from "@dualyne/shared";
 import { formatContext, formatPerMTok } from "@/lib/format";
 import { getDict, href, type Locale } from "@/lib/i18n";
+import { ProviderMark } from "./ProviderMark";
 import { OpenWalletButton } from "./WalletProvider";
 
 const envName = `${brand.name.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_KEY`;
@@ -50,7 +50,7 @@ reply = client.chat.completions.create(
             {m.provider}
           </div>
           <div className="mp-title">
-            <span className="mp-dot" style={{ "--c": m.providerColor } as CSSProperties} aria-hidden="true" />
+            <ProviderMark provider={m.provider} color={m.providerColor} size={34} />
             <h1 className="grad">{m.name}</h1>
             {m.live ? (
               <span className="st live">{d.models.live}</span>
@@ -139,7 +139,7 @@ reply = client.chat.completions.create(
               .map((o) => (
                 <li key={o.id}>
                   <Link href={h(`/models/${o.id}`)}>
-                    <i style={{ "--c": o.providerColor } as CSSProperties} aria-hidden="true" />
+                    <ProviderMark provider={o.provider} color={o.providerColor} />
                     <span>
                       {o.name}
                       <small>{d.models.bestFor[o.id] ?? o.bestFor}</small>
