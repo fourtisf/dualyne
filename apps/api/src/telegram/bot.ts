@@ -156,12 +156,25 @@ export const STARTER_QUESTIONS = [
   "What is DeFi, and what are the risks?",
   "How do I keep my crypto wallet safe?",
   "Explain blockchain like I'm 12",
+  "What is a seed phrase and why does it matter?",
+  "How do crypto exchanges work?",
+  "What is staking, and is it risky?",
+  "What are gas fees on Ethereum?",
+  "What is a Bitcoin halving?",
+  "How do I spot a crypto scam?",
+  "What is a layer 2, like Base or Arbitrum?",
+  "What are NFTs actually used for?",
+  "What is a crypto airdrop?",
+  "Hot wallet vs cold wallet: which should I use?",
 ] as const;
 
-const STARTER_KEYBOARD: Keyboard = STARTER_QUESTIONS.map((q, i) => [
-  { text: `💡 ${q}`, callback_data: `start:${i}` },
-]);
-const NEW_CHAT_TEXT = "Started a new conversation. Type your question, or tap one to begin:";
+/** A few starter questions picked at random, so each list feels fresh. */
+function starterKeyboard(n = 4): Keyboard {
+  const picks = [...STARTER_QUESTIONS.keys()].sort(() => Math.random() - 0.5).slice(0, n);
+  return picks.map((i) => [{ text: `💡 ${STARTER_QUESTIONS[i]}`, callback_data: `start:${i}` }]);
+}
+const NEW_CHAT_TEXT =
+  "🆕 New conversation started. Earlier messages are forgotten.\n\nType your question, or tap one to begin:";
 
 class TelegramError extends Error {
   constructor(
@@ -382,7 +395,7 @@ export class TelegramBot {
         case "/start":
           return {
             html: welcomeText(await this.freeModels(), limit),
-            keyboard: [[this.openAppButton(w)], ...STARTER_KEYBOARD],
+            keyboard: [[this.openAppButton(w)], ...starterKeyboard()],
           };
         case "/help":
           return { html: helpText(limit, this.isOwner(w.chat)) };
@@ -405,7 +418,7 @@ export class TelegramBot {
         case "/new":
         case "/reset":
           await this.ctx.redis.del(keys.history(w.chat), keys.last(w.chat));
-          return { html: NEW_CHAT_TEXT, keyboard: STARTER_KEYBOARD };
+          return { html: NEW_CHAT_TEXT, keyboard: starterKeyboard() };
         case "/model":
         case "/models": {
           if (!args.length) return this.modelPicker(w.chat);
@@ -419,8 +432,8 @@ export class TelegramBot {
         case "/ask":
           if (!arg) {
             return {
-              html: "Type your question after /ask, for example:\n/ask What is an API?\n\nOr tap one to start:",
-              keyboard: STARTER_KEYBOARD,
+              html: "❓ Ask anything. In a chat with me, just type your question. In a group, put it after /ask, for example:\n/ask What is an API?\n\nNeed an idea? Tap one:",
+              keyboard: starterKeyboard(),
             };
           }
           await this.ask(w, arg);
@@ -881,7 +894,7 @@ export class TelegramBot {
     if (kind === "act" && value === "new") {
       await this.ctx.redis.del(keys.history(w.chat), keys.last(w.chat));
       await answer("Started a new conversation.");
-      await this.send(chatId, NEW_CHAT_TEXT, { reply_markup: { inline_keyboard: STARTER_KEYBOARD } });
+      await this.send(chatId, NEW_CHAT_TEXT, { reply_markup: { inline_keyboard: starterKeyboard() } });
       return;
     }
     if (kind === "start" || kind === "sug") {

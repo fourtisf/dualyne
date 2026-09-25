@@ -118,7 +118,7 @@ describe("Telegram bot: chat", () => {
       { role: "user", content: "What is my name?" },
     ]);
     await say(msg(7, "/new"));
-    expect(texts().at(-1)).toMatch(/^Started a new conversation/);
+    expect(texts().at(-1)).toMatch(/^🆕 New conversation started/);
     await say(msg(7, "Hi again"));
     expect(asked()[2]).toEqual([{ role: "user", content: "Hi again" }]);
   });
@@ -451,19 +451,15 @@ describe("Telegram formatting", () => {
 
 describe("Telegram bot: suggested questions", () => {
   it("offers crypto starter questions on /ask, /new and /start, and a tap asks one", async () => {
+    const starters = (b: Body | undefined) => buttons(b)!.filter((x) => x.startsWith("start:"));
     await say(msg(7, "/ask"));
-    expect(buttons(sent().at(-1))).toEqual([
-      "start:0",
-      "start:1",
-      "start:2",
-      "start:3",
-      "start:4",
-      "start:5",
-    ]);
+    expect(sent().at(-1)!.text).toContain("Ask anything");
+    expect(starters(sent().at(-1))).toHaveLength(4);
     await say(msg(7, "/new"));
-    expect(buttons(sent().at(-1))).toContain("start:0");
+    expect(sent().at(-1)!.text).toContain("New conversation started");
+    expect(starters(sent().at(-1))).toHaveLength(4);
     await say(msg(7, "/start"));
-    expect(buttons(sent().at(-1))).toContain("start:5");
+    expect(starters(sent().at(-1))).toHaveLength(4);
 
     await bot.handle(press(7, "start:0"));
     expect(texts()).toContain("❓ <b>What is Bitcoin, in simple words?</b>");
