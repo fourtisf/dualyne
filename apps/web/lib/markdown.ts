@@ -21,7 +21,7 @@ export function md(src: string): string {
       html += "<pre><code>" + esc(part.replace(/^[^\n]*\n/, "").replace(/\n$/, "")) + "</code></pre>";
       return;
     }
-    let list: { t: "ul" | "ol"; items: string[] } | null = null;
+    let list: { t: "ul" | "ol"; items: string[]; start: number } | null = null;
     let para: string[] = [];
     const fp = () => {
       if (para.length) {
@@ -31,7 +31,8 @@ export function md(src: string): string {
     };
     const fl = () => {
       if (list) {
-        html += `<${list.t}>` + list.items.map((x) => "<li>" + inline(x) + "</li>").join("") + `</${list.t}>`;
+        const open = list.t === "ol" && list.start !== 1 ? `<ol start="${list.start}">` : `<${list.t}>`;
+        html += open + list.items.map((x) => "<li>" + inline(x) + "</li>").join("") + `</${list.t}>`;
         list = null;
       }
     };
@@ -39,9 +40,9 @@ export function md(src: string): string {
       .split("\n")
       .forEach((l) => {
         let m: RegExpMatchArray | null;
+        // A blank line ends a paragraph but not a list: models often put blank lines between items.
         if (!l.trim()) {
           fp();
-          fl();
           return;
         }
         if ((m = l.match(/^\s*(#{1,4})\s+(.*)/))) {
@@ -54,18 +55,18 @@ export function md(src: string): string {
           fp();
           if (!list || list.t !== "ul") {
             fl();
-            list = { t: "ul", items: [] };
+            list = { t: "ul", items: [], start: 1 };
           }
           list.items.push(m[1] ?? "");
           return;
         }
-        if ((m = l.match(/^\s*\d+[.)]\s+(.*)/))) {
+        if ((m = l.match(/^\s*(\d+)[.)]\s+(.*)/))) {
           fp();
           if (!list || list.t !== "ol") {
             fl();
-            list = { t: "ol", items: [] };
+            list = { t: "ol", items: [], start: Math.min(Number(m[1]) || 1, 9999) };
           }
-          list.items.push(m[1] ?? "");
+          list.items.push(m[2] ?? "");
           return;
         }
         fl();
