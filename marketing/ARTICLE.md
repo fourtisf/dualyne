@@ -1,7 +1,7 @@
 # X Article: introducing Dualyne
 
 **Cover image:** `banners/png/article-cover-1500x600.png` (5:2, what X recommends).
-**Images inside the article:** where it says `[image: …]`, use Insert → Media in the X editor.
+Only one image: the cover. The article itself is text.
 
 Before publishing, check the notes in brackets: they mark lines that are only true once a setting is on
 (API open, Google/email sign-in configured). Delete those lines if the setting is still off.
@@ -28,8 +28,6 @@ We thought that was backwards. So we built **Dualyne**.
 Open dualyne.com, pick a model and type. No signup, no card. Answers stream in as they're written, and you
 can switch models in the middle of a conversation to get a second opinion.
 
-`[image: banners/png/03-chat.png]`
-
 Chat does more than text:
 
 - **Images and PDFs.** Attach a photo, a screenshot or a PDF and ask about it. Models that can see images
@@ -43,8 +41,6 @@ Chat does more than text:
 
 This is the part we're proudest of. Switch on **Ask several**, pick up to four models, and ask once. The
 answers appear side by side. Pick the one you like and keep chatting with it.
-
-`[image: banners/png/04-compare.png]`
 
 Every model has a personality. One is better at code, another at tone, another at saying "I'm not sure"
 instead of making something up. The only honest way to choose is to test with your own questions, and
@@ -64,16 +60,12 @@ so it reads well on X and Telegram.
 Message **@dualynebot** and chat with the same models without leaving Telegram. It works in any language,
 in private chats and in groups. `/compare` runs a blind comparison right in the chat.
 
-`[image: banners/png/06-telegram.png]`
-
 ### For developers: one API for every model
 
 _[Only once API_OPEN=true is live on the server.]_
 
 Dualyne speaks the OpenAI API format. Change your base URL and your key, and your existing SDKs, bots and
 agents keep working. Start with 20 free requests a day.
-
-`[image: banners/png/07-docs.png]`
 
 ### Honest by design
 
