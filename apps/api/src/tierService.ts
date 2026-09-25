@@ -21,13 +21,18 @@ export interface TierOptions {
   owners?: string[];
 }
 
-/** Whether this account is one of OWNER_ACCOUNTS (by wallet address or email). */
+/** Whether this account is one of OWNER_ACCOUNTS (by account ID, wallet address or email). */
 export function isOwner(
   owners: readonly string[],
-  wallet: Pick<Wallet, "address" | "email"> | null | undefined,
+  wallet: Pick<Wallet, "id" | "address" | "email"> | null | undefined,
 ): boolean {
   if (!wallet || !owners.length) return false;
-  return owners.some((o) => o === wallet.address?.toLowerCase() || o === wallet.email?.toLowerCase());
+  return owners.some(
+    (o) =>
+      o === wallet.id.toLowerCase() ||
+      o === wallet.address?.toLowerCase() ||
+      o === wallet.email?.toLowerCase(),
+  );
 }
 
 const BALANCE_TTL = 5 * 60; // HANDOFF: cache the on-chain balance for 5 minutes

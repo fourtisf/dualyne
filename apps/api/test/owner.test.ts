@@ -52,6 +52,20 @@ describe("owner account (OWNER_ACCOUNTS)", () => {
     expect(quota.plan).toBe("owner");
   });
 
+  it("can also be listed by account ID", async () => {
+    const other = newAccount();
+    const { cookie } = await signIn(t, other);
+    const me = (await t.app.inject({ method: "GET", url: "/me", headers: { cookie } })).json();
+    expect(me.tierSource).toBe("default");
+    (t.app.ctx.env.OWNER_ACCOUNTS as string[]).push(me.id);
+    try {
+      const again = (await t.app.inject({ method: "GET", url: "/me", headers: { cookie } })).json();
+      expect(again).toMatchObject({ tierSource: "owner", tierLabel: "Owner" });
+    } finally {
+      (t.app.ctx.env.OWNER_ACCOUNTS as string[]).pop();
+    }
+  });
+
   it("is only the listed accounts: everyone else keeps the normal limits", async () => {
     t.upstream.mode = "stream";
     const { cookie } = await signIn(t);

@@ -108,7 +108,7 @@ const schema = z
     // Wallet sign-in (SIWE) and on-chain reads
     SESSION_SECRET: z.string().default(""),
     /**
-     * The owner's accounts: wallet addresses and/or emails, comma-separated. They get no limits
+     * The owner's accounts: account IDs, wallet addresses and/or emails, comma-separated. They get no limits
      * anywhere (API, Chat, web search) and are never charged; the cost still comes from the
      * OpenRouter balance.
      */
