@@ -1,9 +1,11 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import type { KeyInfo, MeResponse } from "@dualyne/shared";
+import type { AuthMethods, KeyInfo, MeResponse } from "@dualyne/shared";
 import { ApiRequestError, apiFetch } from "@/lib/api";
 import { publicConfig } from "@/lib/config";
+import { accountLabel } from "@/lib/format";
+import { captureReferral, referralCode } from "@/lib/referral";
 import { store, today } from "@/lib/storage";
 import { useT } from "./LocaleProvider";
 import { apiErrorText } from "@/lib/i18n";
@@ -27,7 +29,20 @@ const WALLET_KEY = "dualyne.wallet";
 interface WalletContextValue {
   /** Signed-in account, or null. `undefined` while the session is being checked. */
   me: MeResponse | null | undefined;
+  /** The linked wallet address, or null (signed out, or an email/Google account without one). */
   addr: string | null;
+  /** What the account is shown as: its wallet, else its email. */
+  label: string | null;
+  /** Sign-in options the site offers (null until known). */
+  methods: AuthMethods | null;
+  /** Email a sign-in code. Resolves to an error message, or null when sent. */
+  sendEmailCode(email: string): Promise<string | null>;
+  /** Sign in with the emailed code. Resolves to an error message, or null on success. */
+  verifyEmailCode(email: string, code: string): Promise<string | null>;
+  /** Where "Continue with Google" goes. */
+  googleUrl(): string;
+  /** A message to show in the sign-in window (e.g. Google sign-in failed). */
+  notice: string;
   keys: KeyInfo[];
   /** Sign in with a wallet. Resolves to an error message, or null on success. */
   connect(target: ConnectTarget): Promise<string | null>;
@@ -72,6 +87,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [wc, setWc] = useState<(Eip1193 & { disconnect(): Promise<void> }) | null>(null);
   const [wallets, setWallets] = useState<DiscoveredWallet[]>([]);
   const [injected, setInjected] = useState<Eip1193 | null>(null);
+  const [methods, setMethods] = useState<AuthMethods | null>(null);
+  const [notice, setNotice] = useState("");
   const limit = publicConfig.compareLimitPerHour;
 
   const loadKeys = useCallback(async () => {
@@ -91,6 +108,63 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [loadKeys]);
 
   useEffect(() => discoverWallets(setWallets), []);
+
+  // Sign-in options, the invite code from the address, and the result of a Google sign-in.
+  useEffect(() => {
+    captureReferral();
+    apiFetch<AuthMethods>("/auth/methods")
+      .then(setMethods)
+      .catch(() => setMethods({ wallet: true, email: false, google: false }));
+    const url = new URL(window.location.href);
+    const failed = url.searchParams.get("login_error");
+    if (failed || url.searchParams.has("signed_in")) {
+      url.searchParams.delete("login_error");
+      url.searchParams.delete("signed_in");
+      window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+    }
+    if (failed) {
+      setNotice(t.wallet.googleFailed);
+      setModalOpen(true);
+    }
+  }, [t]);
+
+  const sendEmailCode = useCallback(
+    async (email: string) => {
+      try {
+        await apiFetch("/auth/email/start", { method: "POST", body: { email } });
+        return null;
+      } catch (e) {
+        return e instanceof ApiRequestError ? apiErrorText(t, e.code, e.message) : t.wallet.errors.failed;
+      }
+    },
+    [t],
+  );
+
+  const verifyEmailCode = useCallback(
+    async (email: string, code: string) => {
+      try {
+        const ref = referralCode();
+        const m = await apiFetch<MeResponse>("/auth/email/verify", {
+          method: "POST",
+          body: { email, code, ...(ref ? { ref } : {}) },
+        });
+        setMe(m);
+        await loadKeys();
+        setNotice("");
+        return null;
+      } catch (e) {
+        return e instanceof ApiRequestError ? apiErrorText(t, e.code, e.message) : t.wallet.errors.failed;
+      }
+    },
+    [loadKeys, t],
+  );
+
+  const googleUrl = useCallback(() => {
+    const q = new URLSearchParams({ return: window.location.pathname });
+    const ref = referralCode();
+    if (ref) q.set("ref", ref);
+    return `${publicConfig.apiUrl}/auth/google/start?${q}`;
+  }, []);
 
   useEffect(() => {
     void refresh();
@@ -172,6 +246,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     () => ({
       me,
       addr: me?.address ?? null,
+      label: accountLabel(me),
+      methods,
+      sendEmailCode,
+      verifyEmailCode,
+      googleUrl,
+      notice,
       keys,
       connect,
       wallets,
@@ -181,7 +261,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       revokeKey,
       modalOpen,
       openModal: () => setModalOpen(true),
-      closeModal: () => setModalOpen(false),
+      closeModal: () => {
+        setModalOpen(false);
+        setNotice("");
+      },
       compareUsed: compare && Date.now() - compare.at < HOUR_MS ? Math.max(0, limit - compare.remaining) : 0,
       compareLimit: limit,
       setCompareRemaining,
@@ -198,6 +281,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }),
     [
       me,
+      methods,
+      sendEmailCode,
+      verifyEmailCode,
+      googleUrl,
+      notice,
       keys,
       connect,
       disconnect,

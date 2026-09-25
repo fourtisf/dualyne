@@ -371,6 +371,16 @@ Setelah deploy:
 - Konversi fee ke stablecoin dan top-up saldo OpenRouter tetap dilakukan manual. Website hanya mencatat apa yang terlihat di blockchain.
 - Top-up Builder dicek otomatis lewat hash transaksi dan dikreditkan satu kali saja. Tombol **Top up credits** di dashboard aktif setelah `DEPOSIT_ADDRESS` diisi.
 
+### Login email dan Google
+
+Selain wallet, pengunjung bisa masuk dengan **email** (kode 6 digit) atau **Google**. Keduanya mati sampai diisi di `.env`, lalu jalankan `deploy.sh`:
+
+- **Email:** buat mailbox (misalnya `hello@dualyne.com` di Hostinger), lalu isi
+  `SMTP_URL=smtps://hello%40dualyne.com:PASSWORD@smtp.hostinger.com:465` (tanda `@` di nama pengguna ditulis `%40`) dan `MAIL_FROM="Dualyne <hello@dualyne.com>"`.
+- **Google:** di console.cloud.google.com buat **OAuth client ID** tipe _Web application_. Isi _Authorized redirect URI_ dengan `https://api.dualyne.com/auth/google/callback`, lalu salin `GOOGLE_CLIENT_ID` dan `GOOGLE_CLIENT_SECRET` ke `.env`. Di _OAuth consent screen_, isi nama aplikasi, logo dan link Privacy (`https://dualyne.com/privacy`).
+
+Akun email/Google bisa menautkan wallet dari jendela akun (**Link a wallet**) untuk membayar Pro dan membuat API key. Chat bisa disinkronkan ke akun (opsional, per browser), dan setiap akun punya link undangan di Dashboard: pengundang dapat `REFERRAL_PRO_DAYS` hari Pro saat yang diundang pertama kali membeli Pro.
+
 ### API key: Coming soon
 
 Secara default pembuatan API key ditutup (`API_OPEN=false`): kartu **API** di halaman harga menampilkan "Coming soon" dan tombol **Create key** di jendela wallet nonaktif. Key yang sudah pernah dibuat tetap berfungsi. Untuk membuka, tambahkan `API_OPEN=true` di `.env` lalu jalankan `deploy.sh`.

@@ -174,3 +174,56 @@ export type ChatQuota = (
       proUntil: string;
     }
 ) & { webLimit: number; webRemaining: number };
+
+/** A Chat conversation kept in sync with the account (PUT /me/chats/:id). File contents never included. */
+const syncSource = z.object({ url: z.string().url().max(2000), title: z.string().max(300) }).strict();
+export const syncedTurnSchema = z
+  .object({
+    role: z.enum(["user", "assistant"]),
+    content: z.string().max(40_000),
+    model: z.string().max(40).optional(),
+    failed: z.boolean().optional(),
+    attachments: z
+      .array(
+        z
+          .object({
+            kind: z.enum(["image", "pdf", "text"]),
+            name: z.string().max(120),
+            gone: z.literal(true),
+          })
+          .strict(),
+      )
+      .max(CHAT_ATTACHMENTS_PER_MESSAGE)
+      .optional(),
+    sources: z.array(syncSource).max(10).optional(),
+    alts: z
+      .array(
+        z
+          .object({
+            model: z.string().max(40),
+            content: z.string().max(40_000),
+            failed: z.boolean().optional(),
+            error: z.string().max(300).optional(),
+            sources: z.array(syncSource).max(10).optional(),
+          })
+          .strict(),
+      )
+      .max(4)
+      .optional(),
+    picked: z.number().int().min(0).max(3).optional(),
+  })
+  .strict();
+export const syncedChatSchema = z
+  .object({
+    title: z.string().trim().min(1).max(120),
+    turns: z.array(syncedTurnSchema).max(CHAT_HISTORY_MAX * 3),
+    /** Milliseconds since 1970, from the browser that changed it. */
+    updatedAt: z.number().int().positive(),
+  })
+  .strict();
+export type SyncedChatBody = z.infer<typeof syncedChatSchema>;
+
+/** GET /me/chats */
+export interface SyncedChatsResponse {
+  chats: (SyncedChatBody & { id: string })[];
+}

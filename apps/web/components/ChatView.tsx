@@ -10,6 +10,7 @@ import {
   type ChatMessage,
   type ChatQuota,
   type ChatTurn,
+  type SyncedChatsResponse,
 } from "@dualyne/shared";
 import {
   ACCEPT,
@@ -19,6 +20,7 @@ import {
   readAttachment,
   type Attached,
 } from "@/lib/attachments";
+import { apiFetch } from "@/lib/api";
 import { ChatError, getChatQuota, runChat, shareChat } from "@/lib/chat-client";
 import { publicConfig } from "@/lib/config";
 import { formatWait } from "@/lib/i18n";
@@ -72,6 +74,9 @@ const CHATS_KEY = "dualyne.chats";
 const ACTIVE_KEY = "dualyne.chats.active";
 const MODEL_KEY = "dualyne.chat.model";
 const INSTRUCTIONS_KEY = "dualyne.chat.instructions";
+/** Whether this browser syncs chats with the signed-in account. */
+const SYNC_KEY = "dualyne.chat.sync";
+const SYNC_DELAY_MS = 1200;
 /** chat id → the link it was shared as (and how many messages it held then). */
 const SHARE_OF_KEY = "dualyne.chatShareOf";
 /** share id → delete token; only this browser can remove the link. */
@@ -153,6 +158,10 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
   const [shared, setShared] = useState<{ chatId: string; url: string; copied: boolean } | null>(null);
   const [sharing, setSharing] = useState(false);
   const [voiceOk, setVoiceOk] = useState({ dictate: false, speak: false });
+  const [sync, setSync] = useState(false);
+  /** Chat id → the version the server has; `pulledFor` is the account whose chats were merged in. */
+  const syncedAt = useRef(new Map<string, number>());
+  const [pulledFor, setPulledFor] = useState<string | null>(null);
 
   const aborts = useRef<AbortController[]>([]);
   const stopListening = useRef<(() => void) | null>(null);
@@ -186,6 +195,7 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
     }
     setChats(saved);
     setInstructions(store.get<string>(INSTRUCTIONS_KEY, ""));
+    setSync(store.get<boolean>(SYNC_KEY, false));
     setVoiceOk({ dictate: canDictate(), speak: canSpeak() });
     const params = new URLSearchParams(window.location.search);
     const q = (params.get("q") ?? "").trim().slice(0, CHAT_MESSAGE_MAX);
@@ -228,6 +238,64 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
     store.set(CHATS_KEY, forSaving(chats));
     store.set(ACTIVE_KEY, activeId);
   }, [chats, activeId, busy, loaded]);
+
+  // Chat sync, step 1: bring in the account's chats (the newer copy of each chat wins).
+  const account = w.me ? (w.me.email ?? w.me.address ?? "") : null;
+  useEffect(() => {
+    if (!loaded || !sync || !account || pulledFor === account) return;
+    let live = true;
+    apiFetch<SyncedChatsResponse>("/me/chats")
+      .then(({ chats: remote }) => {
+        if (!live) return;
+        syncedAt.current = new Map(remote.map((c) => [c.id, c.updatedAt]));
+        setChats((local) => {
+          const byId = new Map(local.map((c) => [c.id, c]));
+          for (const r of remote) {
+            const mine = byId.get(r.id);
+            if (!mine || r.updatedAt > mine.updatedAt) byId.set(r.id, r as Conversation);
+          }
+          return [...byId.values()].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, MAX_CHATS);
+        });
+        setPulledFor(account);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [loaded, sync, account, pulledFor]);
+
+  // Step 2: send changed chats (and deletions) a moment after they change.
+  useEffect(() => {
+    if (!sync || !account || pulledFor !== account || busy) return;
+    const timer = setTimeout(() => {
+      const known = syncedAt.current;
+      for (const c of forSaving(chats)) {
+        if (known.get(c.id) === c.updatedAt || !c.turns.length) continue;
+        known.set(c.id, c.updatedAt);
+        void apiFetch(`/me/chats/${encodeURIComponent(c.id)}`, {
+          method: "PUT",
+          body: { title: c.title, turns: c.turns, updatedAt: c.updatedAt },
+        }).catch(() => known.delete(c.id));
+      }
+      for (const id of [...known.keys()]) {
+        if (chats.some((c) => c.id === id)) continue;
+        known.delete(id);
+        void apiFetch(`/me/chats/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => undefined);
+      }
+    }, SYNC_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [chats, sync, account, pulledFor, busy]);
+
+  const toggleSync = async () => {
+    if (sync) {
+      if (!window.confirm(t.syncOffConfirm)) return;
+      await apiFetch("/me/chats", { method: "DELETE" }).catch(() => undefined);
+      syncedAt.current = new Map();
+      setPulledFor(null);
+    }
+    setSync(!sync);
+    store.set(SYNC_KEY, !sync);
+  };
 
   // Keep the newest message in view, scrolling the conversation only (never the page).
   useEffect(() => {
@@ -856,7 +924,13 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
             {t.premium(premium.length)}
           </button>
         )}
-        <p className="side-note">{t.local}</p>
+        {w.me ? (
+          <label className="side-sync">
+            <input type="checkbox" checked={sync} onChange={() => void toggleSync()} />
+            {t.sync}
+          </label>
+        ) : null}
+        <p className="side-note">{sync && w.me ? t.syncOn : t.local}</p>
       </aside>
       {listOpen && (
         <button

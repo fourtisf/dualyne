@@ -59,7 +59,8 @@ export class ApiKeyAuth {
     const principal: KeyPrincipal = {
       keyId: row.id,
       walletId: row.walletId,
-      walletAddress: row.wallet.address,
+      // Keys are only made for accounts with a wallet; the id keeps the quota key stable otherwise.
+      walletAddress: row.wallet.address ?? row.wallet.id,
       tier,
       tierSource: source,
     };

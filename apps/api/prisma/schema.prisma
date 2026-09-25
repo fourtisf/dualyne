@@ -43,9 +43,19 @@ model Model {
   usage            UsageLog[]
 }
 
+/// An account. It began as a wallet (Sign-In With Ethereum); it can also be an email or a Google
+/// account, and any of them can have a wallet linked later.
 model Wallet {
   id           String         @id @default(cuid())
-  address      String         @unique // lowercase 0x…
+  address      String?        @unique // lowercase 0x…, null for email/Google accounts without a wallet
+  email        String?        @unique // lowercase, verified
+  googleSub    String?        @unique
+  /// Invite code for the referral link, made on first use.
+  referralCode String?        @unique
+  referredById String?
+  referredBy   Wallet?        @relation("Referrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals    Wallet[]       @relation("Referrals")
+  chats        SyncedChat[]
   /// Tier set by an admin (test keys before on-chain tiers exist).
   tierOverride Tier?
   createdAt    DateTime       @default(now())
@@ -274,4 +284,26 @@ model Share {
   /// SHA-256 of the delete token returned once to the creator's browser.
   deleteTokenHash String
   createdAt       DateTime @default(now())
+}
+
+/// A Chat conversation the account chose to sync (opt-in). File contents are never included.
+model SyncedChat {
+  accountId String
+  account   Wallet   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  id        String // the browser's chat id
+  title     String
+  turns     Json
+  updatedAt DateTime
+
+  @@id([accountId, id])
+}
+
+/// Pro days given to an inviter when someone they invited first pays for Pro. One per invitee.
+model ReferralReward {
+  refereeId  String   @id
+  referrerId String
+  days       Int
+  createdAt  DateTime @default(now())
+
+  @@index([referrerId])
 }

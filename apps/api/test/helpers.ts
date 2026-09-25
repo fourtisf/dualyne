@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import type { Mailer, MailMessage } from "../src/auth/mailer";
 import type { FastifyInstance } from "fastify";
 import { Redis } from "ioredis";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
@@ -35,6 +36,8 @@ export interface FakeUpstream {
   telegram: { token: string; method: string; body: Record<string, unknown> }[];
   /** What the Telegram stand-in's getUpdates returns next (then it is emptied). */
   telegramUpdates: unknown[];
+  /** ID token the Google token-endpoint stand-in returns (null = 400). */
+  googleIdToken: string | null;
   /** When true, the Telegram stand-in refuses sendMessage with parse_mode (400), like bad HTML. */
   telegramRejectHtml: boolean;
   close(): Promise<void>;
@@ -63,6 +66,7 @@ export async function startFakeUpstream(): Promise<FakeUpstream> {
     telegram: [],
     telegramUpdates: [],
     telegramRejectHtml: false,
+    googleIdToken: null,
     close: async () => undefined,
   };
 
@@ -115,6 +119,16 @@ export async function startFakeUpstream(): Promise<FakeUpstream> {
       res.statusCode = data ? 200 : 404;
       res.setHeader("content-type", "application/json");
       res.end(JSON.stringify(data ? { data } : { error: { message: "not found" } }));
+      return;
+    }
+    if (path === "/google/token") {
+      res.setHeader("content-type", "application/json");
+      if (!state.googleIdToken || !new URLSearchParams(raw).get("code")) {
+        res.statusCode = 400;
+        res.end(JSON.stringify({ error: "invalid_grant" }));
+        return;
+      }
+      res.end(JSON.stringify({ access_token: "x", id_token: state.googleIdToken }));
       return;
     }
     if (path === "/v1/models") {
@@ -194,7 +208,7 @@ export interface TestContext {
 
 export async function createTestContext(
   envOverrides: Record<string, string> = {},
-  opts: { chain?: ChainReader | null } = {},
+  opts: { chain?: ChainReader | null; mailer?: Mailer | null } = {},
 ): Promise<TestContext> {
   const upstream = await startFakeUpstream();
   const prisma = new PrismaClient();
@@ -218,7 +232,14 @@ export async function createTestContext(
     ...envOverrides,
   });
   await resetState(prisma, redis);
-  const app = await buildApp({ env, prisma, redis, clock: () => now.value, chain: opts.chain ?? null });
+  const app = await buildApp({
+    env,
+    prisma,
+    redis,
+    clock: () => now.value,
+    chain: opts.chain ?? null,
+    mailer: opts.mailer ?? null,
+  });
   await app.ready();
   return {
     app,
@@ -237,6 +258,7 @@ export async function createTestContext(
       upstream.telegram.length = 0;
       upstream.telegramUpdates.length = 0;
       upstream.telegramRejectHtml = false;
+      upstream.googleIdToken = null;
     },
     close: async () => {
       await app.close();
@@ -255,6 +277,8 @@ export async function resetState(prisma: PrismaClient, redis: Redis): Promise<vo
   await prisma.eloRating.deleteMany();
   await prisma.vote.deleteMany();
   await prisma.proPayment.deleteMany();
+  await prisma.referralReward.deleteMany();
+  await prisma.syncedChat.deleteMany();
   await prisma.deposit.deleteMany();
   await prisma.creditAccount.deleteMany();
   await prisma.treasuryTransfer.deleteMany();
@@ -419,3 +443,18 @@ export async function signIn(
   const cookie = setCookie.split(";")[0]!;
   return { cookie, account };
 }
+
+/** A mailer that keeps what it would have sent. */
+export function fakeMailer(): Mailer & { sent: MailMessage[] } {
+  const sent: MailMessage[] = [];
+  return {
+    sent,
+    async send(msg) {
+      sent.push(msg);
+    },
+  };
+}
+
+/** An unsigned JWT with these claims (the Google stand-in's ID token). */
+export const fakeIdToken = (claims: Record<string, unknown>) =>
+  ["e30", Buffer.from(JSON.stringify(claims)).toString("base64url"), "sig"].join(".");

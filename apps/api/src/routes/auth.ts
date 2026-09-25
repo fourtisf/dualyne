@@ -5,6 +5,8 @@ import { clearSessionCookie, requireOwnOrigin, setSessionCookie } from "../auth/
 import { SESSION_COOKIE } from "../auth/sessions";
 import { verifySiwe } from "../auth/siwe";
 import { webHosts, webOrigins } from "../env";
+import { ApiError } from "../lib/errors";
+import { referrerFor } from "../referrals";
 import { buildMe } from "./me";
 
 const NONCE_TTL_SECONDS = 300;
@@ -15,6 +17,8 @@ const verifyBody = z
       .string()
       .regex(/^0x[0-9a-fA-F]+$/, "Invalid signature")
       .max(20_000),
+    /** Referral code from the link the visitor arrived with. */
+    ref: z.string().trim().max(20).optional(),
   })
   .strict();
 
@@ -40,11 +44,27 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       consumeNonce: async (n) => (await ctx.redis.del(`siwe:nonce:${n}`)) === 1,
       chain: ctx.chain,
     });
-    const wallet = await ctx.prisma.wallet.upsert({
-      where: { address: address.toLowerCase() },
-      update: {},
-      create: { address: address.toLowerCase() },
-    });
+    const lower = address.toLowerCase();
+    const existing = await ctx.prisma.wallet.findUnique({ where: { address: lower } });
+    const current = await ctx.sessions.get(req.cookies[SESSION_COOKIE]);
+    let wallet;
+    if (current && !current.address) {
+      // Signed in with email or Google: link this wallet to that account.
+      if (existing && existing.id !== current.id) {
+        throw new ApiError(
+          409,
+          "wallet_in_use",
+          "This wallet already has its own Dualyne account. Sign out, then connect it to use that account.",
+        );
+      }
+      wallet = await ctx.prisma.wallet.update({ where: { id: current.id }, data: { address: lower } });
+    } else {
+      wallet =
+        existing ??
+        (await ctx.prisma.wallet
+          .create({ data: { address: lower, referredById: await referrerFor(ctx.prisma, body.ref) } })
+          .catch(async () => ctx.prisma.wallet.findUniqueOrThrow({ where: { address: lower } })));
+    }
     const { token } = await ctx.sessions.create(wallet.id);
     setSessionCookie(ctx, reply, token);
     return buildMe(ctx, wallet);

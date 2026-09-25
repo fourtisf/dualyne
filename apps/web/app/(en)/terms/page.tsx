@@ -54,6 +54,14 @@ export default function TermsPage() {
           </ul>
           <p>We may suspend keys, wallets or IP addresses that break these rules, with or without notice.</p>
 
+          <h2>Accounts and invites</h2>
+          <p>
+            You can sign in with a wallet, an email address or Google. Keep access to them secure: whoever
+            controls them controls the account. One person may use invite links to bring others, but creating
+            accounts to reward yourself isn&apos;t allowed, and rewards gained that way can be removed. Invite
+            rewards are Pro days only and have no cash value.
+          </p>
+
           <h2>API keys</h2>
           <p>
             Keep your keys secret. You are responsible for all use of keys created by your wallet. If a key

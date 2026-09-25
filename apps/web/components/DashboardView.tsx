@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { brand } from "@dualyne/config";
-import type { CreditsResponse, MeResponse, UsageResponse } from "@dualyne/shared";
+import type { CreditsResponse, MeResponse, ReferralResponse, UsageResponse } from "@dualyne/shared";
 import { apiFetch } from "@/lib/api";
 import { publicConfig } from "@/lib/config";
-import { formatRunCost, shortAddr } from "@/lib/format";
+import { formatRunCost } from "@/lib/format";
 import type { Dict } from "@/lib/i18n";
 import { useT } from "./LocaleProvider";
 import { TopUpDialog } from "./TopUpDialog";
@@ -95,7 +95,7 @@ export function DashboardView() {
         <div>
           <div className="kick">
             <i />
-            {shortAddr(me.address)}
+            {w.label}
           </div>
           <h1 className="grad">{t.title}</h1>
         </div>
@@ -144,6 +144,7 @@ export function DashboardView() {
           </div>
           <div className="s">{me.keys.count ? t.keysSome : t.keysNone}</div>
         </div>
+        <InviteCard />
         <div className="card span3">
           <div className="l" style={{ display: "flex", justifyContent: "space-between" }}>
             <span>{t.week}</span>
@@ -249,5 +250,40 @@ export function DashboardView() {
         />
       )}
     </>
+  );
+}
+
+/** The account's invite link and what it earned. */
+function InviteCard() {
+  const t = useT().dashboard;
+  const [ref, setRef] = useState<ReferralResponse | null>(null);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    apiFetch<ReferralResponse>("/me/referral")
+      .then(setRef)
+      .catch(() => setRef(null));
+  }, []);
+  if (!ref) return null;
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(ref.link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      /* select by hand */
+    }
+  };
+  return (
+    <div className="card span3 invite">
+      <div className="l">{t.invite}</div>
+      <p className="s">{t.inviteText(ref.rewardDays)}</p>
+      <div className="inv-row">
+        <input readOnly value={ref.link} aria-label={t.invite} onFocus={(e) => e.target.select()} />
+        <button className="btn sm" type="button" onClick={copy}>
+          {copied ? t.copied : t.copyLink}
+        </button>
+      </div>
+      <div className="s">{t.inviteStats(ref.joined, ref.upgraded, ref.daysEarned)}</div>
+    </div>
   );
 }

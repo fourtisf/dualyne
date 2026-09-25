@@ -97,7 +97,8 @@ export function TopUpDialog({
     setStatus("");
     const me = w.me;
     const provider = w.provider();
-    if (!me) return;
+    if (!me?.address) return;
+    const address = me.address;
     if (!provider) {
       setError(t.errors.noProvider);
       return;
@@ -110,8 +111,8 @@ export function TopUpDialog({
     setBusy(true);
     try {
       const [from] = (await provider.request({ method: "eth_requestAccounts" })) as string[];
-      if (!from || from.toLowerCase() !== me.address.toLowerCase()) {
-        setError(t.errors.account(shortAddr(me.address)));
+      if (!from || from.toLowerCase() !== address.toLowerCase()) {
+        setError(t.errors.account(shortAddr(address)));
         return;
       }
       const current = parseInt(String(await provider.request({ method: "eth_chainId" })), 16);
@@ -244,7 +245,9 @@ export function TopUpDialog({
         )}
 
         <div className="tu-manual">
-          <div className="t">{t.manual(asset, chain, w.me ? shortAddr(w.me.address) : t.yourWallet)}</div>
+          <div className="t">
+            {t.manual(asset, chain, w.me?.address ? shortAddr(w.me.address) : t.yourWallet)}
+          </div>
           <div className="addr">
             <span className="ca-addr">{credits.depositAddress}</span>
             <button className="link" type="button" style={{ color: "var(--muted)" }} onClick={copy}>

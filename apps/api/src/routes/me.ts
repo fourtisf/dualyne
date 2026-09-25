@@ -15,14 +15,20 @@ export async function buildMe(ctx: AppContext, wallet: Wallet) {
   const { tier, source } = await ctx.tierService.resolve(wallet);
   const policy = ctx.tiers[tier];
   const [used, keyCount] = await Promise.all([
-    ctx.quota.used(wallet.address),
+    ctx.quota.used(wallet.address ?? wallet.id),
     ctx.prisma.apiKey.count({ where: { walletId: wallet.id } }),
   ]);
-  const eligibility = tier === "explorer" && ctx.sybil.enabled ? await ctx.sybil.check(wallet.address) : null;
-  const bal = ctx.tierService.tokenEnabled ? await ctx.tierService.tokenBalance(wallet.address) : null;
+  const eligibility =
+    tier === "explorer" && ctx.sybil.enabled && wallet.address ? await ctx.sybil.check(wallet.address) : null;
+  const bal =
+    ctx.tierService.tokenEnabled && wallet.address
+      ? await ctx.tierService.tokenBalance(wallet.address)
+      : null;
   const credit = ctx.credits.enabled ? await ctx.credits.balance(wallet.id) : 0n;
   return {
     address: wallet.address,
+    email: wallet.email,
+    google: wallet.googleSub !== null,
     tier,
     tierLabel: policy.label,
     tierSource: source,
@@ -122,6 +128,9 @@ export const meRoutes: FastifyPluginAsync = async (app) => {
         "api_closed",
         "API keys are coming soon. Follow us on X to hear when they open.",
       );
+    }
+    if (!wallet.address) {
+      throw new ApiError(403, "wallet_required", "Link a wallet to your account to create API keys.");
     }
     const body = createKeyBody.parse(req.body ?? {});
     const { tier } = await ctx.tierService.resolve(wallet);

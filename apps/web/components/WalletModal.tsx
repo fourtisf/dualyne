@@ -6,7 +6,6 @@ import type { KeyInfo, MeResponse } from "@dualyne/shared";
 import { ApiRequestError } from "@/lib/api";
 import { publicConfig } from "@/lib/config";
 import { apiErrorText, type Dict } from "@/lib/i18n";
-import { shortAddr } from "@/lib/format";
 import { isPhone, KNOWN_WALLETS, safeWalletIcon, walletConnectEnabled } from "@/lib/wallet";
 import { useT } from "./LocaleProvider";
 import { useWallet, type ConnectTarget } from "./WalletProvider";
@@ -63,6 +62,8 @@ export function WalletModal() {
   const [fresh, setFresh] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [confirming, setConfirming] = useState<string | null>(null);
+  /** Signed in with email or Google, choosing a wallet to link. */
+  const [linking, setLinking] = useState(false);
 
   useEffect(() => {
     if (!w.modalOpen) return;
@@ -80,6 +81,7 @@ export function WalletModal() {
     if (!w.modalOpen) {
       setFresh(null);
       setConfirming(null);
+      setLinking(false);
     }
   }, [w.modalOpen]);
 
@@ -89,6 +91,7 @@ export function WalletModal() {
     const err = await w.connect(target);
     setBusy(null);
     if (err) setMsg(err);
+    else setLinking(false);
   };
 
   const createKey = async () => {
@@ -135,6 +138,7 @@ export function WalletModal() {
   const others = KNOWN_WALLETS.filter((k) => !installed.has(k.rdns) && (!env.phone || k.openInApp));
 
   const me = w.me;
+  const otherMethods = Boolean(w.methods?.email || w.methods?.google);
   const limit = me?.limits.dailyRequests ?? null;
   const used = me?.usage.today ?? 0;
   const atMax = me ? me.keys.max !== null && me.keys.count >= me.keys.max : false;
@@ -146,6 +150,83 @@ export function WalletModal() {
         ? t.explorerOneKey
         : t.tierKeys(me?.tierLabel ?? "", me?.keys.max ?? null)
       : undefined;
+
+  const walletOptions = (
+    <>
+      <div className="opts">
+        {w.wallets.map((x) => (
+          <button
+            key={x.info.uuid || x.info.rdns}
+            className="opt"
+            type="button"
+            disabled={busy !== null}
+            onClick={() => connect(x.info.uuid, { kind: "injected", wallet: x })}
+          >
+            <WalletIcon name={x.info.name} icon={x.info.icon} rdns={x.info.rdns} />
+            <span>
+              {busy === x.info.uuid ? t.check : x.info.name}
+              <small>{t.detected}</small>
+            </span>
+          </button>
+        ))}
+        {!w.wallets.length && env.injected && (
+          <button
+            className="opt"
+            type="button"
+            disabled={busy !== null}
+            onClick={() => connect("injected", { kind: "injected" })}
+          >
+            <span className="ic" />
+            <span>
+              {busy === "injected" ? t.check : t.browser}
+              <small>{t.browserSub}</small>
+            </span>
+          </button>
+        )}
+        {walletConnectEnabled() && (
+          <button
+            className="opt"
+            type="button"
+            disabled={busy !== null}
+            onClick={() => connect("walletconnect", { kind: "walletconnect" })}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- tiny local SVG */}
+            <img className="ic img" src="/wallets/walletconnect.svg" alt="" width={34} height={34} />
+            <span>
+              {busy === "walletconnect" ? t.check : t.walletConnect}
+              <small>{t.walletConnectSub}</small>
+            </span>
+          </button>
+        )}
+      </div>
+      {!w.wallets.length && !env.injected && <p className="opts-none">{t.noneHere}</p>}
+      {others.length > 0 && (
+        <>
+          <div className="opts-h">{env.phone ? t.openInWallet : t.moreWallets}</div>
+          <div className="opts more">
+            {others.map((k) => {
+              const inApp = env.phone && k.openInApp && env.url ? k.openInApp(env.url) : null;
+              return (
+                <a
+                  key={k.rdns}
+                  className="opt"
+                  href={inApp ?? k.install}
+                  target={inApp ? undefined : "_blank"}
+                  rel="noopener"
+                >
+                  <WalletIcon name={k.name} rdns={k.rdns} color={k.color} />
+                  <span>
+                    {k.name}
+                    <small>{inApp ? t.openInApp : t.install}</small>
+                  </span>
+                </a>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </>
+  );
 
   return (
     <dialog
@@ -161,85 +242,55 @@ export function WalletModal() {
         <button className="mx" aria-label={t.close} type="button" onClick={w.closeModal}>
           ×
         </button>
-        {!me ? (
+        {!me || linking ? (
           <>
-            <h3 id="wmTitle">{t.connectTitle}</h3>
-            <p>{t.connectText}</p>
-            <div className="opts">
-              {w.wallets.map((x) => (
-                <button
-                  key={x.info.uuid || x.info.rdns}
-                  className="opt"
-                  type="button"
-                  disabled={busy !== null}
-                  onClick={() => connect(x.info.uuid, { kind: "injected", wallet: x })}
-                >
-                  <WalletIcon name={x.info.name} icon={x.info.icon} rdns={x.info.rdns} />
-                  <span>
-                    {busy === x.info.uuid ? t.check : x.info.name}
-                    <small>{t.detected}</small>
-                  </span>
-                </button>
-              ))}
-              {!w.wallets.length && env.injected && (
-                <button
-                  className="opt"
-                  type="button"
-                  disabled={busy !== null}
-                  onClick={() => connect("injected", { kind: "injected" })}
-                >
-                  <span className="ic" />
-                  <span>
-                    {busy === "injected" ? t.check : t.browser}
-                    <small>{t.browserSub}</small>
-                  </span>
-                </button>
-              )}
-              {walletConnectEnabled() && (
-                <button
-                  className="opt"
-                  type="button"
-                  disabled={busy !== null}
-                  onClick={() => connect("walletconnect", { kind: "walletconnect" })}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element -- tiny local SVG */}
-                  <img className="ic img" src="/wallets/walletconnect.svg" alt="" width={34} height={34} />
-                  <span>
-                    {busy === "walletconnect" ? t.check : t.walletConnect}
-                    <small>{t.walletConnectSub}</small>
-                  </span>
-                </button>
-              )}
-            </div>
-            {!w.wallets.length && !env.injected && <p className="opts-none">{t.noneHere}</p>}
-            {others.length > 0 && (
-              <>
-                <div className="opts-h">{env.phone ? t.openInWallet : t.moreWallets}</div>
-                <div className="opts more">
-                  {others.map((k) => {
-                    const inApp = env.phone && k.openInApp && env.url ? k.openInApp(env.url) : null;
-                    return (
-                      <a
-                        key={k.rdns}
-                        className="opt"
-                        href={inApp ?? k.install}
-                        target={inApp ? undefined : "_blank"}
-                        rel="noopener"
-                      >
-                        <WalletIcon name={k.name} rdns={k.rdns} color={k.color} />
-                        <span>
-                          {k.name}
-                          <small>{inApp ? t.openInApp : t.install}</small>
-                        </span>
-                      </a>
-                    );
-                  })}
+            <h3 id="wmTitle">{linking ? t.linkWallet : otherMethods ? t.signInTitle : t.connectTitle}</h3>
+            <p>{linking ? t.linkWalletText : otherMethods ? t.signInText : t.connectText}</p>
+            {!linking && otherMethods && (
+              <div className="signin">
+                {w.methods?.google && (
+                  <a className="btn signin-g" href={w.googleUrl()}>
+                    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+                      <path
+                        fill="#FFC107"
+                        d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"
+                      />
+                      <path
+                        fill="#FF3D00"
+                        d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"
+                      />
+                      <path
+                        fill="#4CAF50"
+                        d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"
+                      />
+                      <path
+                        fill="#1976D2"
+                        d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"
+                      />
+                    </svg>
+                    {t.google}
+                  </a>
+                )}
+                {w.methods?.email && <EmailSignIn />}
+                <div className="signin-or">
+                  <span>{t.orWallet}</span>
                 </div>
-              </>
+              </div>
             )}
+            {walletOptions}
             <div className="msg" role="status">
-              {msg}
+              {msg || w.notice}
             </div>
+            {linking && (
+              <button
+                className="link"
+                type="button"
+                style={{ color: "var(--muted)" }}
+                onClick={() => setLinking(false)}
+              >
+                {t.back}
+              </button>
+            )}
           </>
         ) : (
           <>
@@ -248,11 +299,16 @@ export function WalletModal() {
               {t.accessText} <b className="tier-name">{me.tierLabel}</b>
             </p>
             <div className="addr">
-              <span>{shortAddr(me.address)}</span>
+              <span>{w.label}</span>
               <button className="link" type="button" onClick={() => void w.disconnect()}>
-                {t.disconnect}
+                {me.address ? t.disconnect : t.signOut}
               </button>
             </div>
+            {!me.address && (
+              <button className="btn dark sm link-wallet" type="button" onClick={() => setLinking(true)}>
+                {t.linkWallet}
+              </button>
+            )}
             <div className="usage">
               <span>{t.requestsToday}</span>
               <span>
@@ -275,8 +331,12 @@ export function WalletModal() {
                 id="newKey"
                 type="button"
                 style={{ marginLeft: "auto" }}
-                disabled={!publicConfig.apiOpen || atMax || Boolean(notEligible) || busy === "key"}
-                title={publicConfig.apiOpen ? createTitle : t.keysSoonNote}
+                disabled={
+                  !publicConfig.apiOpen || !me.address || atMax || Boolean(notEligible) || busy === "key"
+                }
+                title={
+                  !publicConfig.apiOpen ? t.keysSoonNote : !me.address ? t.walletNeededForKeys : createTitle
+                }
                 onClick={createKey}
               >
                 {!publicConfig.apiOpen ? t.keysSoon : busy === "key" ? t.creating : t.createKey}
@@ -322,5 +382,105 @@ export function WalletModal() {
         )}
       </div>
     </dialog>
+  );
+}
+
+/** Sign in with a 6-digit code sent by email. */
+function EmailSignIn() {
+  const w = useWallet();
+  const t = useT().wallet;
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  if (!open) {
+    return (
+      <button className="btn dark signin-e" type="button" onClick={() => setOpen(true)}>
+        <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M3 7l9 6 9-6" fill="none" stroke="currentColor" strokeWidth="2" />
+        </svg>
+        {t.email}
+      </button>
+    );
+  }
+  const send = async () => {
+    setBusy(true);
+    setError("");
+    const err = await w.sendEmailCode(email.trim());
+    setBusy(false);
+    if (err) setError(err);
+    else setSentTo(email.trim().toLowerCase());
+  };
+  const verify = async () => {
+    if (!sentTo) return;
+    setBusy(true);
+    setError("");
+    const err = await w.verifyEmailCode(sentTo, code.trim());
+    setBusy(false);
+    if (err) setError(err);
+  };
+  return (
+    <form
+      className="signin-mail"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void (sentTo ? verify() : send());
+      }}
+    >
+      {!sentTo ? (
+        <>
+          <input
+            type="email"
+            autoComplete="email"
+            required
+            autoFocus
+            placeholder={t.emailPlaceholder}
+            aria-label={t.emailLabel}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <button className="btn" type="submit" disabled={busy || !email.includes("@")}>
+            {busy ? t.sending : t.sendCode}
+          </button>
+        </>
+      ) : (
+        <>
+          <p className="signin-sent">{t.codeSent(sentTo)}</p>
+          <input
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            autoFocus
+            maxLength={6}
+            placeholder="123456"
+            aria-label={t.codeLabel}
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+          />
+          <button className="btn" type="submit" disabled={busy || code.length !== 6}>
+            {busy ? t.verifying : t.verify}
+          </button>
+          <button
+            className="link"
+            type="button"
+            style={{ color: "var(--muted)" }}
+            onClick={() => {
+              setSentTo(null);
+              setCode("");
+            }}
+          >
+            {t.otherEmail}
+          </button>
+        </>
+      )}
+      {error && (
+        <div className="msg" role="alert">
+          {error}
+        </div>
+      )}
+    </form>
   );
 }

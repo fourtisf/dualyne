@@ -20,3 +20,7 @@ export function formatRunCost(usd: number): string {
   if (usd < 0.01) return `$${usd.toFixed(4)}`;
   return `$${usd.toFixed(3)}`;
 }
+
+/** How the signed-in account is shown: its wallet, else its email. */
+export const accountLabel = (me: { address: string | null; email: string | null } | null | undefined) =>
+  me ? (me.address ? shortAddr(me.address) : (me.email ?? "Account")) : null;

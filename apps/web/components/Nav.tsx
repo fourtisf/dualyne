@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { brand } from "@dualyne/config";
-import { shortAddr } from "@/lib/format";
 import { href } from "@/lib/i18n";
 import { Logo } from "./Logo";
 import { TopBar } from "./TopBar";
@@ -11,7 +10,7 @@ import { useLocale, useT } from "./LocaleProvider";
 import { useWallet } from "./WalletProvider";
 
 export function Nav() {
-  const { addr, openModal } = useWallet();
+  const { label: addr, openModal } = useWallet();
   const locale = useLocale();
   const t = useT().nav;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -66,7 +65,7 @@ export function Nav() {
             </Link>
             <button className="btn dark sm nav-wallet" id="walletBtn" type="button" onClick={openModal}>
               <span className={addr ? "dot on" : "dot"} id="walletDot" />
-              <span id="walletLabel">{addr ? shortAddr(addr) : t.connect}</span>
+              <span id="walletLabel">{addr ?? t.connect}</span>
             </button>
             <Link className="btn sm nav-cta" href="/chat">
               {t.start}
@@ -120,7 +119,7 @@ export function Nav() {
           {t.dashboard}
         </Link>
         <button type="button" className="mnav-wallet" onClick={() => (close(), openModal())}>
-          {addr ? shortAddr(addr) : t.connect}
+          {addr ?? t.connect}
         </button>
       </nav>
     </>

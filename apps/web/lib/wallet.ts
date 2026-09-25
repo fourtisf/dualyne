@@ -1,4 +1,5 @@
 import { getAddress, stringToHex } from "viem";
+import { referralCode } from "./referral";
 import { createSiweMessage } from "viem/siwe";
 import { brand } from "@dualyne/config";
 import type { MeResponse } from "@dualyne/shared";
@@ -67,7 +68,11 @@ export async function signInWithWallet(provider: Eip1193): Promise<MeResponse> {
       "Signing was cancelled in your wallet. Connect again when you're ready.",
     );
   }
-  return apiFetch<MeResponse>("/auth/verify", { method: "POST", body: { message, signature } });
+  const ref = referralCode();
+  return apiFetch<MeResponse>("/auth/verify", {
+    method: "POST",
+    body: { message, signature, ...(ref ? { ref } : {}) },
+  });
 }
 
 /** A browser wallet announced through EIP-6963 (one entry per installed extension). */

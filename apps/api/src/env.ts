@@ -105,6 +105,19 @@ const schema = z
 
     // Wallet sign-in (SIWE) and on-chain reads
     SESSION_SECRET: z.string().default(""),
+    /** Email sign-in: an SMTP URL (e.g. smtps://user:pass@smtp.hostinger.com:465). Empty = off. */
+    SMTP_URL: z.string().default(""),
+    /** Sender of sign-in codes; defaults to "Dualyne <hello@SITE_DOMAIN>". */
+    MAIL_FROM: z.string().default(""),
+    /** Google sign-in (OAuth client for a web application). Empty = off. */
+    GOOGLE_CLIENT_ID: z.string().default(""),
+    GOOGLE_CLIENT_SECRET: z.string().default(""),
+    GOOGLE_AUTH_URL: z.string().url().default("https://accounts.google.com/o/oauth2/v2/auth"),
+    GOOGLE_TOKEN_URL: z.string().url().default("https://oauth2.googleapis.com/token"),
+    /** This API's public URL, for the Google redirect; defaults to https://api.SITE_DOMAIN. */
+    API_PUBLIC_URL: z.string().default(""),
+    /** Pro days an inviter gets when someone they invited first pays for Pro. */
+    REFERRAL_PRO_DAYS: z.coerce.number().int().min(0).default(7),
     SIWE_CHAIN_ID: z.coerce.number().int().positive().default(1),
     /** JSON-RPC endpoint for SIWE_CHAIN_ID. Without it, on-chain features are off. */
     RPC_URL: z

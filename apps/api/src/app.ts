@@ -6,6 +6,7 @@ import Fastify, { type FastifyError, type FastifyInstance } from "fastify";
 import { Redis } from "ioredis";
 import { ZodError } from "zod";
 import { ApiKeyAuth, bearerToken } from "./auth/apiKey";
+import { createMailer, type Mailer } from "./auth/mailer";
 import { Sessions } from "./auth/sessions";
 import type { ChainReader } from "./chain/types";
 import { ViemChain } from "./chain/viem";
@@ -38,6 +39,8 @@ import { catalogRoutes } from "./routes/internal.catalog";
 import { pageViewRoutes } from "./routes/internal.pv";
 import { chatShareRoutes } from "./routes/chatShares";
 import { proRoutes } from "./routes/pro";
+import { accountRoutes } from "./routes/accounts";
+import { chatSyncRoutes } from "./routes/chatSync";
 import { healthRoutes } from "./routes/health";
 import { statusRoutes } from "./routes/status";
 
@@ -48,6 +51,8 @@ export interface BuildOptions {
   clock?: Clock;
   /** Override the chain reader (tests). Defaults to viem when RPC_URL is set. */
   chain?: ChainReader | null;
+  /** Override the mailer (tests). Defaults to SMTP when SMTP_URL is set. */
+  mailer?: Mailer | null;
 }
 
 /** Paths called from the website with the session cookie: CORS limited to our own origins. */
@@ -153,6 +158,7 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
     ipHash: (ip) => hashIp(env.IP_HASH_SECRET, ip),
     chain,
     sessions: new Sessions(prisma, env.SESSION_SECRET, clock),
+    mailer: opts.mailer !== undefined ? opts.mailer : createMailer(env),
     tierService,
     credits: new Credits(prisma, env.BUILDER_MARKUP, creditsEnabled),
     sybil: new SybilCheck(
@@ -279,6 +285,8 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
   await app.register(pageViewRoutes);
   await app.register(chatShareRoutes);
   await app.register(proRoutes);
+  await app.register(accountRoutes);
+  await app.register(chatSyncRoutes);
   await app.register(authRoutes);
   await app.register(meRoutes);
   await app.register(treasuryRoutes);

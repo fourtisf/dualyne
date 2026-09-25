@@ -864,3 +864,18 @@ button.side-premium{border:0; background:none; padding:0; font:inherit; text-ali
 .lb-cats button{height:30px; padding:0 12px; border-radius:999px; border:1px solid var(--line2); background:rgba(255,255,255,.02); color:var(--muted); font:500 12.5px/1 var(--sans); cursor:pointer}
 .lb-cats button:hover{color:var(--text)}
 .lb-cats button[aria-pressed="true"]{color:#fff; border-color:rgba(139,92,246,.6); background:rgba(139,92,246,.16)}
+/* v13 · accounts: sign-in options, invites, chat sync */
+.signin{display:grid; gap:10px; margin:0 0 6px}
+.signin .btn{width:100%; justify-content:center; gap:10px}
+.signin-mail{display:grid; gap:8px}
+.signin-mail input{height:46px; padding:0 14px; border-radius:12px; border:1px solid var(--line2); background:rgba(255,255,255,.03); color:var(--text); font:400 15px/1 var(--sans); outline:0}
+.signin-mail input:focus{border-color:rgba(139,92,246,.6)}
+.m p.signin-sent{margin:0; font-size:13.5px}
+.signin-or{display:flex; align-items:center; gap:12px; margin:8px 0 4px; color:var(--faint); font:500 12px/1 var(--mono); letter-spacing:.08em; text-transform:uppercase}
+.signin-or::before,.signin-or::after{content:""; flex:1; height:1px; background:var(--line)}
+.link-wallet{margin:0 0 14px}
+.invite .inv-row{display:flex; gap:8px; margin:12px 0}
+.invite input{flex:1; min-width:0; height:38px; padding:0 12px; border-radius:10px; border:1px solid var(--line2); background:rgba(255,255,255,.03); color:var(--text); font:500 13px/1 var(--mono)}
+.side-sync{display:flex; align-items:center; gap:8px; margin:6px 0 0; padding:9px 10px; border-radius:9px; color:var(--muted); font:500 13px/1.3 var(--sans); cursor:pointer}
+.side-sync input{accent-color:#8B5CF6}
+.side-sync:hover{color:var(--text); background:rgba(255,255,255,.05)}

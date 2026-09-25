@@ -17,6 +17,12 @@ importers:
 
   apps/api:
     dependencies:
+      '@dualyne/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@dualyne/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@fastify/cookie':
         specifier: 11.1.2
         version: 11.1.2
@@ -29,12 +35,6 @@ importers:
       '@prisma/client':
         specifier: 6.19.3
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
-      '@dualyne/config':
-        specifier: workspace:*
-        version: link:../../packages/config
-      '@dualyne/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       fastify:
         specifier: 5.12.5
         version: 5.12.5
@@ -44,6 +44,9 @@ importers:
       ioredis:
         specifier: 5.11.1
         version: 5.11.1
+      nodemailer:
+        specifier: ^6.10.1
+        version: 6.10.1
       prisma:
         specifier: 6.19.3
         version: 6.19.3(typescript@5.9.3)
@@ -57,6 +60,9 @@ importers:
       '@types/node':
         specifier: 22.20.4
         version: 22.20.4
+      '@types/nodemailer':
+        specifier: ^6.4.24
+        version: 6.4.24
       '@typescript-eslint/eslint-plugin':
         specifier: 8.70.1
         version: 8.70.1(@typescript-eslint/parser@8.70.1(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
@@ -1357,6 +1363,9 @@ packages:
 
   '@types/node@22.20.4':
     resolution: {integrity: sha512-zJRE40jpHtKqE/C4fgHrAKQLJuSpzEnP9ff9Y7YtoR3Wd2pwqzlekDeEuUQXjRd+QCYnVnNwuJYmhdk9XV8gvA==}
+
+  '@types/nodemailer@6.4.24':
+    resolution: {integrity: sha512-Ww4u0rT9wQNXh4JiQaIwx3QWdcOFXzOjQA2zc+jtFYNmQiT4mIUqcDin51bDFdkzKubFnQCZNK7FIHlPKQ/q9w==}
 
   '@types/prop-types@15.7.15':
     resolution: {integrity: sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==}
@@ -3006,6 +3015,10 @@ packages:
 
   node-mock-http@1.0.5:
     resolution: {integrity: sha512-KQyt/wLjG3TAc7DOUhpqWzgd4ERxR80JOlTK5VE5R1S12IaPVN5qkj4klBce9HPG1Njuup4Sb5bljaT34lIyjw==}
+
+  nodemailer@6.10.1:
+    resolution: {integrity: sha512-Z+iLaBGVaSjbIzQ4pX6XV41HrooLsQ10ZWPUehGmuantvzWoDVBnmsdUcOIDM1t+yPor5pDhVlDESgOMEGxhHA==}
+    engines: {node: '>=6.0.0'}
 
   normalize-path@3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
@@ -5424,6 +5437,10 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
+  '@types/nodemailer@6.4.24':
+    dependencies:
+      '@types/node': 22.20.4
+
   '@types/prop-types@15.7.15': {}
 
   '@types/react-dom@18.3.7(@types/react@18.3.31)':
@@ -7769,6 +7786,8 @@ snapshots:
     optional: true
 
   node-mock-http@1.0.5: {}
+
+  nodemailer@6.10.1: {}
 
   normalize-path@3.0.0: {}
 

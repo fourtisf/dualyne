@@ -2,7 +2,11 @@ import type { Tier } from "./tiers";
 
 /** GET /me */
 export interface MeResponse {
-  address: string;
+  /** Linked wallet, or null for an email/Google account without one. */
+  address: string | null;
+  /** Verified email, when the account signed in with email or Google. */
+  email: string | null;
+  google: boolean;
   tier: Tier;
   tierLabel: string;
   tierSource: "override" | "credits" | "token" | "default";
@@ -112,3 +116,22 @@ export interface ProResponse {
 export type ProPaymentResponse =
   | { status: "pending"; confirmations: number; required: number }
   | { status: "active"; proUntil: string; days: number; asset?: string; amount?: string; usd?: number };
+
+/** GET /auth/methods: which sign-in options the site offers. */
+export interface AuthMethods {
+  wallet: boolean;
+  email: boolean;
+  google: boolean;
+}
+
+/** GET /me/referral */
+export interface ReferralResponse {
+  code: string;
+  link: string;
+  /** Accounts created from this link. */
+  joined: number;
+  /** Of those, how many bought Pro (each gave `rewardDays`). */
+  upgraded: number;
+  daysEarned: number;
+  rewardDays: number;
+}

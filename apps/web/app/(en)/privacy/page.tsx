@@ -68,6 +68,23 @@ export default function PrivacyPage() {
             status. We don&apos;t store request or response bodies.
           </p>
           <p>
+            <strong>Email and Google accounts.</strong> If you sign in with email, we store your email address
+            and send you a one-time code (we keep only a hash of the code, for 10 minutes). If you sign in
+            with Google, Google tells us your email address and a Google account id, which we store; we
+            don&apos;t get your Google password or access to anything else in your Google account.
+          </p>
+          <p>
+            <strong>Chat sync (optional).</strong> If you turn on <em>Sync chats to my account</em> on the
+            Chat page, the text of your chats (and the names, never the contents, of attached files) is stored
+            with your account so you can open it on other devices. Turning sync off deletes the synced copies
+            from our servers; deleting a chat deletes its copy too.
+          </p>
+          <p>
+            <strong>Invites.</strong> When you create an account through someone&apos;s invite link, we note
+            who invited you, so we can give them Pro days if you later buy Pro. They see only counts, never
+            who you are.
+          </p>
+          <p>
             <strong>Wallet.</strong> When you sign in, you sign a message with your wallet. We store your
             public address, your API keys (as hashes) and a session record. Your wallet never shares private
             keys with us, and signing in doesn&apos;t send any transaction. To check eligibility for the free
@@ -129,7 +146,8 @@ export default function PrivacyPage() {
 
           <h2>How long we keep it</h2>
           <p>
-            Rate-limit counters expire within 48 hours. Sessions end after 30 days or when you disconnect.
+            Rate-limit counters expire within 48 hours. Sessions end after 30 days or when you sign out. Your
+            account (wallet, email, Google id) and synced chats are kept until you ask us to delete them.
             Usage records (models, token counts, cost, timing) are kept for as long as we need them to operate
             limits and billing{brand.tokenEnabled ? " and the public ledger" : ""}. Telegram conversations are
             forgotten after one hour, visit statistics after 90 days. Database backups are deleted after 14
@@ -139,8 +157,9 @@ export default function PrivacyPage() {
           <h2>Cookies</h2>
           <p>
             We use one essential cookie, <code>dly_session</code>, to keep you signed in for up to 30 days. It
-            is HttpOnly, is only sent to our API and contains a random value, not your address. We don&apos;t
-            use tracking or advertising cookies.
+            is HttpOnly, is only sent to our API and contains a random value, not your address. During Google
+            sign-in a second short-lived cookie (<code>dly_gstate</code>, 10 minutes) protects the sign-in
+            from being hijacked. We don&apos;t use tracking or advertising cookies.
           </p>
 
           <h2>What you should not send</h2>

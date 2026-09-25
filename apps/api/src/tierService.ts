@@ -84,7 +84,7 @@ export class TierService {
       const acc = await this.prisma.creditAccount.findUnique({ where: { walletId: wallet.id } });
       if (acc && acc.balanceMicroUsd > 0n) return { tier: "builder", source: "credits" };
     }
-    if (await this.isHolder(wallet.address)) return { tier: "holder", source: "token" };
+    if (wallet.address && (await this.isHolder(wallet.address))) return { tier: "holder", source: "token" };
     return { tier: "explorer", source: "default" };
   }
 }

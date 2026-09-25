@@ -90,6 +90,13 @@ export const proRoutes: FastifyPluginAsync = async (app) => {
         throw new ApiError(409, "already_used", "This transaction was already used for credits.");
       }
 
+      if (!wallet.address) {
+        throw new ApiError(
+          403,
+          "wallet_required",
+          "Link a wallet to your account first: payments are checked against the wallet that sends them.",
+        );
+      }
       const paid = await verifyPayment(ctx, wallet.address, hash);
       if (paid.status === "pending") return reply.status(202).send(paid);
 

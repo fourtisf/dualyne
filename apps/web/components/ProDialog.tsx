@@ -133,7 +133,8 @@ export function ProDialog() {
     setStatus("");
     const me = w.me;
     const provider = w.provider();
-    if (!me || !info?.payTo || !amount) return;
+    if (!me?.address || !info?.payTo || !amount) return;
+    const address = me.address;
     if (!provider) {
       setError(tu.errors.noProvider);
       return;
@@ -141,8 +142,8 @@ export function ProDialog() {
     setBusy(true);
     try {
       const [from] = (await provider.request({ method: "eth_requestAccounts" })) as string[];
-      if (!from || from.toLowerCase() !== me.address.toLowerCase()) {
-        setError(tu.errors.account(shortAddr(me.address)));
+      if (!from || from.toLowerCase() !== address.toLowerCase()) {
+        setError(tu.errors.account(shortAddr(address)));
         return;
       }
       const current = parseInt(String(await provider.request({ method: "eth_chainId" })), 16);
@@ -270,6 +271,23 @@ export function ProDialog() {
               {t.connect}
             </button>
           </>
+        ) : !w.me.address ? (
+          <>
+            <p>{t.intro(publicConfig.proPriceUsd, publicConfig.proDays)}</p>
+            <p className="pro-closed">{d.wallet.linkWalletText}</p>
+            <button
+              className="btn"
+              type="button"
+              style={{ width: "100%" }}
+              onClick={() => {
+                resume.current = true;
+                close();
+                w.openModal();
+              }}
+            >
+              {d.wallet.linkWallet}
+            </button>
+          </>
         ) : !info ? (
           error ? (
             <div className="msg" role="alert">
@@ -346,7 +364,7 @@ export function ProDialog() {
                   </div>
                 )}
                 <div className="tu-manual">
-                  <div className="t">{t.manual(amount, asset, chain, shortAddr(w.me.address))}</div>
+                  <div className="t">{t.manual(amount, asset, chain, shortAddr(w.me.address ?? ""))}</div>
                   <div className="addr">
                     <span className="ca-addr">{info.payTo}</span>
                     <button className="link" type="button" style={{ color: "var(--muted)" }} onClick={copy}>

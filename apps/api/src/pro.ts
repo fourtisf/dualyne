@@ -1,5 +1,6 @@
 import { Prisma, type Wallet } from "@prisma/client";
 import type { AppContext } from "./context";
+import { rewardReferrer } from "./referrals";
 
 /**
  * The Pro plan: PRO_PRICE_USD buys PRO_DAYS of every model in Chat, paid in crypto to
@@ -44,6 +45,7 @@ export async function applyProPayment(
       const from = current.proUntil && current.proUntil.getTime() > now ? current.proUntil.getTime() : now;
       const until = new Date(from + days * 86_400_000);
       await db.wallet.update({ where: { id: wallet.id }, data: { proUntil: until } });
+      await rewardReferrer(db, current, ctx.env.REFERRAL_PRO_DAYS, ctx.clock());
       return until;
     });
   } catch (e) {

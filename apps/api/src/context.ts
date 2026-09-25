@@ -1,3 +1,4 @@
+import type { Mailer } from "./auth/mailer";
 import type { PrismaClient } from "@prisma/client";
 import type { Redis } from "ioredis";
 import type { Env } from "./env";
@@ -38,6 +39,8 @@ export interface AppContext {
   /** null when RPC_URL is not configured. */
   chain: ChainReader | null;
   sessions: Sessions;
+  /** Sends email sign-in codes; null when SMTP isn't set up. */
+  mailer: Mailer | null;
   tierService: TierService;
   sybil: SybilCheck;
   credits: Credits;
