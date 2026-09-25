@@ -8,6 +8,7 @@ import { estimateTokens, tokensCostMicro, usdToMicro } from "../lib/money";
 import { readEvents, StreamInspector } from "../openrouter/sse";
 import { logUsage } from "../usage/log";
 import { alertBudgetOnce, alertOutOfCredits } from "../routes/v1.chat";
+import { suggestFollowUps } from "../chat/suggest";
 import { pickTwo } from "../routes/votes";
 import { esc, splitMarkdown, stripTags, toTelegramHtml } from "./format";
 import {
@@ -143,7 +144,24 @@ const keys = {
   history: (chat: string) => `tgbot:hist:${chat}`,
   last: (chat: string) => `tgbot:last:${chat}`,
   model: (chat: string) => `tgbot:model:${chat}`,
+  /** Follow-up questions offered under one answer message. */
+  suggestions: (chat: string, messageId: number) => `tgbot:sug:${chat}:${messageId}`,
 };
+
+/** Questions offered as buttons when a conversation starts (the bot answers in any language). */
+export const STARTER_QUESTIONS = [
+  "What is Bitcoin, in simple words?",
+  "How is Ethereum different from Bitcoin?",
+  "What are stablecoins and how do they hold $1?",
+  "What is DeFi, and what are the risks?",
+  "How do I keep my crypto wallet safe?",
+  "Explain blockchain like I'm 12",
+] as const;
+
+const STARTER_KEYBOARD: Keyboard = STARTER_QUESTIONS.map((q, i) => [
+  { text: `💡 ${q}`, callback_data: `start:${i}` },
+]);
+const NEW_CHAT_TEXT = "Started a new conversation. Type your question, or tap one to begin:";
 
 class TelegramError extends Error {
   constructor(
@@ -362,7 +380,10 @@ export class TelegramBot {
       const arg = text.slice(head.length).trim();
       switch (cmd) {
         case "/start":
-          return { html: welcomeText(await this.freeModels(), limit), keyboard: [[this.openAppButton(w)]] };
+          return {
+            html: welcomeText(await this.freeModels(), limit),
+            keyboard: [[this.openAppButton(w)], ...STARTER_KEYBOARD],
+          };
         case "/help":
           return { html: helpText(limit, this.isOwner(w.chat)) };
         case "/about":
@@ -384,7 +405,7 @@ export class TelegramBot {
         case "/new":
         case "/reset":
           await this.ctx.redis.del(keys.history(w.chat), keys.last(w.chat));
-          return { html: "Started a new conversation. What would you like to ask?" };
+          return { html: NEW_CHAT_TEXT, keyboard: STARTER_KEYBOARD };
         case "/model":
         case "/models": {
           if (!args.length) return this.modelPicker(w.chat);
@@ -396,7 +417,12 @@ export class TelegramBot {
           };
         }
         case "/ask":
-          if (!arg) return { html: "Add your question after /ask, for example:\n/ask What is an API?" };
+          if (!arg) {
+            return {
+              html: "Type your question after /ask, for example:\n/ask What is an API?\n\nOr tap one to start:",
+              keyboard: STARTER_KEYBOARD,
+            };
+          }
           await this.ask(w, arg);
           return null;
         case "/compare":
@@ -479,7 +505,7 @@ export class TelegramBot {
   private async ask(
     w: Where,
     question: string,
-    opts: { model?: Model; again?: boolean } = {},
+    opts: { model?: Model; again?: boolean; echo?: boolean } = {},
   ): Promise<void> {
     const refused = this.preflight(question);
     if (refused) {
@@ -488,6 +514,8 @@ export class TelegramBot {
     }
     await this.oneAtATime(w, async () => {
       const { ctx } = this;
+      // A question from a button isn't in the chat yet: show what is being answered.
+      if (opts.echo) await this.send(w.chatId, `❓ <b>${esc(question)}</b>`);
       const model = opts.model ?? (await this.modelFor(w.chat, await this.freeModels()));
       if (!model) {
         await this.reply(w, "No models are available right now. Try again later.");
@@ -565,22 +593,56 @@ export class TelegramBot {
       if (slot.remaining <= 5) footer.push(`<i>${slot.remaining} free messages left today</i>`);
       const parts = splitMarkdown(result.text, PART_CHARS).map(toTelegramHtml);
       parts[parts.length - 1] += `\n\n${footer.join(" · ")}`;
+      let lastId = 0;
       for (let i = 0; i < parts.length; i++) {
         const keyboard = i === parts.length - 1 ? ANSWER_BUTTONS : undefined;
         if (i === 0 && live.id) {
           // If the final edit fails (Telegram rate limit), send the answer as a new message.
-          await this.edit(w.chatId, live.id, parts[0]!, keyboard).catch(() =>
-            this.reply(w, parts[0]!, keyboard),
+          const liveId = live.id;
+          lastId = await this.edit(w.chatId, liveId, parts[0]!, keyboard).then(
+            () => liveId,
+            () => this.reply(w, parts[0]!, keyboard),
           );
-        } else if (i === 0) await this.reply(w, parts[0]!, keyboard);
+        } else if (i === 0) lastId = await this.reply(w, parts[0]!, keyboard);
         else
-          await this.send(
+          lastId = await this.send(
             w.chatId,
             parts[i]!,
             keyboard ? { reply_markup: { inline_keyboard: keyboard } } : {},
           );
       }
+      // Follow-up questions arrive a moment later as buttons on the same message.
+      if (lastId) ctx.track(this.offerFollowUps(w, question, result.text, lastId, parts[parts.length - 1]!));
     });
+  }
+
+  /** Add up to 3 follow-up questions as buttons above the answer's usual buttons. */
+  private async offerFollowUps(
+    w: Where,
+    question: string,
+    answer: string,
+    messageId: number,
+    html: string,
+  ): Promise<void> {
+    const questions = await suggestFollowUps(this.ctx, question, answer);
+    if (!questions.length) return;
+    await this.ctx.redis.set(
+      keys.suggestions(w.chat, messageId),
+      JSON.stringify(questions),
+      "EX",
+      HISTORY_TTL_SECONDS * 24,
+    );
+    const keyboard: Keyboard = [
+      ...questions.map((q, i) => [{ text: `💬 ${q}`, callback_data: `sug:${i}` }]),
+      ...ANSWER_BUTTONS,
+    ];
+    await this.edit(w.chatId, messageId, html, keyboard).catch(() => undefined);
+  }
+
+  private async suggestionAt(chat: string, messageId: number, i: number): Promise<string | undefined> {
+    const raw = await this.ctx.redis.get(keys.suggestions(chat, messageId));
+    const list = raw ? (JSON.parse(raw) as string[]) : [];
+    return Number.isInteger(i) ? list[i] : undefined;
   }
 
   /** Two random free models answer the same question without their names; the asker votes. */
@@ -819,7 +881,22 @@ export class TelegramBot {
     if (kind === "act" && value === "new") {
       await this.ctx.redis.del(keys.history(w.chat), keys.last(w.chat));
       await answer("Started a new conversation.");
-      await this.send(chatId, "Started a new conversation. What would you like to ask?");
+      await this.send(chatId, NEW_CHAT_TEXT, { reply_markup: { inline_keyboard: STARTER_KEYBOARD } });
+      return;
+    }
+    if (kind === "start" || kind === "sug") {
+      const question =
+        kind === "start"
+          ? STARTER_QUESTIONS[Number(value)]
+          : m?.message_id
+            ? await this.suggestionAt(w.chat, m.message_id, Number(value))
+            : undefined;
+      if (!question) {
+        await answer("This suggestion has expired. Type your question instead.");
+        return;
+      }
+      await answer();
+      await this.ask(w, question, { echo: true });
       return;
     }
     if (kind === "act" && value === "other") {

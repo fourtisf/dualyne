@@ -4,7 +4,7 @@ import { createTestContext, parseSse, type TestContext } from "./helpers";
 
 let t: TestContext;
 beforeEach(async () => {
-  t ??= await createTestContext();
+  t ??= await createTestContext({ CHAT_SUGGEST_MODEL: "mistral" });
   await t.reset();
   t.upstream.mode = "stream";
 });

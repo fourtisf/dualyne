@@ -448,3 +448,48 @@ describe("Telegram formatting", () => {
     expect(parts[1]!.startsWith("```py\n")).toBe(true);
   });
 });
+
+describe("Telegram bot: suggested questions", () => {
+  it("offers crypto starter questions on /ask, /new and /start, and a tap asks one", async () => {
+    await say(msg(7, "/ask"));
+    expect(buttons(sent().at(-1))).toEqual([
+      "start:0",
+      "start:1",
+      "start:2",
+      "start:3",
+      "start:4",
+      "start:5",
+    ]);
+    await say(msg(7, "/new"));
+    expect(buttons(sent().at(-1))).toContain("start:0");
+    await say(msg(7, "/start"));
+    expect(buttons(sent().at(-1))).toContain("start:5");
+
+    await bot.handle(press(7, "start:0"));
+    expect(texts()).toContain("❓ <b>What is Bitcoin, in simple words?</b>");
+    expect(asked().at(-1)!.at(-1)).toEqual({ role: "user", content: "What is Bitcoin, in simple words?" });
+  });
+
+  it("adds follow-up questions under an answer, and a tap asks them", async () => {
+    const env = t.app.ctx.env as { CHAT_SUGGEST_MODEL: string };
+    env.CHAT_SUGGEST_MODEL = "mistral";
+    t.upstream.jsonForNonStream = true;
+    t.upstream.jsonContent = '["How does mining work?", "Is Bitcoin safe?", "How do I buy Bitcoin?"]';
+    try {
+      await say(msg(7, "What is Bitcoin?"));
+      await Promise.all([...t.app.ctx.inflight]);
+      const edited = calls("editMessageText").at(-1);
+      expect(buttons(edited)!.slice(0, 3)).toEqual(["sug:0", "sug:1", "sug:2"]);
+      expect(edited!.reply_markup!.inline_keyboard[0]![0]!.text).toBe("💬 How does mining work?");
+
+      const answerId = edited!.message_id as number;
+      await bot.handle(press(7, "sug:1", 7, answerId));
+      expect(texts()).toContain("❓ <b>Is Bitcoin safe?</b>");
+      // An old or unknown message: the suggestion is gone.
+      await bot.handle(press(7, "sug:0", 7, 999_999));
+      expect(toasts()).toContain("This suggestion has expired. Type your question instead.");
+    } finally {
+      env.CHAT_SUGGEST_MODEL = "";
+    }
+  });
+});

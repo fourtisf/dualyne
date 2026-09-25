@@ -38,6 +38,8 @@ export interface FakeUpstream {
   telegramUpdates: unknown[];
   /** Message content the "json" mode returns. */
   jsonContent: string;
+  /** In "stream" mode, still answer requests without `stream: true` with JSON. */
+  jsonForNonStream: boolean;
   /** ID token the Google token-endpoint stand-in returns (null = 400). */
   googleIdToken: string | null;
   /** When true, the Telegram stand-in refuses sendMessage with parse_mode (400), like bad HTML. */
@@ -70,6 +72,7 @@ export async function startFakeUpstream(): Promise<FakeUpstream> {
     telegramRejectHtml: false,
     googleIdToken: null,
     jsonContent: "Hello",
+    jsonForNonStream: false,
     close: async () => undefined,
   };
 
@@ -149,7 +152,7 @@ export async function startFakeUpstream(): Promise<FakeUpstream> {
       res.end(JSON.stringify({ error: { message: "upstream says no", code: state.errorStatus } }));
       return;
     }
-    if (state.mode === "json") {
+    if (state.mode === "json" || (state.jsonForNonStream && body.stream !== true)) {
       res.setHeader("content-type", "application/json");
       res.end(
         JSON.stringify({
@@ -233,6 +236,8 @@ export async function createTestContext(
     IP_HASH_SECRET: "test-ip-secret-test-ip-secret-test-ip",
     JOBS_ENABLED: "false",
     API_OPEN: "true",
+    // Follow-up suggestions make an extra upstream call; tests that want them turn them on.
+    CHAT_SUGGEST_MODEL: "",
     SESSION_SECRET: "test-session-secret-test-session-secret",
     ...envOverrides,
   });
@@ -265,6 +270,7 @@ export async function createTestContext(
       upstream.telegramRejectHtml = false;
       upstream.googleIdToken = null;
       upstream.jsonContent = "Hello";
+      upstream.jsonForNonStream = false;
     },
     close: async () => {
       await app.close();
