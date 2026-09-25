@@ -9,6 +9,10 @@ import { secondsUntilUtcMidnight } from "../lib/time";
 import { readEvents, StreamInspector } from "../openrouter/sse";
 import { verifyTurnstile } from "../turnstile";
 import { isPro, premiumSpendMicro } from "../pro";
+import { isOwner } from "../tierService";
+
+/** What the owner's quota shows: there is no real limit. */
+const OWNER_SHOWN_LIMIT = 999_999;
 import { toUpstream } from "../chat/upstream";
 import { logUsage } from "../usage/log";
 import { rememberAnswer } from "./chatShares";
@@ -35,6 +39,16 @@ export const freeChatRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       reply.header("cache-control", "no-store");
       const wallet = await ctx.sessions.get(req.cookies[SESSION_COOKIE]);
+      if (isOwner(env.OWNER_ACCOUNTS, wallet)) {
+        const body: ChatQuota = {
+          plan: "owner",
+          limit: OWNER_SHOWN_LIMIT,
+          remaining: OWNER_SHOWN_LIMIT,
+          webLimit: OWNER_SHOWN_LIMIT,
+          webRemaining: OWNER_SHOWN_LIMIT,
+        };
+        return body;
+      }
       if (wallet && isPro(wallet, ctx.clock())) {
         const [remaining, premiumRemaining, webRemaining] = await Promise.all([
           ctx.proChatLimiter.remaining(wallet.id),
@@ -78,7 +92,9 @@ export const freeChatRoutes: FastifyPluginAsync = async (app) => {
         throw new ApiError(404, "model_not_found", "That model is not in the catalog.");
       }
       const wallet = await ctx.sessions.get(req.cookies[SESSION_COOKIE]);
-      const pro = wallet && isPro(wallet, ctx.clock()) ? wallet : null;
+      // The owner (OWNER_ACCOUNTS) gets everything Pro has, with no limits.
+      const owner = isOwner(env.OWNER_ACCOUNTS, wallet);
+      const pro = wallet && (owner || isPro(wallet, ctx.clock())) ? wallet : null;
       const premium = model.minTier !== "explorer";
       if (premium && !pro) {
         throw new ApiError(
@@ -126,7 +142,9 @@ export const freeChatRoutes: FastifyPluginAsync = async (app) => {
       const slots: { release(): Promise<void> }[] = [];
       const releaseAll = () => Promise.all(slots.map((s) => s.release()));
       let remaining: number;
-      if (pro) {
+      if (owner) {
+        remaining = OWNER_SHOWN_LIMIT;
+      } else if (pro) {
         const slot = await ctx.proChatLimiter.hit(pro.id);
         if (!slot.allowed) {
           throw new ApiError(
@@ -178,7 +196,9 @@ export const freeChatRoutes: FastifyPluginAsync = async (app) => {
 
       // Web search has its own daily allowance, since every search costs extra.
       let webResults = 0;
-      if (body.webSearch) {
+      if (body.webSearch && owner) {
+        webResults = env.WEB_SEARCH_RESULTS;
+      } else if (body.webSearch) {
         const web = pro ? await ctx.webProLimiter.hit(pro.id) : await ctx.webFreeLimiter.hit(ipHash);
         if (!web.allowed) {
           await releaseAll();

@@ -183,7 +183,8 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
   const active = chats.find((c) => c.id === activeId) ?? null;
   const turns = active?.turns ?? NO_TURNS;
   const current = models.find((m) => m.id === model);
-  const pro = quota?.plan === "pro";
+  // The site owner has Pro's models with no limits.
+  const pro = quota?.plan === "pro" || quota?.plan === "owner";
   const usable = (m: CatalogModel) => m.minTier === "explorer" || pro;
 
   // Load saved chats (moving the first version's single chat over) and settings.
@@ -1240,7 +1241,7 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
               type="button"
               className={web ? "tool wide on" : "tool wide"}
               aria-pressed={web}
-              title={quota ? t.webTitle(quota.webRemaining, quota.webLimit) : t.web}
+              title={quota && quota.plan !== "owner" ? t.webTitle(quota.webRemaining, quota.webLimit) : t.web}
               disabled={busy}
               onClick={() => setWeb((v) => !v)}
             >
@@ -1254,7 +1255,7 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
                 />
               </svg>
               <span>{t.web}</span>
-              {quota && web && <small>{quota.webRemaining}</small>}
+              {quota && web && quota.plan !== "owner" && <small>{quota.webRemaining}</small>}
             </button>
             <div className="tpl">
               <button
@@ -1344,9 +1345,11 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
           <span className="hint">{instructions ? t.instructionsOn : t.hint}</span>
           {quota && (
             <span className={quota.remaining === 0 ? "quota out" : "quota"}>
-              {quota.plan === "pro"
-                ? t.quotaPro(quota.remaining, quota.limit, quota.premiumRemaining)
-                : t.quota(quota.remaining, quota.limit)}
+              {quota.plan === "owner"
+                ? t.quotaOwner
+                : quota.plan === "pro"
+                  ? t.quotaPro(quota.remaining, quota.limit, quota.premiumRemaining)
+                  : t.quota(quota.remaining, quota.limit)}
               {quota.plan === "free" && premium.length > 0 && (
                 <>
                   {" · "}

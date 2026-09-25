@@ -300,6 +300,14 @@ export function WalletModal() {
             </p>
             <div className="addr">
               <span>{w.label}</span>
+              <button
+                className="link acct-id"
+                type="button"
+                title={t.copyId}
+                onClick={() => void navigator.clipboard?.writeText(me.id).catch(() => undefined)}
+              >
+                {t.accountId(me.id)}
+              </button>
               <button className="link" type="button" onClick={() => void w.disconnect()}>
                 {me.address ? t.disconnect : t.signOut}
               </button>
@@ -361,6 +369,10 @@ export function WalletModal() {
                     <span className="when">
                       {k.name ? `${k.name} · ` : ""}
                       {t.created(made(k.createdAt))}
+                      <span className="kid" title={t.keyIdTitle}>
+                        {" · "}
+                        {t.keyId(k.id)}
+                      </span>
                     </span>
                     <button className="link" type="button" onClick={() => revoke(k.id)}>
                       {confirming === k.id ? t.confirmRevoke : t.revoke}

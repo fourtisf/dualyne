@@ -26,11 +26,12 @@ export async function buildMe(ctx: AppContext, wallet: Wallet) {
       : null;
   const credit = ctx.credits.enabled ? await ctx.credits.balance(wallet.id) : 0n;
   return {
+    id: wallet.id,
     address: wallet.address,
     email: wallet.email,
     google: wallet.googleSub !== null,
     tier,
-    tierLabel: policy.label,
+    tierLabel: source === "owner" ? "Owner" : policy.label,
     tierSource: source,
     limits: { dailyRequests: policy.dailyRequests, maxTokens: policy.maxTokens, maxKeys: policy.maxKeys },
     usage: {

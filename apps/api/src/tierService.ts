@@ -3,7 +3,7 @@ import type { Redis } from "ioredis";
 import { getAddress, type Address } from "viem";
 import type { ChainReader } from "./chain/types";
 
-export type TierSource = "override" | "credits" | "token" | "default";
+export type TierSource = "owner" | "override" | "credits" | "token" | "default";
 
 export interface TierInfo {
   tier: Tier;
@@ -17,6 +17,17 @@ export interface TierOptions {
   holderMin: number;
   /** When Builder credits are enabled, a positive balance makes the wallet Builder. */
   credits?: boolean;
+  /** OWNER_ACCOUNTS: addresses and emails that get every model with no cap and no charge. */
+  owners?: string[];
+}
+
+/** Whether this account is one of OWNER_ACCOUNTS (by wallet address or email). */
+export function isOwner(
+  owners: readonly string[],
+  wallet: Pick<Wallet, "address" | "email"> | null | undefined,
+): boolean {
+  if (!wallet || !owners.length) return false;
+  return owners.some((o) => o === wallet.address?.toLowerCase() || o === wallet.email?.toLowerCase());
 }
 
 const BALANCE_TTL = 5 * 60; // HANDOFF: cache the on-chain balance for 5 minutes
@@ -78,7 +89,9 @@ export class TierService {
     return bal.units >= BigInt(Math.round(this.opts.holderMin)) * 10n ** BigInt(bal.decimals);
   }
 
-  async resolve(wallet: Pick<Wallet, "id" | "address" | "tierOverride">): Promise<TierInfo> {
+  async resolve(wallet: Pick<Wallet, "id" | "address" | "email" | "tierOverride">): Promise<TierInfo> {
+    // The owner: Builder's limits (none) without Builder's billing.
+    if (isOwner(this.opts.owners ?? [], wallet)) return { tier: "builder", source: "owner" };
     if (wallet.tierOverride) return { tier: wallet.tierOverride, source: "override" };
     if (this.opts.credits) {
       const acc = await this.prisma.creditAccount.findUnique({ where: { walletId: wallet.id } });

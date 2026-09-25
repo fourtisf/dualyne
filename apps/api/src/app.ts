@@ -120,6 +120,7 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
     dlynToken: env.DLYN_TOKEN_ADDRESS as `0x${string}` | undefined,
     holderMin: env.HOLDER_MIN_DLYN,
     credits: creditsEnabled,
+    owners: env.OWNER_ACCOUNTS,
   });
 
   const ctx: AppContext = {

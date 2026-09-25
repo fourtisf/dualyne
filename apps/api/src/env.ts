@@ -107,6 +107,20 @@ const schema = z
 
     // Wallet sign-in (SIWE) and on-chain reads
     SESSION_SECRET: z.string().default(""),
+    /**
+     * The owner's accounts: wallet addresses and/or emails, comma-separated. They get no limits
+     * anywhere (API, Chat, web search) and are never charged; the cost still comes from the
+     * OpenRouter balance.
+     */
+    OWNER_ACCOUNTS: z
+      .string()
+      .default("")
+      .transform((s) =>
+        s
+          .split(",")
+          .map((x) => x.trim().toLowerCase())
+          .filter(Boolean),
+      ),
     /** Email sign-in: an SMTP URL (e.g. smtps://user:pass@smtp.hostinger.com:465). Empty = off. */
     SMTP_URL: z.string().default(""),
     /** Sender of sign-in codes; defaults to "Dualyne <hello@SITE_DOMAIN>". */

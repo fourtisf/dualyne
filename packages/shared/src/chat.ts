@@ -165,6 +165,8 @@ export interface SharedChat {
 /** GET /internal/chat/quota: the caller's plan and messages left today. */
 export type ChatQuota = (
   | { plan: "free"; limit: number; remaining: number }
+  /** The site owner (OWNER_ACCOUNTS): no limits. */
+  | { plan: "owner"; limit: number; remaining: number }
   | {
       plan: "pro";
       limit: number;

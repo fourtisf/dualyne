@@ -885,3 +885,7 @@ button.side-premium{border:0; background:none; padding:0; font:inherit; text-ali
 .fq{display:flex; align-items:center; gap:9px; width:100%; text-align:left; padding:10px 13px; border-radius:11px; border:1px solid var(--line2); background:rgba(255,255,255,.02); color:#d4d4dc; font:500 14px/1.35 var(--sans); cursor:pointer; transition:border-color .15s, background .15s, color .15s}
 .fq svg{flex:none; color:#a78bfa}
 .fq:hover{color:#fff; border-color:rgba(139,92,246,.55); background:rgba(139,92,246,.08)}
+/* v15 · account and key ids */
+.addr .acct-id{margin:0 12px 0 auto; padding:0; color:var(--faint); font:500 11.5px/1 var(--mono)}
+.addr .acct-id:hover{color:var(--muted)}
+.keys .kid{color:var(--faint)}

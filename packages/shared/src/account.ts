@@ -2,6 +2,8 @@ import type { Tier } from "./tiers";
 
 /** GET /me */
 export interface MeResponse {
+  /** Account id (stable, shown so support can find the account). */
+  id: string;
   /** Linked wallet, or null for an email/Google account without one. */
   address: string | null;
   /** Verified email, when the account signed in with email or Google. */
@@ -9,7 +11,7 @@ export interface MeResponse {
   google: boolean;
   tier: Tier;
   tierLabel: string;
-  tierSource: "override" | "credits" | "token" | "default";
+  tierSource: "owner" | "override" | "credits" | "token" | "default";
   limits: { dailyRequests: number | null; maxTokens: number | null; maxKeys: number | null };
   usage: { today: number; remaining: number | null };
   keys: { count: number; max: number | null };

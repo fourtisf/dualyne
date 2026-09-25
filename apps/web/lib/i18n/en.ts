@@ -109,6 +109,7 @@ export const en = {
     quotaPro: (left: number, limit: number, premiumLeft: number) =>
       `Pro · ${left} of ${limit} messages left today · ${premiumLeft} premium`,
     upgrade: "Get Pro",
+    quotaOwner: "Owner · no limits",
     local: "Chats are saved in this browser only.",
     sync: "Sync chats to my account",
     syncOn: "Chats sync to your account (text only, never files).",
@@ -541,6 +542,10 @@ export const en = {
     orWallet: "or use a wallet",
     googleFailed: "Google sign-in didn't finish. Try again, or use email.",
     signedInAs: "Signed in as",
+    accountId: (id: string) => `ID ${id.slice(-8)}`,
+    copyId: "Account ID: click to copy it (support may ask for it)",
+    keyId: (id: string) => `ID ${id.slice(-6)}`,
+    keyIdTitle: "Key ID (not the secret key)",
     signOut: "Sign out",
     linkWallet: "Link a wallet",
     linkWalletText: "Link a wallet to pay for Pro and create API keys. It stays tied to this account.",
