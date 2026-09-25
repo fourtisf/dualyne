@@ -21,7 +21,7 @@ import {
   type Attached,
 } from "@/lib/attachments";
 import { apiFetch } from "@/lib/api";
-import { ChatError, getChatQuota, runChat, shareChat } from "@/lib/chat-client";
+import { ChatError, getChatQuota, runChat, shareChat, suggestFollowUps } from "@/lib/chat-client";
 import { publicConfig } from "@/lib/config";
 import { formatWait } from "@/lib/i18n";
 import { md } from "@/lib/markdown";
@@ -61,6 +61,8 @@ interface Turn extends ChatMessage {
   /** Answers from several models; `picked` is the one the conversation continues with. */
   alts?: Alt[];
   picked?: number;
+  /** Follow-up questions to ask next, shown under the latest answer. */
+  suggestions?: string[];
 }
 
 interface Conversation {
@@ -116,6 +118,12 @@ const toApi = (history: Turn[]): ChatTurn[] =>
       const content = m.content || (files.length ? "" : (m.attachments ?? []).map((a) => a.name).join(", "));
       return files.length ? { role: "user", content, attachments: files } : { role: "user", content };
     });
+
+/** The visitor's latest question, for follow-up suggestions. */
+const questionOf = (history: Turn[]) => {
+  const q = [...history].reverse().find((m) => m.role === "user");
+  return q ? q.content || (q.attachments ?? []).map((a) => a.name).join(", ") || "?" : "?";
+};
 
 const hasImages = (turns: Turn[], pending: Attached[]) =>
   [...turns.flatMap((m) => m.attachments ?? []), ...pending].some((a) => a.kind === "image" && isSendable(a));
@@ -410,7 +418,7 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
     askModel: string,
     history: ChatTurn[],
     update: (patch: Partial<Alt>) => void,
-  ): Promise<boolean> => {
+  ): Promise<string | null> => {
     const ac = new AbortController();
     aborts.current.push(ac);
     let answer = "";
@@ -439,7 +447,7 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
     }
     if (!result.completed)
       update({ content: answer, failed: true, error: answer ? undefined : t.errors.failed });
-    return result.completed;
+    return result.completed ? answer : null;
   };
 
   /**
@@ -467,7 +475,7 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
     try {
       if (!several) {
         try {
-          const ok = await ask(id, askModels[0]!, body, (patch) =>
+          const text = await ask(id, askModels[0]!, body, (patch) =>
             setLast(id, (turn) => ({
               ...turn,
               ...(patch.content !== undefined ? { content: patch.content } : {}),
@@ -475,9 +483,11 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
               ...(patch.failed ? { failed: true } : {}),
             })),
           );
-          if (!ok) {
+          if (text === null) {
             setError(t.errors.failed);
             setTurnsOf(id, (all) => (all[all.length - 1]?.content ? all : all.slice(0, -1)));
+          } else {
+            void loadSuggestions(id, questionOf(history), text);
           }
         } catch (e) {
           if (e instanceof ChatError && e.code === "cancelled") {
@@ -505,16 +515,19 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
           return { ...turn, alts };
         });
       // Turnstile tokens are fetched one at a time, so the requests start in order.
-      await Promise.all(
+      const texts = await Promise.all(
         askModels.map(async (m, i) => {
           try {
-            await ask(id, m, body, (patch) => updateAlt(i, patch));
+            return await ask(id, m, body, (patch) => updateAlt(i, patch));
           } catch (e) {
-            if (e instanceof ChatError && e.code === "cancelled") return;
+            if (e instanceof ChatError && e.code === "cancelled") return null;
             updateAlt(i, { failed: true, error: errorText(e) });
+            return null;
           }
         }),
       );
+      const first = texts.find((x): x is string => Boolean(x));
+      if (first) void loadSuggestions(id, questionOf(history), first);
       // Continue with the first model that answered in full.
       setLast(id, (turn) => {
         const alts = turn.alts ?? [];
@@ -534,20 +547,32 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
     }
   };
 
-  const choose = (i: number) =>
-    active &&
-    setLast(active.id, (turn) => {
-      const alt = turn.alts?.[i];
-      if (!alt || !alt.content || alt.failed) return turn;
-      return {
-        ...turn,
-        picked: i,
-        model: alt.model,
-        content: alt.content,
-        sources: alt.sources,
-        failed: false,
-      };
+  const choose = (i: number) => {
+    if (!active) return;
+    const alt = active.turns[active.turns.length - 1]?.alts?.[i];
+    if (!alt || !alt.content || alt.failed) return;
+    setLast(active.id, (turn) => ({
+      ...turn,
+      picked: i,
+      model: alt.model,
+      content: alt.content,
+      sources: alt.sources,
+      failed: false,
+      suggestions: undefined,
+    }));
+    void loadSuggestions(active.id, questionOf(active.turns.slice(0, -1)), alt.content);
+  };
+
+  /** Fetch follow-up questions for the latest answer (if it's still the latest when they arrive). */
+  const loadSuggestions = async (id: string, question: string, answer: string) => {
+    const questions = await suggestFollowUps(publicConfig.apiUrl, question, answer);
+    if (!questions.length) return;
+    setTurnsOf(id, (all) => {
+      const last = all[all.length - 1];
+      if (last?.role !== "assistant" || last.content !== answer) return all;
+      return [...all.slice(0, -1), { ...last, suggestions: questions }];
     });
+  };
 
   const targets = (): string[] | null => {
     if (!multi) return model ? [model] : null;
@@ -833,6 +858,29 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
     </div>
   );
 
+  /** Suggested next questions under the latest answer; one tap asks them. */
+  const followUps = (m: Turn, i: number) =>
+    !busy && i === lastAi && m.suggestions?.length ? (
+      <div className="follow">
+        <span>{t.askNext}</span>
+        {m.suggestions.map((q) => (
+          <button key={q} type="button" className="fq" onClick={() => send(q)}>
+            <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M5 12h14M13 6l6 6-6 6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            {q}
+          </button>
+        ))}
+      </div>
+    ) : null;
+
   const sourcesList = (sources?: Source[]) =>
     sources?.length ? (
       <div className="ai-sources">
@@ -1088,7 +1136,10 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
                       );
                     })}
                     {!busy && i === lastAi && (
-                      <div className="alt-more">{answerActions(i, m.content, false)}</div>
+                      <div className="alt-more">
+                        {answerActions(i, m.content, false)}
+                        {followUps(m, i)}
+                      </div>
                     )}
                   </div>
                 );
@@ -1102,6 +1153,7 @@ export function ChatView({ models }: { models: CatalogModel[] }) {
                     {m.content ? <Answer text={m.content} codeLabel={t.code} /> : typing}
                     {sourcesList(m.sources)}
                     {m.content && !(busy && i === lastAi) && answerActions(i, m.content)}
+                    {followUps(m, i)}
                   </div>
                 </div>
               );

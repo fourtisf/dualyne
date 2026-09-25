@@ -211,6 +211,7 @@ export const syncedTurnSchema = z
       .max(4)
       .optional(),
     picked: z.number().int().min(0).max(3).optional(),
+    suggestions: z.array(z.string().max(160)).max(3).optional(),
   })
   .strict();
 export const syncedChatSchema = z
@@ -226,4 +227,15 @@ export type SyncedChatBody = z.infer<typeof syncedChatSchema>;
 /** GET /me/chats */
 export interface SyncedChatsResponse {
   chats: (SyncedChatBody & { id: string })[];
+}
+
+/** POST /internal/chat/suggest: follow-up questions for an answer Dualyne just wrote. */
+export const chatSuggestRequestSchema = z
+  .object({
+    question: z.string().trim().min(1).max(CHAT_MESSAGE_MAX),
+    answer: z.string().trim().min(1).max(40_000),
+  })
+  .strict();
+export interface ChatSuggestResponse {
+  questions: string[];
 }

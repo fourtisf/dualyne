@@ -41,6 +41,7 @@ import { chatShareRoutes } from "./routes/chatShares";
 import { proRoutes } from "./routes/pro";
 import { accountRoutes } from "./routes/accounts";
 import { chatSyncRoutes } from "./routes/chatSync";
+import { chatSuggestRoutes } from "./routes/chatSuggest";
 import { healthRoutes } from "./routes/health";
 import { statusRoutes } from "./routes/status";
 
@@ -287,6 +288,7 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
   await app.register(proRoutes);
   await app.register(accountRoutes);
   await app.register(chatSyncRoutes);
+  await app.register(chatSuggestRoutes);
   await app.register(authRoutes);
   await app.register(meRoutes);
   await app.register(treasuryRoutes);

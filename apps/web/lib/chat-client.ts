@@ -1,4 +1,4 @@
-import type { ChatEvents, ChatQuota, ChatRequest } from "@dualyne/shared";
+import type { ChatEvents, ChatQuota, ChatRequest, ChatSuggestResponse } from "@dualyne/shared";
 
 export class ChatError extends Error {
   constructor(
@@ -137,4 +137,21 @@ export async function shareChat(
   };
   if (!res.ok || !j.id || !j.token) throw new ChatError(j.error?.code ?? "failed", j.error?.message ?? "");
   return { id: j.id, token: j.token };
+}
+
+/** Up to 3 follow-up questions for an answer Dualyne just wrote (empty when unavailable). */
+export async function suggestFollowUps(apiUrl: string, question: string, answer: string): Promise<string[]> {
+  try {
+    const res = await fetch(`${apiUrl}/internal/chat/suggest`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ question: question.slice(0, 8000), answer: answer.slice(0, 40_000) }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) return [];
+    const j = (await res.json()) as ChatSuggestResponse;
+    return Array.isArray(j.questions) ? j.questions.filter((q) => typeof q === "string").slice(0, 3) : [];
+  } catch {
+    return [];
+  }
 }

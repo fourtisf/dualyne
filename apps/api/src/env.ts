@@ -53,6 +53,8 @@ const schema = z
     /** Pages read per search; OpenRouter charges per result. */
     WEB_SEARCH_RESULTS: z.coerce.number().int().min(1).max(10).default(3),
     WEB_SEARCH_USD_PER_RESULT: z.coerce.number().min(0).default(0.004),
+    /** Model that writes the follow-up question suggestions under Chat answers ("" = off). */
+    CHAT_SUGGEST_MODEL: z.string().default("mistral"),
     /**
      * Stablecoins accepted for Pro and Builder top-ups besides USDG, 1 token = $1, on SIWE_CHAIN_ID:
      * "USDC:0x…,USDT:0x…".

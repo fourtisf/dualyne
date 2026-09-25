@@ -21,6 +21,11 @@ export async function rememberAnswer(redis: Redis, ipHash: string, text: string)
   await redis.set(answerKey(ipHash, text), "1", "EX", ANSWER_TTL_SECONDS);
 }
 
+/** Whether Dualyne wrote `text` for this visitor in the last day. */
+export async function answerKnown(redis: Redis, ipHash: string, text: string): Promise<boolean> {
+  return (await redis.exists(answerKey(ipHash, text))) === 1;
+}
+
 const idParam = z.object({ id: z.string().regex(/^[A-Za-z0-9]{6,20}$/) });
 const deleteBody = z.object({ token: z.string().min(10).max(100) }).strict();
 const NOT_FOUND = "This shared chat doesn't exist or was removed.";

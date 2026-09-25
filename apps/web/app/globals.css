@@ -879,3 +879,9 @@ button.side-premium{border:0; background:none; padding:0; font:inherit; text-ali
 .side-sync{display:flex; align-items:center; gap:8px; margin:6px 0 0; padding:9px 10px; border-radius:9px; color:var(--muted); font:500 13px/1.3 var(--sans); cursor:pointer}
 .side-sync input{accent-color:#8B5CF6}
 .side-sync:hover{color:var(--text); background:rgba(255,255,255,.05)}
+/* v14 · follow-up questions under the latest answer */
+.follow{display:grid; gap:6px; margin:14px 0 4px; max-width:640px}
+.follow>span{font:600 11px/1 var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--faint); margin:0 0 2px}
+.fq{display:flex; align-items:center; gap:9px; width:100%; text-align:left; padding:10px 13px; border-radius:11px; border:1px solid var(--line2); background:rgba(255,255,255,.02); color:#d4d4dc; font:500 14px/1.35 var(--sans); cursor:pointer; transition:border-color .15s, background .15s, color .15s}
+.fq svg{flex:none; color:#a78bfa}
+.fq:hover{color:#fff; border-color:rgba(139,92,246,.55); background:rgba(139,92,246,.08)}

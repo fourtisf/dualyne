@@ -36,6 +36,8 @@ export interface FakeUpstream {
   telegram: { token: string; method: string; body: Record<string, unknown> }[];
   /** What the Telegram stand-in's getUpdates returns next (then it is emptied). */
   telegramUpdates: unknown[];
+  /** Message content the "json" mode returns. */
+  jsonContent: string;
   /** ID token the Google token-endpoint stand-in returns (null = 400). */
   googleIdToken: string | null;
   /** When true, the Telegram stand-in refuses sendMessage with parse_mode (400), like bad HTML. */
@@ -67,6 +69,7 @@ export async function startFakeUpstream(): Promise<FakeUpstream> {
     telegramUpdates: [],
     telegramRejectHtml: false,
     googleIdToken: null,
+    jsonContent: "Hello",
     close: async () => undefined,
   };
 
@@ -153,7 +156,9 @@ export async function startFakeUpstream(): Promise<FakeUpstream> {
           id: "gen-json",
           object: "chat.completion",
           model: String(body.model),
-          choices: [{ index: 0, message: { role: "assistant", content: "Hello" }, finish_reason: "stop" }],
+          choices: [
+            { index: 0, message: { role: "assistant", content: state.jsonContent }, finish_reason: "stop" },
+          ],
           usage: { prompt_tokens: 5, completion_tokens: 1, total_tokens: 6, cost: 0.0005 },
         }),
       );
@@ -259,6 +264,7 @@ export async function createTestContext(
       upstream.telegramUpdates.length = 0;
       upstream.telegramRejectHtml = false;
       upstream.googleIdToken = null;
+      upstream.jsonContent = "Hello";
     },
     close: async () => {
       await app.close();

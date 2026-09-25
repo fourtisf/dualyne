@@ -121,6 +121,7 @@ export const en = {
     webTitle: (left: number, limit: number) =>
       `Search the web for this answer (${left} of ${limit} searches left today)`,
     sources: "Sources",
+    askNext: "Ask next",
     askAll: "Ask several",
     askAllTitle: "Ask up to 4 models at once. Each answer counts as one message.",
     askAllPick: "Pick 2 to 4 models",
