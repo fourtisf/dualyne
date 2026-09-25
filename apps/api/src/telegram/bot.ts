@@ -1,4 +1,4 @@
-import { CHAT_MESSAGE_MAX, CHAT_TOTAL_MAX, type ChatMessage } from "@dualyne/shared";
+import { categorize, CHAT_MESSAGE_MAX, CHAT_TOTAL_MAX, type ChatMessage } from "@dualyne/shared";
 import type { Model } from "@prisma/client";
 import type { FastifyBaseLogger } from "fastify";
 import { brand } from "@dualyne/config";
@@ -622,6 +622,7 @@ export class TelegramBot {
           modelB: b.id,
           ipHash: ctx.ipHash(`telegram:${w.person}`),
           blind: true,
+          category: categorize(question),
           createdAt: ctx.clock(),
         },
       });
@@ -894,6 +895,7 @@ export class TelegramBot {
         modelB: run.modelB,
         winner: pick,
         blind: true,
+        category: run.category,
         ipHash: run.ipHash,
       },
     });

@@ -2,26 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { brand } from "@dualyne/config";
-import type { SharedChat } from "@dualyne/shared";
 import { ProviderMark } from "@/components/ProviderMark";
 import { getCatalog } from "@/lib/catalog";
 import { md } from "@/lib/markdown";
+import { getSharedChat } from "@/lib/shares";
 import { UnshareButton } from "../../s/[id]/UnshareButton";
-
-async function getSharedChat(id: string): Promise<SharedChat | null> {
-  if (!/^[A-Za-z0-9]{6,20}$/.test(id)) return null;
-  const base = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL;
-  if (!base) return null;
-  try {
-    const res = await fetch(`${base.replace(/\/$/, "")}/internal/chat/share/${id}`, {
-      next: { revalidate: 300 },
-      signal: AbortSignal.timeout(3000),
-    });
-    return res.ok ? ((await res.json()) as SharedChat) : null;
-  } catch {
-    return null;
-  }
-}
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const c = await getSharedChat(params.id);

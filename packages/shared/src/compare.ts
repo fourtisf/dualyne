@@ -68,7 +68,52 @@ export interface VoteResponse {
 /** GET /leaderboard */
 export interface LeaderboardResponse {
   updatedAt: string | null;
+  /** The category this table covers ("all" for every vote). */
+  category: LeaderboardCategory;
+  /** Votes counted in this category. */
   totalVotes: number;
   blindOnly: boolean;
   rows: { modelId: string; rating: number; wins: number; losses: number; ties: number; games: number }[];
+}
+
+/** Leaderboard categories. Each comparison gets one, guessed from its prompt (the prompt isn't kept). */
+export const COMPARE_CATEGORIES = ["general", "coding", "writing", "reasoning", "multilingual"] as const;
+export type CompareCategory = (typeof COMPARE_CATEGORIES)[number];
+/** The leaderboard over every category. */
+export type LeaderboardCategory = CompareCategory | "all";
+
+const CODING =
+  /```|\b(code|coding|function|bug|debug|error|exception|stack ?trace|python|javascript|typescript|java|c\+\+|c#|rust|golang|kotlin|swift|php|ruby|sql|regex|api|json|html|css|react|node|compile|script|class|array|loop)\b|=>|\);/i;
+const REASONING =
+  /\b(why|prove|proof|calculate|compute|solve|math|equation|logic|logical|puzzle|riddle|probability|how many|estimate|reason)\b|\d+\s*[-+*/^×÷=]\s*\d+/i;
+const WRITING =
+  /\b(write|rewrite|draft|email|essay|poem|story|caption|tweet|post|letter|blog|headline|slogan|paragraph|summar(y|ise|ize)|translate|proofread|tone)\b/i;
+const EN_WORDS = new Set(
+  "the a an and or is are was what how why who when where to of in on for with this that it you i my me can do does".split(
+    " ",
+  ),
+);
+const OTHER_WORDS = new Set(
+  (
+    "yang dan apa bagaimana saya aku kamu untuk dengan tidak ini itu ada bisa jelaskan tolong buat dalam " +
+    "el la los las que por para con una es como qué " +
+    "le les des est une pour avec pas que qui " +
+    "der die das und ist nicht mit ein eine wie was " +
+    "o os as é um uma não com para como"
+  ).split(" "),
+);
+
+/** Guess a comparison's category from its prompt. */
+export function categorize(prompt: string): CompareCategory {
+  if (CODING.test(prompt)) return "coding";
+  const letters = prompt.match(/\p{L}/gu) ?? [];
+  const latin = letters.filter((c) => /[A-Za-zÀ-ÿ]/.test(c)).length;
+  if (letters.length >= 4 && latin / letters.length < 0.7) return "multilingual";
+  const words = prompt.toLowerCase().match(/[\p{L}']+/gu) ?? [];
+  const en = words.filter((x) => EN_WORDS.has(x)).length;
+  const other = words.filter((x) => OTHER_WORDS.has(x)).length;
+  if (other >= 2 && other > en) return "multilingual";
+  if (REASONING.test(prompt)) return "reasoning";
+  if (WRITING.test(prompt)) return "writing";
+  return "general";
 }

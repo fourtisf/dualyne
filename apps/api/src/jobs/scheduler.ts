@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { treasuryConfig } from "../routes/treasury";
 import { syncTreasury } from "../treasury";
 import { recomputeElo } from "../elo";
-import { blindOnly, LEADERBOARD_CACHE_KEY } from "../routes/votes";
+import { blindOnly, LEADERBOARD_CACHE_KEYS } from "../routes/votes";
 import { alertOnce } from "../lib/alert";
 import { verifyModels } from "./verifyModels";
 
@@ -66,7 +66,7 @@ export function defaultJobs(app: FastifyInstance): Job[] {
       everyMs: DAY,
       run: async () => {
         const r = await recomputeElo(ctx.prisma, { blindOnly: blindOnly(ctx) });
-        await ctx.redis.del(LEADERBOARD_CACHE_KEY);
+        await ctx.redis.del(...LEADERBOARD_CACHE_KEYS);
         app.log.info({ job: "elo-recompute", ...r }, "leaderboard recomputed");
       },
     },

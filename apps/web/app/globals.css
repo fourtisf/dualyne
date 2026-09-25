@@ -859,3 +859,8 @@ button.side-premium{border:0; background:none; padding:0; font:inherit; text-ali
 .ci-text:focus{border-color:rgba(139,92,246,.6)}
 .ci-row{display:flex; align-items:center; gap:8px; margin-top:12px}
 .ci-row small{margin-right:auto; color:var(--faint); font:500 12px/1 var(--mono)}
+/* v12 · leaderboard categories */
+.lb-cats{display:flex; flex-wrap:wrap; gap:6px; margin:0 0 12px}
+.lb-cats button{height:30px; padding:0 12px; border-radius:999px; border:1px solid var(--line2); background:rgba(255,255,255,.02); color:var(--muted); font:500 12.5px/1 var(--sans); cursor:pointer}
+.lb-cats button:hover{color:var(--text)}
+.lb-cats button[aria-pressed="true"]{color:#fff; border-color:rgba(139,92,246,.6); background:rgba(139,92,246,.16)}

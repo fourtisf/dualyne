@@ -4,41 +4,17 @@ import { notFound } from "next/navigation";
 import { brand } from "@dualyne/config";
 import { getCatalog } from "@/lib/catalog";
 import { md } from "@/lib/markdown";
+import { getSharedCompare, type SharedCompare } from "@/lib/shares";
 import { UnshareButton } from "./UnshareButton";
 
-interface Shared {
-  id: string;
-  prompt: string;
-  a: string;
-  b: string;
-  answerA: string;
-  answerB: string;
-  createdAt: string;
-}
-
-async function getShare(id: string): Promise<Shared | null> {
-  if (!/^[A-Za-z0-9]{6,20}$/.test(id)) return null;
-  const base = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL;
-  if (!base) return null;
-  try {
-    const res = await fetch(`${base.replace(/\/$/, "")}/shares/${id}`, {
-      next: { revalidate: 300 },
-      signal: AbortSignal.timeout(3000),
-    });
-    return res.ok ? ((await res.json()) as Shared) : null;
-  } catch {
-    return null;
-  }
-}
-
-async function names(s: Shared) {
+async function names(s: SharedCompare) {
   const { models } = await getCatalog();
   const n = (id: string) => models.find((m) => m.id === id)?.menuName ?? id;
   return { a: n(s.a), b: n(s.b) };
 }
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const s = await getShare(params.id);
+  const s = await getSharedCompare(params.id);
   if (!s) return { title: "Shared comparison", robots: { index: false } };
   const { a, b } = await names(s);
   const prompt = s.prompt.length > 150 ? `${s.prompt.slice(0, 147)}…` : s.prompt;
@@ -51,7 +27,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function SharedPage({ params }: { params: { id: string } }) {
-  const s = await getShare(params.id);
+  const s = await getSharedCompare(params.id);
   if (!s) notFound();
   const { a, b } = await names(s);
   return (

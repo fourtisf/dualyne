@@ -1,12 +1,21 @@
 import { randomInt } from "node:crypto";
 import type { FastifyPluginAsync } from "fastify";
-import { voteRequestSchema, type LeaderboardResponse, type VoteResponse } from "@dualyne/shared";
+import {
+  COMPARE_CATEGORIES,
+  voteRequestSchema,
+  type LeaderboardCategory,
+  type LeaderboardResponse,
+  type VoteResponse,
+} from "@dualyne/shared";
+import { z } from "zod";
 import { SESSION_COOKIE } from "../auth/sessions";
 import type { AppContext } from "../context";
 import { recomputeElo } from "../elo";
 import { ApiError } from "../lib/errors";
 
 const CACHE_KEY = "cache:leaderboard";
+const cacheKey = (category: LeaderboardCategory) => `${CACHE_KEY}:${category}`;
+const leaderboardQuery = z.object({ category: z.enum(["all", ...COMPARE_CATEGORIES]).default("all") });
 const CACHE_TTL = 600;
 
 export const blindOnly = (ctx: AppContext) => ctx.env.COMPARE_BLIND_MODE === "always";
@@ -48,6 +57,7 @@ export const voteRoutes: FastifyPluginAsync = async (app) => {
         modelB: run.modelB,
         winner: body.winner,
         blind: run.blind,
+        category: run.category,
         walletId: wallet?.id ?? null,
         ipHash: run.ipHash,
       },
@@ -57,9 +67,10 @@ export const voteRoutes: FastifyPluginAsync = async (app) => {
     return res;
   });
 
-  app.get("/leaderboard", async (_req, reply) => {
+  app.get("/leaderboard", async (req, reply) => {
+    const { category } = leaderboardQuery.parse(req.query);
     reply.header("cache-control", "public, max-age=60");
-    const cached = await ctx.redis.get(CACHE_KEY);
+    const cached = await ctx.redis.get(cacheKey(category));
     if (cached) return reply.type("application/json").send(cached);
 
     // Cold start: build the table once if votes exist but the nightly job hasn't run yet.
@@ -67,11 +78,17 @@ export const voteRoutes: FastifyPluginAsync = async (app) => {
       await recomputeElo(ctx.prisma, { blindOnly: blindOnly(ctx) });
     }
     const [rows, totalVotes] = await Promise.all([
-      ctx.prisma.eloRating.findMany({ orderBy: { rating: "desc" } }),
-      ctx.prisma.vote.count({ where: blindOnly(ctx) ? { blind: true } : {} }),
+      ctx.prisma.eloRating.findMany({ where: { category }, orderBy: { rating: "desc" } }),
+      ctx.prisma.vote.count({
+        where: {
+          ...(blindOnly(ctx) ? { blind: true } : {}),
+          ...(category === "all" ? {} : { category }),
+        },
+      }),
     ]);
     const body: LeaderboardResponse = {
       updatedAt: rows[0]?.updatedAt.toISOString() ?? null,
+      category,
       totalVotes,
       blindOnly: blindOnly(ctx),
       rows: rows
@@ -87,9 +104,10 @@ export const voteRoutes: FastifyPluginAsync = async (app) => {
     };
     const json = JSON.stringify(body);
     // Cache an empty board only briefly so the first votes show up soon after launch.
-    await ctx.redis.set(CACHE_KEY, json, "EX", body.rows.length ? CACHE_TTL : 60);
+    await ctx.redis.set(cacheKey(category), json, "EX", body.rows.length ? CACHE_TTL : 60);
     return reply.type("application/json").send(json);
   });
 };
 
-export const LEADERBOARD_CACHE_KEY = CACHE_KEY;
+/** Every cached leaderboard, to clear after the ratings change. */
+export const LEADERBOARD_CACHE_KEYS = ["all" as const, ...COMPARE_CATEGORIES].map(cacheKey);

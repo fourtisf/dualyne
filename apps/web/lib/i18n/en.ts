@@ -318,6 +318,15 @@ export const en = {
     bestFor: {} as Record<string, string>,
     lb: {
       scope: "Leaderboard scope",
+      categories: "Category",
+      category: {
+        all: "All",
+        general: "General",
+        coding: "Coding",
+        writing: "Writing",
+        reasoning: "Reasoning",
+        multilingual: "Non-English",
+      },
       yours: "Your votes",
       everyone: "Everyone",
       everyoneDisabled: "Rankings appear after the first votes",

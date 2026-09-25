@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TIER_DEFAULTS, type CatalogModel, type LeaderboardResponse } from "@dualyne/shared";
+import {
+  COMPARE_CATEGORIES,
+  TIER_DEFAULTS,
+  type CatalogModel,
+  type LeaderboardCategory,
+  type LeaderboardResponse,
+} from "@dualyne/shared";
 import { brand } from "@dualyne/config";
 import { publicConfig } from "@/lib/config";
 import { formatContext, formatPerMTok } from "@/lib/format";
@@ -99,20 +105,30 @@ function Leaderboard({ models }: { models: CatalogModel[] }) {
   const [mine, setMine] = useState<ReturnType<typeof ratings>>({ rows: [], total: 0 });
   const [community, setCommunity] = useState<LeaderboardResponse | null>(null);
   const [scope, setScope] = useState<"everyone" | "mine" | null>(null);
+  const [category, setCategory] = useState<LeaderboardCategory>("all");
+  const [board, setBoard] = useState<LeaderboardResponse | null>(null);
   useEffect(() => setMine(ratings(store.get<Match[]>("dualyne.matches", []))), [version]);
   useEffect(() => {
-    fetch(`${publicConfig.apiUrl}/leaderboard`)
+    let live = true;
+    fetch(`${publicConfig.apiUrl}/leaderboard?category=${category}`)
       .then((r) => (r.ok ? (r.json() as Promise<LeaderboardResponse>) : null))
-      .then((d) => setCommunity(d))
-      .catch(() => setCommunity(null));
-  }, []);
+      .then((d) => {
+        if (!live) return;
+        setBoard(d);
+        if (category === "all") setCommunity(d);
+      })
+      .catch(() => live && setBoard(null));
+    return () => {
+      live = false;
+    };
+  }, [category]);
   const name = (id: string) => models.find((m) => m.id === id)?.menuName ?? id;
   const hasCommunity = Boolean(community && community.rows.length);
   const active = scope ?? (hasCommunity ? "everyone" : "mine");
 
   const meta =
-    active === "everyone" && community
-      ? t.metaCommunity(community.totalVotes, community.blindOnly)
+    active === "everyone" && board
+      ? t.metaCommunity(board.totalVotes, board.blindOnly)
       : mine.total
         ? t.metaMine(mine.total, hasCommunity)
         : hasCommunity
@@ -120,8 +136,8 @@ function Leaderboard({ models }: { models: CatalogModel[] }) {
           : t.metaNone;
 
   const rows =
-    active === "everyone" && community
-      ? community.rows.map((r) => ({ id: r.modelId, r: r.rating, w: r.wins, n: r.games }))
+    active === "everyone"
+      ? (board?.rows ?? []).map((r) => ({ id: r.modelId, r: r.rating, w: r.wins, n: r.games }))
       : mine.rows;
 
   return (
@@ -144,6 +160,15 @@ function Leaderboard({ models }: { models: CatalogModel[] }) {
         <span className="sp" />
         <span id="lbMeta">{meta}</span>
       </div>
+      {active === "everyone" && hasCommunity && (
+        <div className="lb-cats" role="group" aria-label={t.categories}>
+          {(["all", ...COMPARE_CATEGORIES] as const).map((c) => (
+            <button key={c} type="button" aria-pressed={category === c} onClick={() => setCategory(c)}>
+              {t.category[c]}
+            </button>
+          ))}
+        </div>
+      )}
       <div id="lbBody">
         {!rows.length ? (
           <div className="lb-empty">

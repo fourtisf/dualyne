@@ -1,5 +1,5 @@
 import type { Model } from "@prisma/client";
-import { compareRequestSchema, type CompareEvents, type Lane } from "@dualyne/shared";
+import { categorize, compareRequestSchema, type CompareEvents, type Lane } from "@dualyne/shared";
 import type { FastifyPluginAsync } from "fastify";
 import { isRefusal, type Refusal, type Reservation } from "../budget";
 import { ApiError } from "../lib/errors";
@@ -130,7 +130,14 @@ export const compareRoutes: FastifyPluginAsync = async (app) => {
       reply.header("x-compare-remaining", slot.remaining);
 
       const run = await ctx.prisma.compareRun.create({
-        data: { modelA: modelA.id, modelB: modelB.id, ipHash, blind, createdAt: ctx.clock() },
+        data: {
+          modelA: modelA.id,
+          modelB: modelB.id,
+          ipHash,
+          blind,
+          category: categorize(body.prompt),
+          createdAt: ctx.clock(),
+        },
       });
 
       reply.hijack();

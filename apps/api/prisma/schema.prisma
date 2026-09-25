@@ -147,6 +147,8 @@ model CompareRun {
   completedB Boolean  @default(false)
   /// Blind run: the server picked the models and hides them until the vote.
   blind      Boolean  @default(false)
+  /// Leaderboard category guessed from the prompt (the prompt itself isn't stored).
+  category   String   @default("general")
   vote       Vote?
 
   @@index([createdAt])
@@ -161,6 +163,7 @@ model Vote {
   modelB    String
   winner    String // "a" | "b" | "tie"
   blind     Boolean
+  category  String     @default("general")
   walletId  String?
   ipHash    String
   createdAt DateTime   @default(now())
@@ -171,13 +174,17 @@ model Vote {
 
 /// Elo ratings, recomputed nightly from all votes (K=24, start 1000).
 model EloRating {
-  modelId   String   @id
+  /// "all", or one of the compare categories.
+  category  String   @default("all")
+  modelId   String
   rating    Float
   wins      Int
   losses    Int
   ties      Int
   games     Int
   updatedAt DateTime @updatedAt
+
+  @@id([category, modelId])
 }
 
 /// Prepaid Builder credit per wallet, in micro-USD.

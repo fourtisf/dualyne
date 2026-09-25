@@ -81,6 +81,29 @@ describe("community votes", () => {
   });
 });
 
+describe("leaderboard categories", () => {
+  it("files each vote under a category guessed from the prompt and ranks per category", async () => {
+    const code = await runCompare({ a: "claude-swift", b: "llama", prompt: "Fix this Python bug: x = [1,2" });
+    const chat = await runCompare({ a: "claude-swift", b: "llama", prompt: "Tell me a fun fact" });
+    await vote(code.compareId, "b");
+    await vote(chat.compareId, "a");
+    const votes = await t.prisma.vote.findMany({ orderBy: { createdAt: "asc" } });
+    expect(votes.map((v) => v.category).sort()).toEqual(["coding", "general"]);
+    await recomputeElo(t.prisma, { blindOnly: false });
+
+    const coding = (await t.app.inject({ method: "GET", url: "/leaderboard?category=coding" })).json();
+    expect(coding.category).toBe("coding");
+    expect(coding.totalVotes).toBe(1);
+    expect(coding.rows[0]).toMatchObject({ modelId: "llama", wins: 1, games: 1 });
+    const all = (await t.app.inject({ method: "GET", url: "/leaderboard" })).json();
+    expect(all).toMatchObject({ category: "all", totalVotes: 2 });
+    expect(all.rows.map((r: { games: number }) => r.games)).toEqual([2, 2]);
+    const writing = (await t.app.inject({ method: "GET", url: "/leaderboard?category=writing" })).json();
+    expect(writing).toMatchObject({ totalVotes: 0, rows: [] });
+    expect((await t.app.inject({ method: "GET", url: "/leaderboard?category=poems" })).statusCode).toBe(400);
+  });
+});
+
 describe("blind comparisons", () => {
   it("picks two different free models, hides them, and reveals them after the vote", async () => {
     const meta = await runCompare({ blind: true });
