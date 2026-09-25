@@ -1298,6 +1298,151 @@
         box-shadow: 0 0 10px #67e8f9;
       }
 
+      /* ================= article cover 5:2 ================= */
+      .banner.article {
+        width: 1500px;
+        height: 600px;
+      }
+      #article .brand {
+        top: 44px;
+      }
+      #article .copy {
+        position: absolute;
+        left: 64px;
+        top: 150px;
+        width: 640px;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+        z-index: 3;
+      }
+      #article h1 {
+        font-size: 76px;
+      }
+      #article .sub {
+        margin: 0;
+        font-size: 21px;
+        line-height: 1.5;
+        color: #c9c9d2;
+        max-width: 560px;
+      }
+      #article .pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      #article .pills span {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 38px;
+        padding: 0 14px;
+        border-radius: 12px;
+        font: 500 15px/1 var(--sans);
+        color: #ededf2;
+        background: rgba(255, 255, 255, 0.05);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+      }
+      #article .stage3d {
+        left: 760px;
+        top: 70px;
+        width: 700px;
+        height: 480px;
+      }
+      #article .window {
+        width: 680px;
+        transform: rotateY(-14deg) rotateX(5deg);
+        transform-origin: 30% 50%;
+      }
+      .cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        padding: 16px;
+      }
+      .q {
+        grid-column: 1 / -1;
+        justify-self: end;
+        max-width: 80%;
+        padding: 10px 14px;
+        border-radius: 14px 14px 4px 14px;
+        font-size: 15px;
+        color: #fff;
+        background: rgba(139, 92, 246, 0.2);
+        box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.35);
+      }
+      .col {
+        padding: 14px;
+        border-radius: 14px;
+        font-size: 14px;
+        line-height: 1.55;
+        color: #c9c9d2;
+        background: rgba(255, 255, 255, 0.03);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+      }
+      .col.on {
+        box-shadow:
+          inset 0 0 0 1px rgba(167, 139, 250, 0.7),
+          0 0 30px -10px rgba(139, 92, 246, 0.7);
+      }
+      .col b {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 8px;
+        font-size: 14px;
+        color: #fff;
+      }
+      .col b img {
+        width: 18px;
+        height: 18px;
+      }
+      .col .tag {
+        display: block;
+        margin-top: 10px;
+        font: 600 11px/1 var(--mono);
+        color: #c4b5fd;
+      }
+      .srcs {
+        grid-column: 1 / -1;
+        display: flex;
+        gap: 8px;
+        font: 500 12px/1 var(--mono);
+        color: #a5b4fc;
+      }
+      .srcs span {
+        padding: 6px 9px;
+        border-radius: 8px;
+        background: rgba(165, 180, 252, 0.08);
+      }
+      .composer-mock {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 16px 16px;
+        padding: 10px 12px;
+        border-radius: 14px;
+        font-size: 14px;
+        color: #6b6b78;
+        box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.45);
+      }
+      .composer-mock i {
+        font-style: normal;
+        padding: 5px 9px;
+        border-radius: 8px;
+        font-size: 12.5px;
+        color: #ddd6fe;
+        background: rgba(139, 92, 246, 0.16);
+      }
+      .composer-mock .send {
+        margin-left: auto;
+        padding: 8px 14px;
+        border-radius: 10px;
+        color: #08080a;
+        font-weight: 600;
+        background: linear-gradient(180deg, #fff, #d6d6de);
+      }
+
       /* ================= 06 telegram ================= */
       #telegram .copy {
         position: absolute;
@@ -2058,6 +2203,64 @@ reply = client.chat.completions.<span class="f">create</span>(
       </div>
       <div class="foot">
         <span>07 / Docs</span><span class="rule"></span><span style="color: #c9c9d2">dualyne.com/docs</span>
+      </div>
+    </section>
+
+    <!-- Article cover (X Articles, 5:2) -->
+    <section class="banner article" id="article" style="--gx: 70%; --gy: 40%">
+      <div class="aurora">
+        <i
+          style="left: 700px; top: -200px; width: 700px; height: 460px; background: #5b2fd6; opacity: 0.55"
+        ></i>
+        <i
+          style="left: 1050px; top: 300px; width: 520px; height: 340px; background: #0e7490; opacity: 0.45"
+        ></i>
+        <i
+          style="left: -160px; top: 360px; width: 560px; height: 320px; background: #9d174d; opacity: 0.25"
+        ></i>
+      </div>
+      <div class="grid"></div>
+      <div class="floor" style="opacity: 0.5"></div>
+      <div data-chrome></div>
+      <div class="brand" data-logo>dualyne</div>
+      <div class="copy">
+        <span class="kick"><i>NEW</i>Introducing Dualyne</span>
+        <h1><span class="metal">Every AI model.</span><br /><span class="accent">One place.</span></h1>
+        <p class="sub">Ask Claude, Llama, DeepSeek and Mistral side by side. Free to start, no signup.</p>
+        <div class="pills">
+          <span>📎 Images &amp; PDFs</span><span>🌐 Web search</span><span>⚖️ Ask several</span
+          ><span>🔑 One API</span>
+        </div>
+      </div>
+      <div class="stage3d">
+        <div class="window">
+          <div class="bar">
+            <div class="lights"><span></span><span></span><span></span></div>
+            <span class="t">Chat</span>
+            <span class="live"><span class="dot"></span>dualyne.com</span>
+          </div>
+          <div class="cols">
+            <div class="q">Best way to learn Python in a month?</div>
+            <div class="col on">
+              <b><img src="../../apps/web/public/providers/anthropic.svg" alt="" />Claude Swift</b>
+              Build one small project a week: a to-do app, a scraper, a bot. Read errors out loud, then fix
+              them.
+              <span class="tag">✓ CONTINUING WITH THIS</span>
+            </div>
+            <div class="col">
+              <b><img src="../../apps/web/public/providers/meta.svg" alt="" />Llama</b>
+              Week 1 basics, week 2 functions, week 3 files and APIs, week 4 a real project you actually use.
+            </div>
+            <div class="srcs"><span>1 · python.org</span><span>2 · realpython.com</span></div>
+          </div>
+          <div class="composer-mock">
+            📎 <i>🌐 Web</i><i>⚖️ 2 models</i> Ask anything… <span class="send">Send</span>
+          </div>
+        </div>
+      </div>
+      <div class="foot">
+        <span>Chat · Compare · Build</span><span class="rule"></span
+        ><span style="color: #c9c9d2">dualyne.com</span>
       </div>
     </section>
 

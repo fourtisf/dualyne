@@ -26,6 +26,7 @@ const names = {
   api: "05-api",
   telegram: "06-telegram",
   docs: "07-docs",
+  article: "article-cover-1500x600",
   header: "x-header-1500x500",
 };
 
