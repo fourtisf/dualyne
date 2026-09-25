@@ -173,7 +173,10 @@ export type ChatQuota = (
       remaining: number;
       premiumLimit: number;
       premiumRemaining: number;
-      proUntil: string;
+      /** End of paid Pro time; null when Pro comes only from holding a Dualyne Pass. */
+      proUntil: string | null;
+      /** The wallet holds a Dualyne Pass. */
+      pass?: boolean;
     }
 ) & { webLimit: number; webRemaining: number };
 

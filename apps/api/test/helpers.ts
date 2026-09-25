@@ -8,7 +8,7 @@ import { buildApp } from "../src/app";
 import { generateApiKey } from "../src/auth/apiKey";
 import { loadEnv } from "../src/env";
 import { seedModels } from "../prisma/seed";
-import type { ChainReader, DepositTx, Erc20Transfer } from "../src/chain/types";
+import type { ChainReader, DepositTx, Erc20Transfer, PassState } from "../src/chain/types";
 
 // ---------- fake OpenRouter + Turnstile ----------
 
@@ -406,6 +406,12 @@ export class FakeChain implements ChainReader {
   }
   async ethUsdPrice() {
     return this.ethPrice;
+  }
+  pass: PassState = { priceWei: 10n ** 16n, minted: 12, maxSupply: 500, maxPerWallet: 5, mintOpen: true };
+  async passState() {
+    this.calls++;
+    if (this.failing) throw new Error("rpc down");
+    return this.pass;
   }
   verifyMessage(args: { address: Address; message: string; signature: Hex }) {
     return verifyMessage(args);

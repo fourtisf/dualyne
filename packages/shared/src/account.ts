@@ -98,6 +98,8 @@ export interface StatusResponse {
 /** GET /me/pro: the Pro plan for the signed-in wallet. */
 export interface ProResponse {
   active: boolean;
+  /** Pro comes from holding a Dualyne Pass (no end date while it's held). */
+  pass: boolean;
   proUntil: string | null;
   priceUsd: number;
   days: number;

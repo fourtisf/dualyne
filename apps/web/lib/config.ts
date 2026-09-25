@@ -24,6 +24,8 @@ export const publicConfig = {
   dlynTokenAddress: process.env.NEXT_PUBLIC_DLYN_TOKEN_ADDRESS || brand.tokenAddress,
   dlynBuyUrl: process.env.NEXT_PUBLIC_DLYN_BUY_URL || "",
   dlynChartUrl: process.env.NEXT_PUBLIC_DLYN_CHART_URL || "",
+  /** Dualyne Pass NFT contract (PASS_NFT_ADDRESS, copied by deploy.sh). Empty: no Pass link. */
+  passAddress: process.env.NEXT_PUBLIC_PASS_NFT_ADDRESS || "",
   /** Block explorer base URL, e.g. https://basescan.org */
   explorerUrl: (process.env.NEXT_PUBLIC_EXPLORER_URL || "").replace(/\/$/, ""),
 };

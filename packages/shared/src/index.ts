@@ -3,3 +3,4 @@ export * from "./models";
 export * from "./compare";
 export * from "./chat";
 export * from "./account";
+export * from "./pass";

@@ -178,6 +178,12 @@ const schema = z
     /** First block to scan for treasury inflows. Default: the last ~10,000 blocks. */
     TREASURY_START_BLOCK: z.coerce.number().int().min(0).optional(),
     CHAIN_CONFIRMATIONS: z.coerce.number().int().min(0).default(3),
+    /** Dualyne Pass NFT (contracts/DualynePass.sol) on SIWE_CHAIN_ID. Holders get Pro. Needs RPC_URL. */
+    PASS_NFT_ADDRESS: z
+      .string()
+      .regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x address")
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
 
     // Community leaderboard and Builder credits (Phase 5)
     /** optional = people pick models (blind is a choice); always = every run is blind (anti-manipulation). */

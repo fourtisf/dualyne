@@ -6,7 +6,8 @@ import { requireOwnOrigin, requireWallet } from "../auth/request";
 import { ApiError } from "../lib/errors";
 import { microToUsd } from "../lib/money";
 import { paymentsOpen, stablecoins, txAlreadyUsed, verifyPayment } from "../payments";
-import { applyProPayment, isPro, periodsPaid } from "../pro";
+import { applyProPayment, periodsPaid } from "../pro";
+import { proStatus } from "../pass";
 
 const payBody = z
   .object({ txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/, "Invalid transaction hash") })
@@ -21,6 +22,7 @@ export const proRoutes: FastifyPluginAsync = async (app) => {
     reply.header("cache-control", "no-store");
     const wallet = await requireWallet(ctx, req);
     const open = env.PRO_OPEN && paymentsOpen(ctx);
+    const status = await proStatus(ctx, wallet);
     const [tokens, ethUsd, payments] = await Promise.all([
       Promise.all(
         stablecoins(env).map(async (t) => ({
@@ -39,7 +41,8 @@ export const proRoutes: FastifyPluginAsync = async (app) => {
       }),
     ]);
     const body: ProResponse = {
-      active: isPro(wallet, ctx.clock()),
+      active: status.active,
+      pass: status.pass,
       proUntil: wallet.proUntil?.toISOString() ?? null,
       priceUsd: env.PRO_PRICE_USD,
       days: env.PRO_DAYS,

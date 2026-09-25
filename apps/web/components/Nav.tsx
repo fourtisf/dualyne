@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { brand } from "@dualyne/config";
+import { publicConfig } from "@/lib/config";
 import { href } from "@/lib/i18n";
 import { Logo } from "./Logo";
 import { TopBar } from "./TopBar";
@@ -53,6 +54,11 @@ export function Nav() {
             {brand.tokenEnabled && (
               <li>
                 <a href={h("/#token")}>{t.token}</a>
+              </li>
+            )}
+            {publicConfig.passAddress && (
+              <li>
+                <Link href="/pass">{t.pass}</Link>
               </li>
             )}
             <li>
@@ -108,6 +114,11 @@ export function Nav() {
           <a href={h("/#token")} onClick={close}>
             {t.token}
           </a>
+        )}
+        {publicConfig.passAddress && (
+          <Link href="/pass" onClick={close}>
+            {t.pass}
+          </Link>
         )}
         <a href={h("/#faq")} onClick={close}>
           {t.faq}

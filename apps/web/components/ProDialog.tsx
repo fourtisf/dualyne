@@ -307,6 +307,7 @@ export function ProDialog() {
             {info.active && info.proUntil && (
               <p className="pro-active">{t.activeUntil(fmtDate(info.proUntil))}</p>
             )}
+            {info.pass && <p className="pro-active">{t.viaPass}</p>}
 
             {!info.open || options.length === 0 ? (
               <p className="pro-closed">{t.closed}</p>

@@ -15,6 +15,8 @@ export interface ChainReader {
   getDepositTx(hash: Hex): Promise<DepositTx | null>;
   /** USD per ETH from a Chainlink feed. Throws if the answer is missing or older than 3 hours. */
   ethUsdPrice(feed: Address): Promise<number>;
+  /** Sale state of a Dualyne Pass contract. */
+  passState(pass: Address): Promise<PassState>;
   /** Signature check that also supports smart-contract wallets (ERC-1271 / ERC-6492). */
   verifyMessage(args: { address: Address; message: string; signature: Hex }): Promise<boolean>;
 }
@@ -37,4 +39,12 @@ export interface DepositTx {
   value: bigint;
   /** ERC-20 Transfer events emitted by the transaction. */
   transfers: { token: Address; from: Address; to: Address; value: bigint }[];
+}
+
+export interface PassState {
+  priceWei: bigint;
+  minted: number;
+  maxSupply: number;
+  maxPerWallet: number;
+  mintOpen: boolean;
 }

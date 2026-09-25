@@ -8,7 +8,8 @@ import { estimateTokens, tokensCostMicro, usdToMicro } from "../lib/money";
 import { secondsUntilUtcMidnight } from "../lib/time";
 import { readEvents, StreamInspector } from "../openrouter/sse";
 import { verifyTurnstile } from "../turnstile";
-import { isPro, premiumSpendMicro } from "../pro";
+import { premiumSpendMicro } from "../pro";
+import { proStatus } from "../pass";
 import { isOwner } from "../tierService";
 
 /** What the owner's quota shows: there is no real limit. */
@@ -24,7 +25,8 @@ const TURNSTILE_ACTION = "chat";
 /**
  * The website's Chat page: one model, a short conversation, streamed back.
  * Free plan: the free (explorer) models, CHAT_LIMIT_PER_DAY per person, paused when the day's free
- * budget is spent. Pro plan (signed-in wallet with proUntil in the future): every model,
+ * budget is spent. Pro plan (signed-in wallet with proUntil in the future, or holding a Dualyne
+ * Pass): every model,
  * PRO_CHAT_PER_DAY messages of which PRO_PREMIUM_PER_DAY on premium models, a fair-use cap on
  * premium cost, and longer answers. The conversation lives in the browser; the server keeps no text.
  */
@@ -49,7 +51,8 @@ export const freeChatRoutes: FastifyPluginAsync = async (app) => {
         };
         return body;
       }
-      if (wallet && isPro(wallet, ctx.clock())) {
+      const status = await proStatus(ctx, wallet);
+      if (wallet && status.active) {
         const [remaining, premiumRemaining, webRemaining] = await Promise.all([
           ctx.proChatLimiter.remaining(wallet.id),
           ctx.proPremiumLimiter.remaining(wallet.id),
@@ -61,7 +64,8 @@ export const freeChatRoutes: FastifyPluginAsync = async (app) => {
           remaining,
           premiumLimit: env.PRO_PREMIUM_PER_DAY,
           premiumRemaining,
-          proUntil: wallet.proUntil!.toISOString(),
+          proUntil: wallet.proUntil && wallet.proUntil > ctx.clock() ? wallet.proUntil.toISOString() : null,
+          ...(status.pass ? { pass: true } : {}),
           webLimit: env.WEB_SEARCH_PRO_PER_DAY,
           webRemaining,
         };
@@ -94,7 +98,7 @@ export const freeChatRoutes: FastifyPluginAsync = async (app) => {
       const wallet = await ctx.sessions.get(req.cookies[SESSION_COOKIE]);
       // The owner (OWNER_ACCOUNTS) gets everything Pro has, with no limits.
       const owner = isOwner(env.OWNER_ACCOUNTS, wallet);
-      const pro = wallet && (owner || isPro(wallet, ctx.clock())) ? wallet : null;
+      const pro = wallet && (owner || (await proStatus(ctx, wallet)).active) ? wallet : null;
       const premium = model.minTier !== "explorer";
       if (premium && !pro) {
         throw new ApiError(

@@ -1,0 +1,15 @@
+{
+  "name": "dualyne-contracts",
+  "private": true,
+  "description": "The Dualyne Pass NFT. Not part of the pnpm workspace: `npm install` here to compile or deploy.",
+  "type": "module",
+  "scripts": {
+    "compile": "node compile.mjs",
+    "pass": "node pass.mjs"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "5.1.0",
+    "solc": "0.8.26",
+    "viem": "2.56.8"
+  }
+}

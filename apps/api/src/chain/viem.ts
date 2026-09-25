@@ -12,12 +12,19 @@ import {
   type Hex,
   type PublicClient,
 } from "viem";
-import type { ChainReader, DepositTx, Erc20Transfer } from "./types";
+import type { ChainReader, DepositTx, Erc20Transfer, PassState } from "./types";
 
 const TRANSFER = parseAbiItem("event Transfer(address indexed from, address indexed to, uint256 value)");
 const FEED_ABI = parseAbi([
   "function decimals() view returns (uint8)",
   "function latestRoundData() view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)",
+]);
+const PASS_ABI = parseAbi([
+  "function price() view returns (uint256)",
+  "function totalMinted() view returns (uint256)",
+  "function maxSupply() view returns (uint256)",
+  "function maxPerWallet() view returns (uint256)",
+  "function mintOpen() view returns (bool)",
 ]);
 const MAX_PRICE_AGE_S = 3 * 3600;
 
@@ -47,6 +54,26 @@ export class ViemChain implements ChainReader {
       functionName: "balanceOf",
       args: [address],
     });
+  }
+
+  async passState(pass: Address): Promise<PassState> {
+    const read = <F extends "price" | "totalMinted" | "maxSupply" | "maxPerWallet" | "mintOpen">(
+      functionName: F,
+    ) => this.client.readContract({ address: pass, abi: PASS_ABI, functionName });
+    const [priceWei, minted, maxSupply, maxPerWallet, mintOpen] = await Promise.all([
+      read("price"),
+      read("totalMinted"),
+      read("maxSupply"),
+      read("maxPerWallet"),
+      read("mintOpen"),
+    ]);
+    return {
+      priceWei,
+      minted: Number(minted),
+      maxSupply: Number(maxSupply),
+      maxPerWallet: Number(maxPerWallet),
+      mintOpen,
+    };
   }
 
   async tokenDecimals(token: Address): Promise<number> {
