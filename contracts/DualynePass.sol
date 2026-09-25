@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
@@ -16,7 +17,10 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 ///         owner reserve, withdraw), without tiers or a reveal, since every Pass gives the same
 ///         access. The artwork is drawn on-chain; packages/shared/src/pass.ts draws the same SVG
 ///         for the website and a test checks the two match.
-contract DualynePass is ERC721, Ownable, ReentrancyGuard {
+///
+///         Marketplaces read contractURI() for the collection page and royaltyInfo() (ERC-2981)
+///         for the creator fee on resales.
+contract DualynePass is ERC721, ERC2981, Ownable, ReentrancyGuard {
     using Strings for uint256;
 
     /* ─────────── supply ─────────── */
@@ -36,6 +40,7 @@ contract DualynePass is ERC721, Ownable, ReentrancyGuard {
     event Minted(address indexed to, uint256 indexed firstId, uint256 quantity);
     event MintOpenSet(bool open);
     event PriceSet(uint256 price);
+    event RoyaltySet(address receiver, uint96 bps);
 
     error MintClosed();
     error BadQuantity();
@@ -44,13 +49,15 @@ contract DualynePass is ERC721, Ownable, ReentrancyGuard {
     error BadPayment();
     error TransferFailed();
 
-    constructor(uint256 maxSupply_, uint256 maxPerWallet_, uint256 price_, address owner_)
+    /// @param royaltyBps_ creator fee on resales, in basis points (500 = 5%), paid to owner_
+    constructor(uint256 maxSupply_, uint256 maxPerWallet_, uint256 price_, address owner_, uint96 royaltyBps_)
         ERC721("Dualyne Pass", "DPASS")
         Ownable(owner_)
     {
         maxSupply = maxSupply_;
         maxPerWallet = maxPerWallet_;
         price = price_;
+        _setDefaultRoyalty(owner_, royaltyBps_);
     }
 
     /* ─────────── minting ─────────── */
@@ -90,16 +97,41 @@ contract DualynePass is ERC721, Ownable, ReentrancyGuard {
         emit PriceSet(p);
     }
 
+    /// @notice Marketplaces may or may not honour this; max 10%.
+    function setRoyalty(address receiver, uint96 bps) external onlyOwner {
+        require(bps <= 1000, "royalty over 10%");
+        _setDefaultRoyalty(receiver, bps);
+        emit RoyaltySet(receiver, bps);
+    }
+
     function withdraw(address payable to) external onlyOwner nonReentrant {
         (bool ok, ) = to.call{value: address(this).balance}("");
         if (!ok) revert TransferFailed();
     }
 
-    /* ─────────── artwork ─────────── */
+    /* ─────────── reads ─────────── */
 
     function totalSupply() external view returns (uint256) {
         return totalMinted;
     }
+
+    function supportsInterface(bytes4 id) public view override(ERC721, ERC2981) returns (bool) {
+        return super.supportsInterface(id);
+    }
+
+    /// @notice Collection details for marketplaces (OpenSea and others read this).
+    function contractURI() external pure returns (string memory) {
+        (, string memory a, string memory b) = _palette(1);
+        string memory json = string.concat(
+            '{"name":"Dualyne Pass",',
+            '"description":"Hold a Dualyne Pass and your wallet has Dualyne Pro: every AI model in Chat (GPT-5, Gemini, Claude and more) with Pro daily limits, for as long as you hold it. Sign in at dualyne.com with the wallet that holds it.",',
+            '"image":"data:image/svg+xml;base64,', Base64.encode(bytes(svg(1, a, b, "0001"))), '",',
+            '"external_link":"https://dualyne.com/pass"}'
+        );
+        return string.concat("data:application/json;base64,", Base64.encode(bytes(json)));
+    }
+
+    /* ─────────── artwork ─────────── */
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
         _requireOwned(tokenId);

@@ -1635,6 +1635,64 @@
         bottom: 34px;
         width: 760px;
       }
+      /* 08 · Dualyne Pass (NFT) */
+      #pass .copy {
+        position: absolute;
+        left: 52px;
+        top: 136px;
+        width: 500px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        z-index: 3;
+      }
+      #pass .cards {
+        position: absolute;
+        left: 590px;
+        top: 70px;
+        width: 560px;
+        height: 540px;
+        perspective: 1600px;
+        z-index: 2;
+      }
+      #pass .card {
+        position: absolute;
+        width: 330px;
+        height: 330px;
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow:
+          0 40px 90px -20px rgba(0, 0, 0, 0.85),
+          0 0 0 1px rgba(255, 255, 255, 0.1);
+      }
+      #pass .card svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      #pass .c1 {
+        left: 10px;
+        top: 150px;
+        transform: rotateY(18deg) rotateZ(-8deg);
+        opacity: 0.8;
+      }
+      #pass .c2 {
+        left: 220px;
+        top: 170px;
+        transform: rotateY(-16deg) rotateZ(7deg);
+        opacity: 0.85;
+      }
+      #pass .c3 {
+        left: 110px;
+        top: 40px;
+        width: 360px;
+        height: 360px;
+        transform: rotateX(8deg);
+        z-index: 2;
+        box-shadow:
+          0 50px 110px -20px rgba(124, 92, 255, 0.55),
+          0 0 0 1px rgba(255, 255, 255, 0.16);
+      }
     </style>
   </head>
   <body>
@@ -2204,6 +2262,184 @@ reply = client.chat.completions.<span class="f">create</span>(
       </div>
       <div class="foot">
         <span>07 / Docs</span><span class="rule"></span><span style="color: #c9c9d2">dualyne.com/docs</span>
+      </div>
+    </section>
+
+    <!-- 08 · Dualyne Pass (NFT) -->
+    <section class="banner" id="pass" style="--gx: 70%; --gy: 40%">
+      <div class="aurora">
+        <i
+          style="left: 640px; top: -120px; width: 600px; height: 440px; background: #6d28d9; opacity: 0.5"
+        ></i>
+        <i
+          style="left: 860px; top: 400px; width: 420px; height: 300px; background: #db2777; opacity: 0.32"
+        ></i>
+        <i
+          style="left: -180px; top: 460px; width: 460px; height: 300px; background: #0e7490; opacity: 0.25"
+        ></i>
+      </div>
+      <div class="grid"></div>
+      <div class="floor" style="opacity: 0.45"></div>
+      <div data-chrome></div>
+      <div class="brand" data-logo>dualyne</div>
+      <div class="pill glass"><span class="dot"></span>dualyne.com/pass</div>
+      <div class="copy">
+        <span class="kick"><i>NFT</i>Dualyne Pass</span>
+        <h2 style="font-size: 60px">
+          <span class="metal">Hold a Pass.</span><br /><span class="accent">Get Pro.</span>
+        </h2>
+        <ol class="nsteps">
+          <li>
+            <span><b>Every AI model</b> · GPT-5, Gemini, Claude Opus</span>
+          </li>
+          <li>
+            <span><b>No subscription.</b> Pro while you hold it</span>
+          </li>
+          <li>
+            <span><b>Art fully on-chain</b> · 6 colors</span>
+          </li>
+        </ol>
+        <span class="free"><b>MINT</b>dualyne.com/pass</span>
+      </div>
+      <div class="cards">
+        <div class="card c1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+            <defs>
+              <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#34D399" />
+                <stop offset="1" stop-color="#22D3EE" />
+              </linearGradient>
+              <radialGradient id="r2" cx=".3" cy=".2" r=".9">
+                <stop offset="0" stop-color="#34D399" stop-opacity=".35" />
+                <stop offset="1" stop-color="#34D399" stop-opacity="0" />
+              </radialGradient>
+            </defs>
+            <rect width="600" height="600" fill="#07070A" />
+            <rect width="600" height="600" fill="url(#r2)" />
+            <rect
+              x="60"
+              y="120"
+              width="480"
+              height="360"
+              rx="28"
+              fill="#0E0E13"
+              stroke="url(#g2)"
+              stroke-width="3"
+            />
+            <path
+              d="M104 176l22 18-22 18"
+              fill="none"
+              stroke="url(#g2)"
+              stroke-width="7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path d="M138 200h26M138 212h18" stroke="url(#g2)" stroke-width="6" stroke-linecap="round" />
+            <text x="104" y="300" font-family="monospace" font-size="44" font-weight="700" fill="#F4F4F6">
+              DUALYNE PASS
+            </text>
+            <text x="104" y="346" font-family="monospace" font-size="20" fill="#9A9AA6">
+              Pro access &#183; every model
+            </text>
+            <text x="104" y="432" font-family="monospace" font-size="22" fill="url(#g2)">#0002</text>
+            <text x="496" y="432" text-anchor="end" font-family="monospace" font-size="18" fill="#6B6B78">
+              dualyne.com
+            </text>
+          </svg>
+        </div>
+        <div class="card c2">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+            <defs>
+              <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#F59E0B" />
+                <stop offset="1" stop-color="#F472B6" />
+              </linearGradient>
+              <radialGradient id="r3" cx=".3" cy=".2" r=".9">
+                <stop offset="0" stop-color="#F59E0B" stop-opacity=".35" />
+                <stop offset="1" stop-color="#F59E0B" stop-opacity="0" />
+              </radialGradient>
+            </defs>
+            <rect width="600" height="600" fill="#07070A" />
+            <rect width="600" height="600" fill="url(#r3)" />
+            <rect
+              x="60"
+              y="120"
+              width="480"
+              height="360"
+              rx="28"
+              fill="#0E0E13"
+              stroke="url(#g3)"
+              stroke-width="3"
+            />
+            <path
+              d="M104 176l22 18-22 18"
+              fill="none"
+              stroke="url(#g3)"
+              stroke-width="7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path d="M138 200h26M138 212h18" stroke="url(#g3)" stroke-width="6" stroke-linecap="round" />
+            <text x="104" y="300" font-family="monospace" font-size="44" font-weight="700" fill="#F4F4F6">
+              DUALYNE PASS
+            </text>
+            <text x="104" y="346" font-family="monospace" font-size="20" fill="#9A9AA6">
+              Pro access &#183; every model
+            </text>
+            <text x="104" y="432" font-family="monospace" font-size="22" fill="url(#g3)">#0003</text>
+            <text x="496" y="432" text-anchor="end" font-family="monospace" font-size="18" fill="#6B6B78">
+              dualyne.com
+            </text>
+          </svg>
+        </div>
+        <div class="card c3">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+            <defs>
+              <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#A78BFA" />
+                <stop offset="1" stop-color="#F472B6" />
+              </linearGradient>
+              <radialGradient id="r1" cx=".3" cy=".2" r=".9">
+                <stop offset="0" stop-color="#A78BFA" stop-opacity=".35" />
+                <stop offset="1" stop-color="#A78BFA" stop-opacity="0" />
+              </radialGradient>
+            </defs>
+            <rect width="600" height="600" fill="#07070A" />
+            <rect width="600" height="600" fill="url(#r1)" />
+            <rect
+              x="60"
+              y="120"
+              width="480"
+              height="360"
+              rx="28"
+              fill="#0E0E13"
+              stroke="url(#g1)"
+              stroke-width="3"
+            />
+            <path
+              d="M104 176l22 18-22 18"
+              fill="none"
+              stroke="url(#g1)"
+              stroke-width="7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path d="M138 200h26M138 212h18" stroke="url(#g1)" stroke-width="6" stroke-linecap="round" />
+            <text x="104" y="300" font-family="monospace" font-size="44" font-weight="700" fill="#F4F4F6">
+              DUALYNE PASS
+            </text>
+            <text x="104" y="346" font-family="monospace" font-size="20" fill="#9A9AA6">
+              Pro access &#183; every model
+            </text>
+            <text x="104" y="432" font-family="monospace" font-size="22" fill="url(#g1)">#0001</text>
+            <text x="496" y="432" text-anchor="end" font-family="monospace" font-size="18" fill="#6B6B78">
+              dualyne.com
+            </text>
+          </svg>
+        </div>
+      </div>
+      <div class="foot">
+        <span>08 / Pass</span><span class="rule"></span><span style="color: #c9c9d2">dualyne.com/pass</span>
       </div>
     </section>
 

@@ -5,6 +5,7 @@
 //   … node pass.mjs price 0.02            (ETH per Pass)
 //   … node pass.mjs reserve 0xWallet 10   (free mints for the team or giveaways)
 //   … node pass.mjs withdraw 0xWallet     (send the mint money there)
+//   … node pass.mjs royalty 0xWallet 500  (creator fee on resales, 500 = 5%)
 //
 // The key is read from the environment and never printed or saved. Use the wallet that should own
 // the contract; only that wallet can open the mint, change the price or withdraw.
@@ -24,7 +25,7 @@ function fail(msg) {
 }
 if (!cmd)
   fail(
-    "Usage: node pass.mjs deploy | open | close | status | price <eth> | reserve <to> <n> | withdraw <to>",
+    "Usage: node pass.mjs deploy | open | close | status | price <eth> | reserve <to> <n> | withdraw <to> | royalty <to> <bps>",
   );
 if (!RPC_URL) fail("Set RPC_URL (the chain's JSON-RPC endpoint, same as the API's RPC_URL).");
 
@@ -63,13 +64,14 @@ switch (cmd) {
     const perWallet = BigInt(process.env.PASS_PER_WALLET ?? "5");
     const price = parseEther(process.env.PASS_PRICE_ETH ?? "0.03");
     const owner = process.env.PASS_OWNER ?? needWallet().account.address;
+    const royaltyBps = BigInt(process.env.PASS_ROYALTY_BPS ?? "500");
     console.log(
-      `Deploying on chain ${chainId}: ${supply} Passes, ${perWallet} per wallet, ${formatEther(price)} ETH each, owner ${owner}`,
+      `Deploying on chain ${chainId}: ${supply} Passes, ${perWallet} per wallet, ${formatEther(price)} ETH each, owner ${owner}, ${Number(royaltyBps) / 100}% royalty`,
     );
     const hash = await needWallet().deployContract({
       abi: build.abi,
       bytecode: build.bytecode,
-      args: [supply, perWallet, price, owner],
+      args: [supply, perWallet, price, owner, royaltyBps],
     });
     console.log(`sent: ${hash}`);
     const r = await pub.waitForTransactionReceipt({ hash });
@@ -94,6 +96,10 @@ switch (cmd) {
   case "reserve":
     if (!isAddress(args[0] ?? "") || !args[1]) fail("Usage: node pass.mjs reserve 0xWallet 10");
     await write("mintReserved", [args[0], BigInt(args[1])]);
+    break;
+  case "royalty":
+    if (!isAddress(args[0] ?? "") || !args[1]) fail("Usage: node pass.mjs royalty 0xWallet 500");
+    await write("setRoyalty", [args[0], BigInt(args[1])]);
     break;
   case "withdraw":
     if (!isAddress(args[0] ?? "")) fail("Usage: node pass.mjs withdraw 0xWallet");

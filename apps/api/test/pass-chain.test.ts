@@ -77,11 +77,11 @@ beforeAll(async () => {
     logging: { quiet: true },
   } as never);
   await server.listen(PORT);
-  // 5 Passes, 2 per wallet, 0.01 ETH each.
+  // 5 Passes, 2 per wallet, 0.01 ETH each, 5% royalty.
   const hash = await owner.deployContract({
     abi,
     bytecode: build.bytecode as Hex,
-    args: [5n, 2n, PRICE, OWNER.address],
+    args: [5n, 2n, PRICE, OWNER.address, 500n],
   });
   pass = getAddress((await chain.client.waitForTransactionReceipt({ hash })).contractAddress!);
 }, 60_000);
@@ -133,6 +133,22 @@ describe("DualynePass on a real EVM", () => {
       expect(Buffer.from(image.split(",")[1]!, "base64").toString("utf8")).toBe(passSvg(id));
     }
     await reverts(read("tokenURI", [99n]), "ERC721NonexistentToken");
+  });
+
+  it("tells marketplaces about the collection and the royalty", async () => {
+    const uri = String(await read("contractURI"));
+    const meta = JSON.parse(Buffer.from(uri.split(",")[1]!, "base64").toString("utf8"));
+    expect(meta).toMatchObject({ name: "Dualyne Pass", external_link: "https://dualyne.com/pass" });
+    expect(Buffer.from(String(meta.image).split(",")[1]!, "base64").toString("utf8")).toBe(passSvg(1));
+
+    // ERC-2981 and ERC-721 interface ids.
+    expect(await read("supportsInterface", ["0x2a55205a"])).toBe(true);
+    expect(await read("supportsInterface", ["0x80ac58cd"])).toBe(true);
+    expect(await read("royaltyInfo", [1n, parseEther("1")])).toEqual([OWNER.address, parseEther("0.05")]);
+    await reverts(send(user, "setRoyalty", [USER.address, 100n]), "OwnableUnauthorizedAccount");
+    await send(owner, "setRoyalty", [PAYOUT, 250n]);
+    expect(await read("royaltyInfo", [1n, parseEther("1")])).toEqual([PAYOUT, parseEther("0.025")]);
+    await expect(send(owner, "setRoyalty", [PAYOUT, 1001n])).rejects.toThrow();
   });
 
   it("sends the mint money to the address the owner picks", async () => {

@@ -23,7 +23,7 @@ Use the wallet that should own the contract. The key is read from the environmen
 export RPC_URL=https://…            # same chain as the API's SIWE_CHAIN_ID (8453 = Base)
 export PRIVATE_KEY=0x…              # owner wallet; it pays the deploy gas
 
-PASS_SUPPLY=500 PASS_PER_WALLET=5 PASS_PRICE_ETH=0.03 node pass.mjs deploy
+PASS_SUPPLY=500 PASS_PER_WALLET=5 PASS_PRICE_ETH=0.03 PASS_ROYALTY_BPS=500 node pass.mjs deploy
 ```
 
 Then put `PASS_NFT_ADDRESS=<address>` in the server's `.env` and run `deploy/pm2/deploy.sh`: the
@@ -36,8 +36,11 @@ node pass.mjs status                # price, minted, open, ETH waiting to be wit
 node pass.mjs price 0.02            # change the price (ETH)
 node pass.mjs reserve 0xWallet 10   # free Passes for the team or giveaways (count toward supply)
 node pass.mjs withdraw 0xWallet     # send the mint money there
+node pass.mjs royalty 0xWallet 500  # creator fee on resales (500 = 5%, max 10%)
 ```
 
-Supply and the per-wallet cap are fixed at deploy. Price, open/closed and withdrawals stay with the
+Marketplaces (OpenSea and others) pick up the collection name, description and image from
+`contractURI()`, and the resale fee from `royaltyInfo()` (ERC-2981). Supply and the per-wallet cap are
+fixed at deploy. Price, open/closed and withdrawals stay with the
 owner. Verify the source on the block explorer with solc 0.8.26, optimizer 200 runs, viaIR, evmVersion
 paris, and OpenZeppelin Contracts 5.1.0.
