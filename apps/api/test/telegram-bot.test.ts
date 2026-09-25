@@ -118,7 +118,7 @@ describe("Telegram bot: chat", () => {
       { role: "user", content: "What is my name?" },
     ]);
     await say(msg(7, "/new"));
-    expect(texts().at(-1)).toMatch(/^🆕 New conversation started/);
+    expect(texts().at(-1)).toMatch(/^🆕 <b>Fresh start/);
     await say(msg(7, "Hi again"));
     expect(asked()[2]).toEqual([{ role: "user", content: "Hi again" }]);
   });
@@ -450,20 +450,27 @@ describe("Telegram formatting", () => {
 });
 
 describe("Telegram bot: suggested questions", () => {
-  it("offers crypto starter questions on /ask, /new and /start, and a tap asks one", async () => {
-    const starters = (b: Body | undefined) => buttons(b)!.filter((x) => x.startsWith("start:"));
-    await say(msg(7, "/ask"));
-    expect(sent().at(-1)!.text).toContain("Ask anything");
-    expect(starters(sent().at(-1))).toHaveLength(4);
+  it("/new offers beginner topics and /ask offers deeper questions, and a tap asks one", async () => {
     await say(msg(7, "/new"));
-    expect(sent().at(-1)!.text).toContain("New conversation started");
-    expect(starters(sent().at(-1))).toHaveLength(4);
-    await say(msg(7, "/start"));
-    expect(starters(sent().at(-1))).toHaveLength(4);
+    const fresh = sent().at(-1)!;
+    expect(fresh.text).toContain("Fresh start");
+    expect(fresh.reply_markup!.inline_keyboard).toHaveLength(3);
+    expect(buttons(fresh)).toEqual(["topic:0", "topic:1", "topic:2", "topic:3", "topic:4", "topic:5"]);
 
-    await bot.handle(press(7, "start:0"));
+    await say(msg(7, "/ask"));
+    const ask = sent().at(-1)!;
+    expect(ask.text).toContain("Questions people ask");
+    expect(buttons(ask)!.every((b) => b.startsWith("start:"))).toBe(true);
+    expect(buttons(ask)).toHaveLength(4);
+
+    await say(msg(7, "/start"));
+    expect(buttons(sent().at(-1))).toContain("topic:0");
+
+    await bot.handle(press(7, "topic:0"));
     expect(texts()).toContain("❓ <b>What is Bitcoin, in simple words?</b>");
-    expect(asked().at(-1)!.at(-1)).toEqual({ role: "user", content: "What is Bitcoin, in simple words?" });
+    await t.redis.del("tgbot:gap:7");
+    await bot.handle(press(7, "start:4"));
+    expect(texts()).toContain("❓ <b>What moves the price of Bitcoin?</b>");
   });
 
   it("adds follow-up questions under an answer, and a tap asks them", async () => {

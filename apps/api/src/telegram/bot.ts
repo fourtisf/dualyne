@@ -148,33 +148,43 @@ const keys = {
   suggestions: (chat: string, messageId: number) => `tgbot:sug:${chat}:${messageId}`,
 };
 
-/** Questions offered as buttons when a conversation starts (the bot answers in any language). */
-export const STARTER_QUESTIONS = [
-  "What is Bitcoin, in simple words?",
-  "How is Ethereum different from Bitcoin?",
-  "What are stablecoins and how do they hold $1?",
-  "What is DeFi, and what are the risks?",
-  "How do I keep my crypto wallet safe?",
-  "Explain blockchain like I'm 12",
-  "What is a seed phrase and why does it matter?",
-  "How do crypto exchanges work?",
-  "What is staking, and is it risky?",
-  "What are gas fees on Ethereum?",
-  "What is a Bitcoin halving?",
-  "How do I spot a crypto scam?",
-  "What is a layer 2, like Base or Arbitrum?",
-  "What are NFTs actually used for?",
-  "What is a crypto airdrop?",
-  "Hot wallet vs cold wallet: which should I use?",
+/** /new and /start: short beginner topics, two per row. A tap asks the question behind it. */
+export const NEW_TOPICS = [
+  { label: "₿ Bitcoin", question: "What is Bitcoin, in simple words?" },
+  { label: "Ξ Ethereum", question: "How is Ethereum different from Bitcoin?" },
+  { label: "💵 Stablecoins", question: "What are stablecoins and how do they hold $1?" },
+  { label: "🔐 Wallet safety", question: "How do I keep my crypto wallet safe?" },
+  { label: "🏦 DeFi", question: "What is DeFi, explained for a beginner?" },
+  { label: "⛓ Blockchain", question: "Explain blockchain like I'm 12" },
 ] as const;
 
-/** A few starter questions picked at random, so each list feels fresh. */
-function starterKeyboard(n = 4): Keyboard {
-  const picks = [...STARTER_QUESTIONS.keys()].sort(() => Math.random() - 0.5).slice(0, n);
-  return picks.map((i) => [{ text: `💡 ${STARTER_QUESTIONS[i]}`, callback_data: `start:${i}` }]);
+const TOPIC_KEYBOARD: Keyboard = [0, 2, 4].map((i) =>
+  [i, i + 1].map((j) => ({ text: NEW_TOPICS[j]!.label, callback_data: `topic:${j}` })),
+);
+
+/** /ask: deeper, practical questions, one per row; 4 picked at random each time. */
+export const ASK_QUESTIONS = [
+  "How do I read a crypto chart as a beginner?",
+  "What is impermanent loss in liquidity pools?",
+  "Staking vs lending: which earns more, and what's riskier?",
+  "How do I check if a token contract is safe?",
+  "What moves the price of Bitcoin?",
+  "How do layer 2s like Base or Arbitrum cut fees?",
+  "How do I spot a crypto scam or rug pull?",
+  "What is a seed phrase, and where should I keep it?",
+  "Hot wallet vs cold wallet: which should I use?",
+  "How do crypto taxes usually work?",
+  "What is a Bitcoin halving and why does it matter?",
+  "How do I bridge tokens between chains safely?",
+] as const;
+
+function askKeyboard(n = 4): Keyboard {
+  const picks = [...ASK_QUESTIONS.keys()].sort(() => Math.random() - 0.5).slice(0, n);
+  return picks.map((i) => [{ text: `🔥 ${ASK_QUESTIONS[i]}`, callback_data: `start:${i}` }]);
 }
+
 const NEW_CHAT_TEXT =
-  "🆕 New conversation started. Earlier messages are forgotten.\n\nType your question, or tap one to begin:";
+  "🆕 <b>Fresh start.</b> I've forgotten our earlier messages.\n\nPick a topic to begin, or just type anything:";
 
 class TelegramError extends Error {
   constructor(
@@ -395,7 +405,7 @@ export class TelegramBot {
         case "/start":
           return {
             html: welcomeText(await this.freeModels(), limit),
-            keyboard: [[this.openAppButton(w)], ...starterKeyboard()],
+            keyboard: [[this.openAppButton(w)], ...TOPIC_KEYBOARD],
           };
         case "/help":
           return { html: helpText(limit, this.isOwner(w.chat)) };
@@ -418,7 +428,7 @@ export class TelegramBot {
         case "/new":
         case "/reset":
           await this.ctx.redis.del(keys.history(w.chat), keys.last(w.chat));
-          return { html: NEW_CHAT_TEXT, keyboard: starterKeyboard() };
+          return { html: NEW_CHAT_TEXT, keyboard: TOPIC_KEYBOARD };
         case "/model":
         case "/models": {
           if (!args.length) return this.modelPicker(w.chat);
@@ -432,8 +442,8 @@ export class TelegramBot {
         case "/ask":
           if (!arg) {
             return {
-              html: "❓ Ask anything. In a chat with me, just type your question. In a group, put it after /ask, for example:\n/ask What is an API?\n\nNeed an idea? Tap one:",
-              keyboard: starterKeyboard(),
+              html: "🔥 <b>Questions people ask</b>\n\nTap one, or ask your own: type it here, or in a group after /ask, like\n/ask What moves the price of Bitcoin?",
+              keyboard: askKeyboard(),
             };
           }
           await this.ask(w, arg);
@@ -894,16 +904,18 @@ export class TelegramBot {
     if (kind === "act" && value === "new") {
       await this.ctx.redis.del(keys.history(w.chat), keys.last(w.chat));
       await answer("Started a new conversation.");
-      await this.send(chatId, NEW_CHAT_TEXT, { reply_markup: { inline_keyboard: starterKeyboard() } });
+      await this.send(chatId, NEW_CHAT_TEXT, { reply_markup: { inline_keyboard: TOPIC_KEYBOARD } });
       return;
     }
-    if (kind === "start" || kind === "sug") {
+    if (kind === "start" || kind === "topic" || kind === "sug") {
       const question =
         kind === "start"
-          ? STARTER_QUESTIONS[Number(value)]
-          : m?.message_id
-            ? await this.suggestionAt(w.chat, m.message_id, Number(value))
-            : undefined;
+          ? ASK_QUESTIONS[Number(value)]
+          : kind === "topic"
+            ? NEW_TOPICS[Number(value)]?.question
+            : m?.message_id
+              ? await this.suggestionAt(w.chat, m.message_id, Number(value))
+              : undefined;
       if (!question) {
         await answer("This suggestion has expired. Type your question instead.");
         return;
