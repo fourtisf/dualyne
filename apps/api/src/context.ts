@@ -31,6 +31,8 @@ export interface AppContext {
   /** Pro plan: chat messages per wallet per day, and the premium-model part of them. */
   proChatLimiter: SlidingWindowLimiter;
   proPremiumLimiter: SlidingWindowLimiter;
+  webFreeLimiter: SlidingWindowLimiter;
+  webProLimiter: SlidingWindowLimiter;
   alert: Alerter;
   ipHash: (ip: string) => string;
   /** null when RPC_URL is not configured. */

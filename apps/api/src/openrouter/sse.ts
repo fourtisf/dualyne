@@ -79,6 +79,8 @@ export class StreamInspector {
   lastDelta = "";
   /** Characters of output seen so far, for estimating cost when usage never arrives. */
   outputChars = 0;
+  /** Web pages cited by the answer (OpenRouter web search annotations), in order, no repeats. */
+  readonly sources: { url: string; title: string }[] = [];
 
   constructor(private readonly now: () => number = Date.now) {}
 
@@ -109,6 +111,7 @@ export class StreamInspector {
         (typeof delta.reasoning === "string" && delta.reasoning.length > 0);
       if (hasOutput && this.firstTokenAt === null) this.firstTokenAt = this.now();
     }
+    for (const c of json.choices ?? []) this.collectSources(c.delta?.annotations ?? c.message?.annotations);
     const usage = readUsage(json);
     if (usage) {
       this.usage = usage;
@@ -116,6 +119,32 @@ export class StreamInspector {
       if (!clientWantsUsage && noChoices) return "drop";
     }
     return "keep";
+  }
+
+  private collectSources(annotations: unknown): void {
+    if (!Array.isArray(annotations)) return;
+    for (const a of annotations as { type?: unknown; url_citation?: { url?: unknown; title?: unknown } }[]) {
+      const c = a?.type === "url_citation" ? a.url_citation : undefined;
+      if (!c || !isHttpUrl(c.url) || this.sources.length >= SOURCES_MAX) continue;
+      if (this.sources.some((s) => s.url === c.url)) continue;
+      const title =
+        typeof c.title === "string" && c.title.trim()
+          ? c.title.trim().slice(0, 200)
+          : new URL(c.url).hostname;
+      this.sources.push({ url: c.url, title });
+    }
+  }
+}
+
+const SOURCES_MAX = 10;
+
+function isHttpUrl(v: unknown): v is string {
+  if (typeof v !== "string" || v.length > 2000) return false;
+  try {
+    const u = new URL(v);
+    return u.protocol === "https:" || u.protocol === "http:";
+  } catch {
+    return false;
   }
 }
 

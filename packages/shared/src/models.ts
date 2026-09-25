@@ -19,6 +19,8 @@ export interface ModelDef {
   /** 1–4 speed bars in the catalog table. */
   speed: number;
   minTier: Tier;
+  /** Reads images. */
+  vision: boolean;
   sortOrder: number;
   openrouterId: string;
   /** Family prefix used to find newer versions in OpenRouter's catalog. */
@@ -41,6 +43,7 @@ export const MODEL_DEFS: readonly ModelDef[] = [
     bestFor: "Quick answers, chat, summaries",
     speed: 4,
     minTier: "explorer",
+    vision: true,
     sortOrder: 10,
     openrouterId: "anthropic/claude-haiku-4.5",
     openrouterFamily: "anthropic/claude-haiku",
@@ -58,6 +61,7 @@ export const MODEL_DEFS: readonly ModelDef[] = [
     bestFor: "Writing, analysis, everyday coding",
     speed: 3,
     minTier: "holder",
+    vision: true,
     sortOrder: 20,
     openrouterId: "anthropic/claude-sonnet-4.5",
     openrouterFamily: "anthropic/claude-sonnet",
@@ -75,6 +79,7 @@ export const MODEL_DEFS: readonly ModelDef[] = [
     bestFor: "Hard reasoning, long documents",
     speed: 2,
     minTier: "holder",
+    vision: true,
     sortOrder: 30,
     openrouterId: "anthropic/claude-opus-4.5",
     openrouterFamily: "anthropic/claude-opus",
@@ -92,6 +97,7 @@ export const MODEL_DEFS: readonly ModelDef[] = [
     bestFor: "General purpose, tool use",
     speed: 3,
     minTier: "holder",
+    vision: true,
     sortOrder: 40,
     openrouterId: "openai/gpt-5",
     openrouterFamily: "openai/gpt-",
@@ -109,6 +115,7 @@ export const MODEL_DEFS: readonly ModelDef[] = [
     bestFor: "Long context, images",
     speed: 3,
     minTier: "holder",
+    vision: true,
     sortOrder: 50,
     openrouterId: "google/gemini-2.5-pro",
     openrouterFamily: "google/gemini-",
@@ -126,6 +133,7 @@ export const MODEL_DEFS: readonly ModelDef[] = [
     bestFor: "Open weights, low cost",
     speed: 4,
     minTier: "explorer",
+    vision: false,
     sortOrder: 60,
     openrouterId: "meta-llama/llama-3.3-70b-instruct",
     openrouterFamily: "meta-llama/llama-",
@@ -143,6 +151,7 @@ export const MODEL_DEFS: readonly ModelDef[] = [
     bestFor: "Math, code, budget reasoning",
     speed: 2,
     minTier: "explorer",
+    vision: false,
     sortOrder: 70,
     openrouterId: "deepseek/deepseek-chat-v3.1",
     openrouterFamily: "deepseek/deepseek-",
@@ -160,6 +169,7 @@ export const MODEL_DEFS: readonly ModelDef[] = [
     bestFor: "Fast multilingual, low cost",
     speed: 4,
     minTier: "explorer",
+    vision: true,
     sortOrder: 80,
     openrouterId: "mistralai/mistral-small-3.2-24b-instruct",
     openrouterFamily: "mistralai/mistral-small",
@@ -180,6 +190,8 @@ export interface CatalogModel {
   bestFor: string;
   speed: number;
   minTier: Tier;
+  /** Reads images. */
+  vision: boolean;
   upstreamName: string;
   /** USD per 1M tokens, null when unknown. */
   inputPerMTok: number | null;
@@ -208,6 +220,7 @@ export const STATIC_CATALOG: CatalogModel[] = MODEL_DEFS.map((m) => ({
   bestFor: m.bestFor,
   speed: m.speed,
   minTier: m.minTier,
+  vision: m.vision,
   upstreamName: m.upstreamName,
   inputPerMTok: perMTok(m.promptPrice),
   outputPerMTok: perMTok(m.completionPrice),
@@ -216,3 +229,6 @@ export const STATIC_CATALOG: CatalogModel[] = MODEL_DEFS.map((m) => ({
 }));
 
 export const MODEL_ID_RE = /^[a-z0-9][a-z0-9-]{0,39}$/;
+
+/** Whether a model id reads images (false for ids not in MODEL_DEFS). */
+export const modelHasVision = (id: string): boolean => MODEL_DEFS.some((m) => m.id === id && m.vision);

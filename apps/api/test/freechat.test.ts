@@ -62,10 +62,10 @@ describe("POST /internal/chat", () => {
 
   it("reports the free messages left without using one", async () => {
     const quota = () => t.app.inject({ method: "GET", url: "/internal/chat/quota" });
-    expect((await quota()).json()).toEqual({ plan: "free", limit: 2, remaining: 2 });
-    expect((await quota()).json()).toEqual({ plan: "free", limit: 2, remaining: 2 });
+    expect((await quota()).json()).toMatchObject({ plan: "free", limit: 2, remaining: 2, webLimit: 3 });
+    expect((await quota()).json()).toMatchObject({ plan: "free", limit: 2, remaining: 2, webLimit: 3 });
     await send(good);
-    expect((await quota()).json()).toEqual({ plan: "free", limit: 2, remaining: 1 });
+    expect((await quota()).json()).toMatchObject({ plan: "free", limit: 2, remaining: 1, webLimit: 3 });
   });
 
   it("limits each IP per day", async () => {

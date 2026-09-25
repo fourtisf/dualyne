@@ -15,6 +15,8 @@ export const publicConfig = {
   proDays: Number(process.env.NEXT_PUBLIC_PRO_DAYS || 30),
   proChatPerDay: Number(process.env.NEXT_PUBLIC_PRO_CHAT_PER_DAY || 300),
   proPremiumPerDay: Number(process.env.NEXT_PUBLIC_PRO_PREMIUM_PER_DAY || 30),
+  webFreePerDay: Number(process.env.NEXT_PUBLIC_WEB_SEARCH_FREE_PER_DAY || 3),
+  webProPerDay: Number(process.env.NEXT_PUBLIC_WEB_SEARCH_PRO_PER_DAY || 30),
   /** Chain used for WalletConnect sessions (sign-in uses the chain the API returns). */
   siweChainId: Number(process.env.NEXT_PUBLIC_SIWE_CHAIN_ID || 1),
   walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",

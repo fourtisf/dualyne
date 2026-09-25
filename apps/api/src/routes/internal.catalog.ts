@@ -1,4 +1,4 @@
-import { perMTok, type CatalogModel } from "@dualyne/shared";
+import { modelHasVision, perMTok, type CatalogModel } from "@dualyne/shared";
 import type { FastifyPluginAsync } from "fastify";
 
 /** Public catalog for the website: names, tiers, prices and context length. No key needed. */
@@ -18,6 +18,7 @@ export const catalogRoutes: FastifyPluginAsync = async (app) => {
       bestFor: m.bestFor,
       speed: m.speed,
       minTier: m.minTier,
+      vision: modelHasVision(m.id),
       upstreamName: m.upstreamName,
       inputPerMTok: perMTok(m.promptPrice),
       outputPerMTok: perMTok(m.completionPrice),

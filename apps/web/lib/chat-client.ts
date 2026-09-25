@@ -1,4 +1,4 @@
-import type { ChatEvents, ChatMessage, ChatQuota } from "@dualyne/shared";
+import type { ChatEvents, ChatQuota, ChatRequest } from "@dualyne/shared";
 
 export class ChatError extends Error {
   constructor(
@@ -23,9 +23,10 @@ export interface ChatResult {
  */
 export async function runChat(
   apiUrl: string,
-  body: { model: string; messages: ChatMessage[]; turnstileToken?: string },
+  body: ChatRequest,
   onDelta: (text: string) => void,
   signal: AbortSignal,
+  onSources?: (sources: ChatEvents["sources"]["sources"]) => void,
 ): Promise<ChatResult> {
   let res: Response;
   try {
@@ -69,6 +70,7 @@ export async function runChat(
     if (!data.length) return;
     const payload = JSON.parse(data.join("\n")) as ChatEvents[keyof ChatEvents];
     if (event === "delta") onDelta((payload as ChatEvents["delta"]).text);
+    else if (event === "sources") onSources?.((payload as ChatEvents["sources"]).sources);
     else if (event === "done") completed = true;
   };
 

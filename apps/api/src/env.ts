@@ -47,6 +47,12 @@ const schema = z
     /** Pro fair use: model cost of premium answers per Pro period, in USD; past it, free models only. */
     PRO_FAIR_USE_USD: z.coerce.number().positive().default(15),
     PRO_MAX_TOKENS: z.coerce.number().int().positive().default(2000),
+    /** Web search in Chat: answers per day that may search (free per person, Pro per wallet). */
+    WEB_SEARCH_FREE_PER_DAY: z.coerce.number().int().min(0).default(3),
+    WEB_SEARCH_PRO_PER_DAY: z.coerce.number().int().min(0).default(30),
+    /** Pages read per search; OpenRouter charges per result. */
+    WEB_SEARCH_RESULTS: z.coerce.number().int().min(1).max(10).default(3),
+    WEB_SEARCH_USD_PER_RESULT: z.coerce.number().min(0).default(0.004),
     /**
      * Stablecoins accepted for Pro and Builder top-ups besides USDG, 1 token = $1, on SIWE_CHAIN_ID:
      * "USDC:0x…,USDT:0x…".

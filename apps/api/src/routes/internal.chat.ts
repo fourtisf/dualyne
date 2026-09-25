@@ -1,4 +1,4 @@
-import { chatRequestSchema, type ChatEvents, type ChatQuota } from "@dualyne/shared";
+import { chatRequestSchema, modelHasVision, type ChatEvents, type ChatQuota } from "@dualyne/shared";
 import type { FastifyPluginAsync } from "fastify";
 import { SESSION_COOKIE } from "../auth/sessions";
 import { isRefusal } from "../budget";
@@ -9,6 +9,7 @@ import { secondsUntilUtcMidnight } from "../lib/time";
 import { readEvents, StreamInspector } from "../openrouter/sse";
 import { verifyTurnstile } from "../turnstile";
 import { isPro, premiumSpendMicro } from "../pro";
+import { toUpstream } from "../chat/upstream";
 import { logUsage } from "../usage/log";
 import { rememberAnswer } from "./chatShares";
 import { alertBudgetOnce, alertOutOfCredits, assertModelsLive, BUSY_RETRY_SECONDS } from "./v1.chat";
@@ -35,9 +36,10 @@ export const freeChatRoutes: FastifyPluginAsync = async (app) => {
       reply.header("cache-control", "no-store");
       const wallet = await ctx.sessions.get(req.cookies[SESSION_COOKIE]);
       if (wallet && isPro(wallet, ctx.clock())) {
-        const [remaining, premiumRemaining] = await Promise.all([
+        const [remaining, premiumRemaining, webRemaining] = await Promise.all([
           ctx.proChatLimiter.remaining(wallet.id),
           ctx.proPremiumLimiter.remaining(wallet.id),
+          ctx.webProLimiter.remaining(wallet.id),
         ]);
         const body: ChatQuota = {
           plan: "pro",
@@ -46,13 +48,18 @@ export const freeChatRoutes: FastifyPluginAsync = async (app) => {
           premiumLimit: env.PRO_PREMIUM_PER_DAY,
           premiumRemaining,
           proUntil: wallet.proUntil!.toISOString(),
+          webLimit: env.WEB_SEARCH_PRO_PER_DAY,
+          webRemaining,
         };
         return body;
       }
+      const ipHash = ctx.ipHash(req.ip);
       const body: ChatQuota = {
         plan: "free",
         limit: env.CHAT_LIMIT_PER_DAY,
-        remaining: await ctx.chatLimiter.remaining(ctx.ipHash(req.ip)),
+        remaining: await ctx.chatLimiter.remaining(ipHash),
+        webLimit: env.WEB_SEARCH_FREE_PER_DAY,
+        webRemaining: await ctx.webFreeLimiter.remaining(ipHash),
       };
       return body;
     },
@@ -60,7 +67,8 @@ export const freeChatRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/internal/chat",
-    { config: { rateLimit: { max: 30, timeWindow: 60_000 } }, bodyLimit: 128 * 1024 },
+    // Room for images and PDFs; the schema caps each file and the total.
+    { config: { rateLimit: { max: 30, timeWindow: 60_000 } }, bodyLimit: 16 * 1024 * 1024 },
     async (req, reply) => {
       assertModelsLive(ctx, "Chat opens soon. Come back in a little while.");
       const body = chatRequestSchema.parse(req.body);
@@ -77,6 +85,14 @@ export const freeChatRoutes: FastifyPluginAsync = async (app) => {
           403,
           "model_not_allowed",
           `${model.name} is part of Pro. Pick a free model, or upgrade.`,
+        );
+      }
+      const hasImages = body.messages.some((m) => m.attachments?.some((a) => a.kind === "image"));
+      if (hasImages && !modelHasVision(model.id)) {
+        throw new ApiError(
+          400,
+          "model_no_vision",
+          `${model.name} can't see images. Pick a model marked "sees images", or remove the image.`,
         );
       }
 
@@ -160,10 +176,30 @@ export const freeChatRoutes: FastifyPluginAsync = async (app) => {
         remaining = slot.remaining;
       }
 
+      // Web search has its own daily allowance, since every search costs extra.
+      let webResults = 0;
+      if (body.webSearch) {
+        const web = pro ? await ctx.webProLimiter.hit(pro.id) : await ctx.webFreeLimiter.hit(ipHash);
+        if (!web.allowed) {
+          await releaseAll();
+          const perDay = pro ? env.WEB_SEARCH_PRO_PER_DAY : env.WEB_SEARCH_FREE_PER_DAY;
+          throw new ApiError(
+            429,
+            "web_search_limit",
+            `You've used your ${perDay} web searches for today.${pro ? "" : " Pro includes more."} Turn off web search to keep chatting.`,
+            { "retry-after": web.retryAfterSeconds },
+          );
+        }
+        slots.push(web);
+        webResults = env.WEB_SEARCH_RESULTS;
+      }
+
       const maxTokens = pro ? env.PRO_MAX_TOKENS : env.COMPARE_MAX_TOKENS;
-      const inputTokens = estimateTokens(body.messages.reduce((n, m) => n + m.content.length, 0));
+      const upstreamChat = toUpstream(body, { webResults });
+      const inputTokens = upstreamChat.inputTokens;
       const reservation = await ctx.budget.reserve(
-        tokensCostMicro(inputTokens, maxTokens, Number(model.promptPrice), Number(model.completionPrice)),
+        tokensCostMicro(inputTokens, maxTokens, Number(model.promptPrice), Number(model.completionPrice)) +
+          usdToMicro(webResults * env.WEB_SEARCH_USD_PER_RESULT),
         !pro,
       );
       if (isRefusal(reservation)) {
@@ -206,7 +242,8 @@ export const freeChatRoutes: FastifyPluginAsync = async (app) => {
         const res = await ctx.openrouter.chat(
           {
             model: model.openrouterId,
-            messages: body.messages,
+            messages: upstreamChat.messages,
+            ...(upstreamChat.plugins.length ? { plugins: upstreamChat.plugins } : {}),
             max_tokens: maxTokens,
             stream: true,
             usage: { include: true },
@@ -254,6 +291,7 @@ export const freeChatRoutes: FastifyPluginAsync = async (app) => {
           : tokensCostMicro(inTok, outTok, Number(model.promptPrice), Number(model.completionPrice));
       const totalMs = Date.now() - startedAt;
 
+      if (completed && inspector.sources.length) await send("sources", { sources: inspector.sources });
       if (completed) {
         // A fingerprint (not the text) so this visitor can share the answer later.
         await rememberAnswer(ctx.redis, ipHash, full);

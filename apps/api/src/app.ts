@@ -141,6 +141,8 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
       86_400_000,
       clock,
     ),
+    webFreeLimiter: new SlidingWindowLimiter(redis, "webf", env.WEB_SEARCH_FREE_PER_DAY, 86_400_000, clock),
+    webProLimiter: new SlidingWindowLimiter(redis, "webp", env.WEB_SEARCH_PRO_PER_DAY, 86_400_000, clock),
     alert: createAlerter(app.log, {
       webhookUrl: env.ALERT_WEBHOOK_URL,
       telegram:

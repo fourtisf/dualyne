@@ -32,11 +32,20 @@ export default function PrivacyPage() {
             <strong>Chat.</strong> Your messages are sent to the model you picked so it can answer. The
             conversation is saved only in your browser&apos;s local storage; our servers don&apos;t store the
             text. For each message we record the model, token counts, cost, timing and the same one-way keyed
-            hash of your IP address described below, which runs the hourly limit. So that a shared chat
+            hash of your IP address described below, which runs the daily limit. So that a shared chat
             can&apos;t put invented words in a model&apos;s mouth, we also keep a fingerprint of each answer
             (a one-way hash of the answer and your IP hash, not the text) for 24 hours. If you click{" "}
             <em>Share</em>, the conversation is saved and anyone with the link can read it, until you remove
             the link from the same browser.
+          </p>
+          <p>
+            <strong>Files, web search and voice in Chat.</strong> Images, PDFs and text files you attach are
+            sent with your message to the model (PDFs are turned into text by OpenRouter first). We don&apos;t
+            store them, and your browser keeps only their names after a reload. When you turn on web search,
+            your question is used to search the web through OpenRouter&apos;s search partner, and the pages
+            found are passed to the model. Custom instructions are kept in your browser and sent with each
+            message. Voice input and read-aloud use your browser&apos;s own speech features; some browsers
+            (such as Chrome) send the audio to their maker to turn it into text. We never receive the audio.
           </p>
           <p>
             <strong>Telegram bot.</strong> When you message @dualynebot, Telegram delivers your messages to
@@ -98,7 +107,8 @@ export default function PrivacyPage() {
             <li>
               <strong>OpenRouter and the model providers</strong> (for example Anthropic, OpenAI, Google,
               Meta, DeepSeek and Mistral) receive your prompts in order to generate answers. Their own privacy
-              policies and data retention rules apply to that content.
+              policies and data retention rules apply to that content, including files you attach. When web
+              search is on, OpenRouter&apos;s search partner (Exa) receives the search query.
             </li>
             <li>
               <strong>Telegram</strong> delivers messages between you and the bot when you use it.

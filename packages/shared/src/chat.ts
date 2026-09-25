@@ -14,11 +14,82 @@ export const chatMessageSchema = z
   .strict();
 export type ChatMessage = z.infer<typeof chatMessageSchema>;
 
-/** POST /internal/chat: one free model, a short conversation, answered as a stream. */
+/** Attachments: images (vision models), PDFs (read as text) and text files. */
+export const CHAT_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"] as const;
+/** A data: URL of an image after the browser shrinks it, in characters. */
+export const CHAT_IMAGE_MAX = 1_500_000;
+/** A PDF as a data: URL (about 4 MB of file). */
+export const CHAT_PDF_MAX = 5_600_000;
+/** All image and PDF data in one request, in characters. */
+export const CHAT_FILES_TOTAL_MAX = 14_000_000;
+/** Characters of one text file, and of all attached text in a chat. */
+export const CHAT_TEXT_FILE_MAX = 60_000;
+export const CHAT_TEXT_TOTAL_MAX = 120_000;
+export const CHAT_ATTACHMENTS_PER_MESSAGE = 4;
+export const CHAT_IMAGES_TOTAL_MAX = 8;
+export const CHAT_PDFS_TOTAL_MAX = 2;
+/** Custom instructions, sent before the conversation. */
+export const CHAT_INSTRUCTIONS_MAX = 1500;
+
+const fileName = z.string().trim().min(1).max(120);
+export const chatAttachmentSchema = z.discriminatedUnion("kind", [
+  z
+    .object({
+      kind: z.literal("image"),
+      name: fileName,
+      data: z
+        .string()
+        .max(CHAT_IMAGE_MAX, "Image is too large")
+        .regex(/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/, "Unsupported image"),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("pdf"),
+      name: fileName,
+      data: z
+        .string()
+        .max(CHAT_PDF_MAX, "PDF is too large (max 4 MB)")
+        .regex(/^data:application\/pdf;base64,[A-Za-z0-9+/=]+$/, "Unsupported PDF"),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("text"),
+      name: fileName,
+      text: z.string().min(1).max(CHAT_TEXT_FILE_MAX, "Text file is too long"),
+    })
+    .strict(),
+]);
+export type ChatAttachment = z.infer<typeof chatAttachmentSchema>;
+
+/** A message sent to /internal/chat: text plus optional files on the visitor's messages. */
+export const chatTurnSchema = z
+  .object({
+    role: z.enum(["user", "assistant"]),
+    content: z.string().trim().max(CHAT_MESSAGE_MAX, "Message is too long"),
+    attachments: z.array(chatAttachmentSchema).max(CHAT_ATTACHMENTS_PER_MESSAGE).optional(),
+  })
+  .strict()
+  .refine((m) => m.content.length > 0 || (m.role === "user" && m.attachments?.length), {
+    message: "Message is empty",
+  })
+  .refine((m) => m.role === "user" || !m.attachments?.length, {
+    message: "Only your messages can have files",
+  });
+export type ChatTurn = z.infer<typeof chatTurnSchema>;
+
+const attached = (r: { messages: ChatTurn[] }) => r.messages.flatMap((m) => m.attachments ?? []);
+
+/** POST /internal/chat: one model, a short conversation, answered as a stream. */
 export const chatRequestSchema = z
   .object({
     model: z.string().regex(MODEL_ID_RE),
-    messages: z.array(chatMessageSchema).min(1).max(CHAT_HISTORY_MAX, "This chat is long. Start a new one."),
+    messages: z.array(chatTurnSchema).min(1).max(CHAT_HISTORY_MAX, "This chat is long. Start a new one."),
+    /** Custom instructions from the visitor's settings. */
+    instructions: z.string().trim().max(CHAT_INSTRUCTIONS_MAX, "Instructions are too long").optional(),
+    /** Let the model search the web for this answer. */
+    webSearch: z.boolean().optional(),
     turnstileToken: z.string().max(4096).optional(),
   })
   .strict()
@@ -27,13 +98,31 @@ export const chatRequestSchema = z
   })
   .refine((r) => r.messages.reduce((n, m) => n + m.content.length, 0) <= CHAT_TOTAL_MAX, {
     message: "This chat is long. Start a new one.",
-  });
+  })
+  .refine((r) => attached(r).filter((a) => a.kind === "image").length <= CHAT_IMAGES_TOTAL_MAX, {
+    message: `Up to ${CHAT_IMAGES_TOTAL_MAX} images per chat. Start a new chat for more.`,
+  })
+  .refine((r) => attached(r).filter((a) => a.kind === "pdf").length <= CHAT_PDFS_TOTAL_MAX, {
+    message: `Up to ${CHAT_PDFS_TOTAL_MAX} PDFs per chat. Start a new chat for more.`,
+  })
+  .refine(
+    (r) =>
+      attached(r).reduce((n, a) => n + (a.kind === "text" ? a.text.length : 0), 0) <= CHAT_TEXT_TOTAL_MAX,
+    { message: "The attached text is too long. Start a new chat." },
+  )
+  .refine(
+    (r) =>
+      attached(r).reduce((n, a) => n + (a.kind === "text" ? 0 : a.data.length), 0) <= CHAT_FILES_TOTAL_MAX,
+    { message: "The files in this chat are too large together. Start a new chat." },
+  );
 export type ChatRequest = z.infer<typeof chatRequestSchema>;
 
 /** Events on the /internal/chat SSE stream, keyed by SSE `event:` name. */
 export interface ChatEvents {
   meta: { model: string };
   delta: { text: string };
+  /** Web pages the answer used, when web search was on. */
+  sources: { sources: { url: string; title: string }[] };
   done: { outputTokens: number; totalMs: number };
   error: { code: "upstream_failed" };
   end: Record<string, never>;
@@ -74,7 +163,7 @@ export interface SharedChat {
 }
 
 /** GET /internal/chat/quota: the caller's plan and messages left today. */
-export type ChatQuota =
+export type ChatQuota = (
   | { plan: "free"; limit: number; remaining: number }
   | {
       plan: "pro";
@@ -83,4 +172,5 @@ export type ChatQuota =
       premiumLimit: number;
       premiumRemaining: number;
       proUntil: string;
-    };
+    }
+) & { webLimit: number; webRemaining: number };

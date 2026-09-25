@@ -32,7 +32,7 @@ export function Pricing({ locale }: { locale: Locale }) {
             </div>
             <p className="who">{t.freeWho}</p>
             <ul>
-              {t.freeItems(c.freeChatPerDay).map((x) => (
+              {t.freeItems(c.freeChatPerDay, c.webFreePerDay).map((x) => (
                 <li key={x}>
                   <Tick />
                   {x}
@@ -53,7 +53,7 @@ export function Pricing({ locale }: { locale: Locale }) {
             </div>
             <p className="who">{t.proWho}</p>
             <ul>
-              {t.proItems(c.proChatPerDay, c.proPremiumPerDay).map((x) => (
+              {t.proItems(c.proChatPerDay, c.proPremiumPerDay, c.webProPerDay).map((x) => (
                 <li key={x}>
                   <Tick hot />
                   {x}
