@@ -7,8 +7,8 @@ import { useT } from "./LocaleProvider";
 import { socialIcons, socialLabel } from "./Social";
 
 /**
- * Slim bar above the navigation: the token's contract address (copyable) when the token is shown,
- * otherwise a short announcement; the community links on the right either way.
+ * Slim bar above the navigation: the token's contract address (copyable) when there is one or the
+ * token is shown, otherwise a short announcement; the community links on the right either way.
  */
 export function TopBar() {
   const d = useT();
@@ -20,7 +20,7 @@ export function TopBar() {
   return (
     <div className="topbar">
       <div className="wrap">
-        {brand.tokenEnabled ? (
+        {brand.tokenEnabled || ca ? (
           <div className="tb-ca">
             <span className="tb-tick">${brand.tokenSymbol}</span>
             <span className="ca-lbl">{t.caLabel}</span>

@@ -242,8 +242,8 @@ describe("Telegram bot: chat", () => {
 
   async function tokenCommand() {
     await say(msg(7, "/token"));
-    expect(texts()[0]).toContain("Contract address: <b>coming soon</b>");
-    expect(sent()[0]!.reply_markup).toBeUndefined();
+    // Without DLYN_TOKEN_ADDRESS the CA from brand.ts is shown.
+    expect(texts()[0]).toContain(`<code>${brand.tokenAddress}</code>`);
 
     const env = t.app.ctx.env as { DLYN_TOKEN_ADDRESS?: string };
     const address = `0x${"ab".repeat(20)}`;

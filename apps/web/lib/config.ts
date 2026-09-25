@@ -20,8 +20,8 @@ export const publicConfig = {
   /** Chain used for WalletConnect sessions (sign-in uses the chain the API returns). */
   siweChainId: Number(process.env.NEXT_PUBLIC_SIWE_CHAIN_ID || 1),
   walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
-  /** Token launch details (empty until launch). */
-  dlynTokenAddress: process.env.NEXT_PUBLIC_DLYN_TOKEN_ADDRESS || "",
+  /** Token details; the CA falls back to the one in brand.ts. */
+  dlynTokenAddress: process.env.NEXT_PUBLIC_DLYN_TOKEN_ADDRESS || brand.tokenAddress,
   dlynBuyUrl: process.env.NEXT_PUBLIC_DLYN_BUY_URL || "",
   dlynChartUrl: process.env.NEXT_PUBLIC_DLYN_CHART_URL || "",
   /** Block explorer base URL, e.g. https://basescan.org */
