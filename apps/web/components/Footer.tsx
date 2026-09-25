@@ -105,7 +105,7 @@ export function Footer({ locale }: { locale: Locale }) {
                 {brand.social.telegram && (
                   <li>
                     <a href={brand.social.telegram} target="_blank" rel="noopener">
-                      Telegram
+                      {t.telegramChannel}
                     </a>
                   </li>
                 )}

@@ -369,7 +369,7 @@ export class TelegramBot {
         case "/links": {
           const row: Button[] = [];
           if (brand.social.x) row.push({ text: "X", url: brand.social.x });
-          if (brand.social.telegram) row.push({ text: "Community", url: brand.social.telegram });
+          if (brand.social.telegram) row.push({ text: "Channel", url: brand.social.telegram });
           return { html: aboutText(), keyboard: [[this.openAppButton(w)], ...(row.length ? [row] : [])] };
         }
         case "/token":

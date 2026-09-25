@@ -90,7 +90,7 @@ export function aboutText(): string {
     `• One API key for every model: ${site}/docs`,
   ];
   if (brand.social.x) lines.push(`• X: ${brand.social.x}`);
-  if (brand.social.telegram) lines.push(`• Community: ${brand.social.telegram}`);
+  if (brand.social.telegram) lines.push(`• Telegram channel: ${brand.social.telegram}`);
   return lines.join("\n");
 }
 
@@ -107,7 +107,7 @@ export function tokenText(address: string | undefined): string {
     "⚠️ Only trust the address shown here and on the website. The team will never DM you first or ask for your seed phrase.",
   ];
   if (brand.social.x) lines.push("", `X: ${brand.social.x}`);
-  if (brand.social.telegram) lines.push(`Community: ${brand.social.telegram}`);
+  if (brand.social.telegram) lines.push(`Telegram channel: ${brand.social.telegram}`);
   return lines.join("\n");
 }
 

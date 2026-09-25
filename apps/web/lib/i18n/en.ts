@@ -512,6 +512,7 @@ export const en = {
     feeSplit: "Fee split",
     community: "Community",
     telegramBot: "Telegram bot",
+    telegramChannel: "Telegram channel",
     chat: "Chat",
     ledger: "Ledger",
     about: "About",

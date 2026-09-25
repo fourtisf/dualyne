@@ -83,6 +83,15 @@ export default function AboutPage() {
                 <a href={brand.social.x} rel="noopener">
                   X
                 </a>
+                {brand.social.telegram && (
+                  <>
+                    {" "}
+                    and our{" "}
+                    <a href={brand.social.telegram} rel="noopener">
+                      Telegram channel
+                    </a>
+                  </>
+                )}
                 .
               </>
             )}

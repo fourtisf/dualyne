@@ -55,7 +55,7 @@ export const brand = {
    */
   social: {
     x: env("NEXT_PUBLIC_X_URL") || "https://x.com/DualyneAi",
-    telegram: env("NEXT_PUBLIC_TELEGRAM_URL"),
+    telegram: env("NEXT_PUBLIC_TELEGRAM_URL") || "https://t.me/dualyne",
     github: "",
   },
   /** Shown on the About page, in the footer and on the legal pages. NEXT_PUBLIC_CONTACT_EMAIL overrides it. */
