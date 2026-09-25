@@ -419,7 +419,7 @@ export class TelegramBot {
         case "/token":
         case "/ca": {
           if (!brand.tokenEnabled) break;
-          const address = this.ctx.env.DLYN_TOKEN_ADDRESS;
+          const address = this.ctx.env.DLYN_TOKEN_ADDRESS ?? brand.tokenAddress;
           return {
             html: tokenText(address),
             keyboard: address ? [[{ text: "📋 Copy address", copy_text: { text: address } }]] : undefined,
