@@ -38,8 +38,6 @@ export const brand = {
   /** Token symbol without the "$". Rendered as "$DLYN" or "100,000 DLYN". */
   tokenSymbol: "DLYN",
   tokenName: "Dualyne access token",
-  /** The token's contract address (CA). NEXT_PUBLIC_DLYN_TOKEN_ADDRESS / DLYN_TOKEN_ADDRESS override it. */
-  tokenAddress: "0x45614b7a71a97ed66a63d35d14934f83a9768ee6",
   /** See tokenEnabled above. */
   tokenEnabled,
   domain,
